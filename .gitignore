@@ -31,3 +31,11 @@ _opam/
 _esy
 esy.lock
 node_modules
+
+# ESBMC release binaries
+bin/esbmc
+ESBMC_Project/release/
+ESBMC_Project/clang11/
+ESBMC_Project/glibc-2.35/
+ESBMC_Project/glibc-build/
+ESBMC_Project/esbmc/build/

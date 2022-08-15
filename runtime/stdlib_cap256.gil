@@ -1,0 +1,14 @@
+#internal
+
+proc i__malloc(typ) {
+      bl := [alloc](typ);
+      ret := bl;
+      return
+};
+
+proc i__free(cap) {
+      bl := [free](cap);
+      ret := bl;
+      return
+};
+

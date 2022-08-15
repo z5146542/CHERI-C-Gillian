@@ -1,0 +1,43 @@
+#internal
+
+proc i__store(cap, val) {
+       bl := [store](cap, val);
+       ret := bl;
+       return
+};
+
+proc i__load(cap, typ) {
+       bl:= [load](cap, typ);
+       ret := bl;
+       return
+};
+
+proc i__value_of_bool(v) {
+          goto [v] tr fl;
+      tr: ret := {{ "int", 1 }};
+          return;
+      fl: ret := {{ "int", 0 }};
+          return
+};
+
+proc i__bool_of_value(v) {
+            goto [ l-nth(v, 1.) = 0i ] fl tr;
+      fl:   ret := false;
+            return;
+      tr:   ret := true;
+            return
+};
+
+proc i__neg_bool_value(v) {
+            goto [ l-nth(v, 0.) = "int" ] int unde;
+      int:  goto [ l-nth(v, 1.) = 0. ] fl tr;
+      fl:   ret := {{ "int", 1. }};
+            return;
+      tr:   ret := {{ "int", 0. }};
+            return;
+      unde: fail[operator]("Cannot neg a non-boolean")
+};
+
+proc i__not_implemented() {
+      fail[NotImplemented]()
+};

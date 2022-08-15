@@ -1,0 +1,55 @@
+#internal
+
+proc i__binops_cmp_lt (v1, v2) {
+        goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
+   tsc: goto [ l-nth(v1, 1.) i< l-nth(v2, 1.) ] vsc vft;
+   vsc: ret := {{ l-nth(v1, 0.), 1i }};
+        return;
+   vft: ret := {{ l-nth(v1, 0.), 0i }};
+        return;
+   tft: fail[comparison]("Type of two values do not match")
+};
+
+proc i__binops_cmp_eq (v1, v2) {                                                
+        goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;                         
+   tsc: goto [ l-nth(v1, 1.) = l-nth(v2, 1.) ] vsc vft;                        
+   vsc: ret := {{ l-nth(v1, 0.), 1i }};                                         
+        return;                                                                 
+   vft: ret := {{ l-nth(v1, 0.), 0i }};                                         
+        return;                                                                 
+   tft: fail[comparison]("Type of two values do not match")                     
+};
+
+(* deal with signedness later *)
+proc i__binops_add (v1, v2) {
+        goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
+   tsc: res := l-nth(v1, 1.) i+ l-nth(v2, 1.);
+        goto [ l-nth(v1, 0.) = "uint32" ] u32s u32f;
+  u32f: goto [ l-nth(v1, 0.) = "uint64" ] u64s u64f;
+  u64f: goto [ l-nth(v1, 0.) = "int32" ] i32s i32f;
+  i32f: goto end;
+  u32s: res := res i% 4294967296i;
+        goto end;
+  u64s: res := res i% 9223372036854775808i;
+        goto end;
+  i32s: res := res i% 2147483648i;
+        goto end;
+   end: ret := {{ l-nth(v1, 0.), res }};
+        return;
+   tft: fail[comparison]("Type of two values do not match") 
+};
+
+proc i__binops_mul (v1, v2) {                                                   
+        goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;                         
+   tsc: res := l-nth(v1, 1.) i* l-nth(v2, 1.);                                  
+        goto [ l-nth(v1, 0.) = "uint32" ] u32s u32f;                             
+  u32f: goto [ l-nth(v1, 0.) = "uint64" ] u64s u64f;                             
+  u64f: goto end;                                                               
+  u32s: res := res i% 4294967295;                                               
+        goto end;                                                               
+  u64s: res := res i% 9223372036854775807;                                      
+        goto end;                                                               
+   end: ret := {{ l-nth(v1, 0.), res }};   
+        return;                                        
+   tft: fail[comparison]("Type of two values do not match")                       
+};

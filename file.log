@@ -1,0 +1,735 @@
+*** Phase ***
+*** Phase ***
+*** MESSAGE: Adding procedure: i__free.
+
+*** MESSAGE: Adding procedure: i__malloc.
+
+*** Phase ***
+*** MESSAGE: Adding procedure: i__not_implemented.
+
+*** MESSAGE: Adding procedure: i__load.
+
+*** MESSAGE: Adding procedure: i__value_of_bool.
+
+*** MESSAGE: Adding procedure: i__bool_of_value.
+
+*** MESSAGE: Adding procedure: i__neg_bool_value.
+
+*** MESSAGE: Adding procedure: i__store.
+
+*** Phase ***
+*** MESSAGE: Adding procedure: i__unops_negb.
+
+*** MESSAGE: Adding procedure: i__unop_ubyteofuint.
+
+*** MESSAGE: Adding procedure: i__unops_cast.
+
+*** MESSAGE: Adding procedure: i__cap_addr_add.
+
+*** MESSAGE: Adding procedure: i__unop_uintofubyte.
+
+Calculating UPs for lemmas
+------------------------------------------------------
+--main: 0--
+TIME: 0.027414
+CMD: x := undefined
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  
+MEMORY:
+  Mem: {
+          next curr: 0
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--main: 1--
+TIME: 0.027442
+CMD: malloc_ret_1 := undefined
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (x: undefined)
+MEMORY:
+  Mem: {
+          next curr: 0
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--main: 2--
+TIME: 0.027459
+CMD: malloc_ret_1 := "i__malloc"("cap256")
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: undefined)
+  (x: undefined)
+MEMORY:
+  Mem: {
+          next curr: 0
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__malloc: 0--
+TIME: 0.027476
+CMD: bl := [alloc](typ)
+PROCS: [i__malloc, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (typ: "cap256")
+MEMORY:
+  Mem: {
+          next curr: 0
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__malloc: 1--
+TIME: 0.027513
+CMD: ret := bl
+PROCS: [i__malloc, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (typ: "cap256")
+MEMORY:
+  Mem: {
+          next curr: 32
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__malloc: 2--
+TIME: 0.027546
+CMD: return
+PROCS: [i__malloc, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (ret: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (typ: "cap256")
+MEMORY:
+  Mem: {
+          next curr: 32
+       }
+
+------------------------------------------------------
+
+Returning.
+------------------------------------------------------
+--main: 3--
+TIME: 0.027584
+CMD: x := malloc_ret_1
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (x: undefined)
+MEMORY:
+  Mem: {
+          next curr: 32
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--main: 4--
+TIME: 0.027601
+CMD: malloc_ret_2 := undefined
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+MEMORY:
+  Mem: {
+          next curr: 32
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--main: 5--
+TIME: 0.027621
+CMD: malloc_ret_2 := "i__malloc"("uint8")
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (malloc_ret_2: undefined)
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+MEMORY:
+  Mem: {
+          next curr: 32
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__malloc: 0--
+TIME: 0.027647
+CMD: bl := [alloc](typ)
+PROCS: [i__malloc, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (typ: "uint8")
+MEMORY:
+  Mem: {
+          next curr: 32
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__malloc: 1--
+TIME: 0.027673
+CMD: ret := bl
+PROCS: [i__malloc, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (typ: "uint8")
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__malloc: 2--
+TIME: 0.027690
+CMD: return
+PROCS: [i__malloc, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (ret: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (typ: "uint8")
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+Returning.
+------------------------------------------------------
+--main: 6--
+TIME: 0.027713
+CMD: t := "i__store"(x, malloc_ret_2)
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (malloc_ret_2: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__store: 0--
+TIME: 0.027736
+CMD: bl := [store](cap, val)
+PROCS: [i__store, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (cap: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (val: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__store: 1--
+TIME: 0.027990
+CMD: ret := bl
+PROCS: [i__store, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{  }})
+  (cap: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (val: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__store: 2--
+TIME: 0.028017
+CMD: return
+PROCS: [i__store, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{  }})
+  (cap: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (ret: {{  }})
+  (val: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+Returning.
+------------------------------------------------------
+--main: 7--
+TIME: 0.028040
+CMD: y := undefined
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (malloc_ret_2: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (t: {{  }})
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--main: 8--
+TIME: 0.028064
+CMD: y := "i__load"(x, "cap256")
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (malloc_ret_2: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (t: {{  }})
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (y: undefined)
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__load: 0--
+TIME: 0.028093
+CMD: bl := [load](cap, typ)
+PROCS: [i__load, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (cap: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (typ: "cap256")
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__load: 1--
+TIME: 0.028280
+CMD: ret := bl
+PROCS: [i__load, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (cap: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (typ: "cap256")
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__load: 2--
+TIME: 0.028302
+CMD: return
+PROCS: [i__load, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (cap: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (ret: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (typ: "cap256")
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+Returning.
+------------------------------------------------------
+--main: 9--
+TIME: 0.028756
+CMD: t := "i__store"(y, {{ "uint8", 10i }})
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (malloc_ret_2: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (t: {{  }})
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (y: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__store: 0--
+TIME: 0.028796
+CMD: bl := [store](cap, val)
+PROCS: [i__store, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (cap: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (val: {{ "uint8", 10i }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__store: 1--
+TIME: 0.028817
+CMD: ret := bl
+PROCS: [i__store, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{  }})
+  (cap: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (val: {{ "uint8", 10i }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__store: 2--
+TIME: 0.028832
+CMD: return
+PROCS: [i__store, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{  }})
+  (cap: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (ret: {{  }})
+  (val: {{ "uint8", 10i }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+Returning.
+------------------------------------------------------
+--main: 10--
+TIME: 0.028852
+CMD: t := "i__free"(y)
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (malloc_ret_2: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (t: {{  }})
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (y: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__free: 0--
+TIME: 0.028876
+CMD: bl := [free](cap)
+PROCS: [i__free, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (cap: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__free: 1--
+TIME: 0.028900
+CMD: ret := bl
+PROCS: [i__free, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, false, true, false, 32, 1i, 32i, false }})
+  (cap: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__free: 2--
+TIME: 0.028917
+CMD: return
+PROCS: [i__free, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, false, true, false, 32, 1i, 32i, false }})
+  (cap: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (ret: {{ true, false, true, false, 32, 1i, 32i, false }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+Returning.
+------------------------------------------------------
+--main: 11--
+TIME: 0.028940
+CMD: t := "i__free"(x)
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (malloc_ret_2: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (t: {{ true, false, true, false, 32, 1i, 32i, false }})
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (y: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__free: 0--
+TIME: 0.028964
+CMD: bl := [free](cap)
+PROCS: [i__free, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (cap: {{ true, true, true, true, 0, 32i, 0i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__free: 1--
+TIME: 0.028995
+CMD: ret := bl
+PROCS: [i__free, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, true, true, true, 0, 32i, 0i, false }})
+  (cap: {{ true, true, true, true, 0, 32i, 0i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--i__free: 2--
+TIME: 0.029011
+CMD: return
+PROCS: [i__free, main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (bl: {{ true, true, true, true, 0, 32i, 0i, false }})
+  (cap: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (ret: {{ true, true, true, true, 0, 32i, 0i, false }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+Returning.
+------------------------------------------------------
+--main: 12--
+TIME: 0.029035
+CMD: ret := {{ "int64", 0. }}
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (malloc_ret_2: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (t: {{ true, true, true, true, 0, 32i, 0i, false }})
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (y: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+------------------------------------------------------
+--main: 13--
+TIME: 0.029070
+CMD: return
+PROCS: [main]
+LOOPS: [] ++ []
+BRANCHING: 0
+
+-----------------------------------------
+STORE:
+  (malloc_ret_1: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (malloc_ret_2: {{ true, false, true, false, 32, 1i, 32i, true }})
+  (ret: {{ "int64", 0. }})
+  (t: {{ true, true, true, true, 0, 32i, 0i, false }})
+  (x: {{ true, true, true, true, 0, 32i, 0i, true }})
+  (y: {{ true, false, true, false, 32, 1i, 32i, true }})
+MEMORY:
+  Mem: {
+          next curr: 33
+       }
+
+------------------------------------------------------
+
+Returning.
+Relaunching suspended confs
