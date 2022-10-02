@@ -68,7 +68,7 @@ export_code (* Utility Functions *)
             integer_of_word8   integer_of_word16  integer_of_word32  integer_of_word64
             sword8_of_integer  sword16_of_integer sword32_of_integer sword64_of_integer
             integer_of_sword8  integer_of_sword16 integer_of_sword32 integer_of_sword64
-            integer_of_nat
+            integer_of_nat cast_val
             (* Error Types *)
             C2Err LogicErr
             TagViolation PermitLoadViolation PermitStoreViolation PermitStoreCapViolation
