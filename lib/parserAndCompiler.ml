@@ -17,9 +17,11 @@ let run cmd =
   (* loop "" *)
   first
 
-let includes = "import \"unops_common.gil\", \"binops_common.gil\", \"internals.gil\";\n\n"
-let esbmc_run = "bin/esbmc"
-let omit_header = "tail -n +8"
+let includes = "import \"unops_common.gil\", \"binops_common.gil\", \"internals.gil\", \"stdlib_cap256.gil\", \"cheri_purecap_uncompressed.gil\";\n\n"
+let esbmc_run = "bin/esbmc "
+let cheri_settings = "--no-library --cheri purecap --cheri-uncompressed "
+let sysroot = "--sysroot ~/Downloads/rootfs-mips64-purecap.cheribsd-headers "
+let remove_misc = "tail -n +8 | grep -v \"^\\s\\s*$\" | grep -v \"^\\ *skip;\" "
 
 let l_emit_parse_tree = ref false
 let l_emit_symbol_table = ref false
@@ -102,7 +104,7 @@ let parse_and_compile_file path =
   (* let snd = Filename.chop_extension path ^ ".giltmp" in *)
   let oc = open_out pathgil in
   (* let od = open_out snd in *)
-  let output = includes ^ (run (esbmc_run ^ " --goto-functions-only " ^ path ^ " | " ^ omit_header)) in
+  let output = includes ^ (run (esbmc_run ^ cheri_settings ^ sysroot ^ "--goto-functions-only " ^ path ^ " | " ^ remove_misc)) in
   let () = Printf.fprintf oc "%s" output in
   (* let () = Printf.fprintf od "%s" output in *)
   let () = close_out oc in

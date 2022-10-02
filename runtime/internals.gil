@@ -14,9 +14,9 @@ proc i__load(cap, typ) {
 
 proc i__value_of_bool(v) {
           goto [v] tr fl;
-      tr: ret := {{ "int", 1 }};
+      tr: ret := {{ "int32", 1i }};
           return;
-      fl: ret := {{ "int", 0 }};
+      fl: ret := {{ "int32", 0i }};
           return
 };
 
@@ -29,11 +29,11 @@ proc i__bool_of_value(v) {
 };
 
 proc i__neg_bool_value(v) {
-            goto [ l-nth(v, 0.) = "int" ] int unde;
+            goto [ l-nth(v, 0.) = "int32" ] int unde;
       int:  goto [ l-nth(v, 1.) = 0. ] fl tr;
-      fl:   ret := {{ "int", 1. }};
+      fl:   ret := {{ "int32", 1i }};
             return;
-      tr:   ret := {{ "int", 0. }};
+      tr:   ret := {{ "int32", 0i }};
             return;
       unde: fail[operator]("Cannot neg a non-boolean")
 };

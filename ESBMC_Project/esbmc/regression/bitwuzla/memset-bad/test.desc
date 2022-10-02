@@ -1,4 +1,0 @@
-THOROUGH
-memset-bad.c
---bitwuzla
-^VERIFICATION FAILED$

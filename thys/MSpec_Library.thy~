@@ -1,0 +1,274 @@
+(*  Title:      MSpec_State
+    Author:     Seung Hoon Park, 2022
+*)
+
+theory MSpec_Library
+  imports Main "HOL-Library.Word" "Word_Lib.Word_Lib_Sumo"
+begin                                           
+
+text \<open>Type specifier\<close>
+datatype mtype = 
+  I8          ("byte"         )
+  | I64       ("iword"        )
+  | Ptr mtype ("_ *"   [70] 70)
+
+text \<open>Type value specifier (used primarily for semantic evaluation) \<close>
+datatype 'a mval = 
+  Bv "8 word"
+  | Iv "64 word"
+  | Pv "'a"
+
+definition val_type :: "'a mval \<Rightarrow> mtype"
+  where
+  "val_type v \<equiv> case v of Bv _ \<Rightarrow> I8
+                        | Iv _ \<Rightarrow> I64
+                        | Pv _ \<Rightarrow> Ptr I64"
+
+text \<open>Naming of variables\<close>
+type_synonym vname = string
+
+text \<open>States whether cell is allocated (used for MM implementations and transformations) \<close>
+datatype allocated = AL | UN
+
+text \<open>Encoding/Decoding mathematical values and machine words\<close>
+
+
+abbreviation encode_byte :: "nat \<Rightarrow> 8 word"
+  where
+  "encode_byte x \<equiv> word_of_nat x"
+
+abbreviation decode_byte :: "8 word \<Rightarrow> nat"
+  where
+  "decode_byte b \<equiv> unat b"
+
+abbreviation encode_8 :: "8 word \<Rightarrow> 8 word list"
+  where
+  "encode_8 w \<equiv> [w]"
+
+abbreviation decode_8 :: "8 word list \<Rightarrow> 8 word"
+  where
+  "decode_8 ls \<equiv> hd ls"
+
+lemma encode_decode_8:
+  "ls = [b] \<Longrightarrow> ls = encode_8 (decode_8 ls)"
+  by simp
+
+lemma decode_encode_8:
+  "w = decode_8 (encode_8 w)"
+  by simp
+
+lemma encode_decode_byte:
+  "w = encode_byte (decode_byte w)"
+  by simp
+
+lemma decode_encode_byte:
+  assumes "i \<le> 2 ^ LENGTH(8) - 1"
+  shows "i = decode_byte (encode_byte i)"
+  by (metis assms le_unat_uoi unat_minus_one_word)
+  
+abbreviation ptr_64_split :: "64 word \<Rightarrow> 32 word list"
+  where
+  "ptr_64_split x \<equiv> (word_rsplit :: 64 word \<Rightarrow> 32 word list) x"
+
+abbreviation int_32_split :: "32 word \<Rightarrow> 16 word list"
+  where
+  "int_32_split x \<equiv> (word_rsplit :: 32 word \<Rightarrow> 16 word list) x"
+
+abbreviation int_16_split :: "16 word \<Rightarrow> 8 word list"
+  where
+  "int_16_split x \<equiv> (word_rsplit :: 16 word \<Rightarrow> 8 word list) x"
+
+(*
+lemma split_flatten_16_eq:
+  assumes "(word_split :: 16 word \<Rightarrow> 8 word \<times> 8 word) x = (a, b)"
+  shows "flatten_16 x = [a, b]" 
+  using assms sledgehammer
+  by force
+
+lemma flatten_split_16_eq:
+  assumes "flatten_16 x = [a, b]"
+  shows "int_16_split x = (a, b)"
+  using assms 
+  unfolding flatten_16_def
+  by fastforce
+*)
+abbreviation cat_16 :: "8 word list \<Rightarrow> 16 word"
+  where
+  "cat_16 x \<equiv> (word_rcat :: 8 word list \<Rightarrow> 16 word) x"
+
+abbreviation encode_16 :: "nat \<Rightarrow> 8 word list"
+  where 
+  "encode_16 x \<equiv> int_16_split (word_of_nat x)"
+
+abbreviation decode_16 :: "8 word list \<Rightarrow> nat"
+  where
+  "decode_16 x \<equiv> unat (cat_16 x)"
+
+lemma rsplit_rcat_eq:
+  assumes "LENGTH(('b::len)) mod LENGTH(('a::len)) = 0"
+    and "length w = LENGTH('b) div LENGTH('a)"
+  shows "(word_rsplit :: 'b word \<Rightarrow> 'a word list) ((word_rcat :: 'a word list \<Rightarrow> 'b word) w) = w"
+  by (simp add: assms(1) assms(2) mod_0_imp_dvd size_word.rep_eq word_rsplit_rcat_size)
+
+lemma rsplit_rcat_16_eq:
+  assumes "w = [a1, a2]"
+  shows "(word_rsplit :: 16 word \<Rightarrow> 8 word list) ((word_rcat :: 8 word list \<Rightarrow> 16 word) w) = w"
+proof -
+  have l1: "length w * 8 = 16"
+    using assms by clarsimp
+  moreover have l2: "size ((word_rcat :: 8 word list \<Rightarrow> 16 word) w) = 16"
+    using assms
+    by (simp add: size_word.rep_eq)
+  from l1 l2 have "length w * 8 = size ((word_rcat :: 8 word list \<Rightarrow> 16 word) w)"
+    by argo
+  thus ?thesis
+    by (metis l1 l2 len8 word_rsplit_rcat_size)
+qed
+    
+
+lemma encode_decode_16:
+  assumes "w = [a, b]"
+  shows "w = encode_16 (decode_16 w)"
+  by (simp add: assms rsplit_rcat_eq)
+
+lemma cat_flatten_16_eq:
+  "cat_16 (int_16_split w) = w" 
+  by (simp add: word_rcat_rsplit)
+
+lemma decode_encode_16:
+  assumes "i \<le> 2 ^ LENGTH(16) - 1"
+  shows "i = decode_16 (encode_16 i)" 
+  by (metis assms cat_flatten_16_eq le_unat_uoi unat_minus_one_word)
+
+abbreviation flatten_32 :: "32 word \<Rightarrow> 8 word list"
+  where
+  "flatten_32 x \<equiv> (word_rsplit :: 32 word \<Rightarrow> 8 word list) x"
+
+abbreviation cat_32 :: "8 word list \<Rightarrow> 32 word"
+  where
+  "cat_32 x \<equiv> (word_rcat :: 8 word list \<Rightarrow> 32 word) x"
+
+abbreviation encode_32 :: "nat \<Rightarrow> 8 word list"
+  where
+  "encode_32 x \<equiv> flatten_32 (word_of_nat x)"
+
+abbreviation decode_32 :: "8 word list \<Rightarrow> nat"
+  where
+  "decode_32 i \<equiv> unat (cat_32 i)"
+
+(*
+lemma split_flatten_32_eq:
+  assumes "int_32_split w = (a, b)"
+  assumes "int_16_split a = (a1, a2)"
+  assumes "int_16_split b = (b1, b2)"
+  shows "flatten_32 w = [a1, a2, b1, b2]"
+  unfolding flatten_32_def 
+  using assms
+  by simp
+
+lemma flatten_split_32_eq:
+  assumes "flatten_32 w = [a1, a2, b1, b2]"
+  assumes "int_32_split w = (a, b)"
+  shows "int_16_split a = (a1, a2)"
+    and "int_16_split b = (b1, b2)"
+  using assms 
+  unfolding flatten_16_def
+  by fastforce+
+
+fun word_8_to_16_merge :: "8 word list \<Rightarrow> 16 word list"
+  where
+  "word_8_to_16_merge (x1 # x2 # xs) = cat_16 [x1, x2] # word_8_to_16_merge xs"
+| "word_8_to_16_merge _ = []"
+
+lemma rcat_merge_eq:
+  fixes a1 a2 b1 b2 :: "8 word"
+  and w :: "8 word list"
+  assumes "w = [a1, a2, b1, b2]"
+  shows "(word_rcat :: 8 word list \<Rightarrow> 32 word) w = (word_rcat :: 16 word list \<Rightarrow> 32 word) (word_8_to_16_merge w)"
+  apply (unfold word_rcat_def)
+  apply (insert assms)
+  apply clarsimp
+  find_theorems name: "rcat"
+  sorry
+
+lemma word_32_split:
+  assumes "w = [a1, a2, b1, b2]"
+  shows "int_32_split (cat_32 w) = (cat_16 [a1, a2], cat_16 [b1, b2])"
+  unfolding int_32_split_def using assms
+  by (simp add: rcat_merge_eq word_split_rcat_eq_tup wsst_TYs(3))
+*)
+
+lemma rsplit_rcat_32_eq:
+  assumes "w = [a1, a2, b1, b2]"
+  shows "(word_rsplit :: 32 word \<Rightarrow> 8 word list) ((word_rcat :: 8 word list \<Rightarrow> 32 word) w) = w" 
+  using rsplit_rcat_eq assms
+  by force
+
+lemma encode_decode_32:
+  assumes "w = [a1, a2, b1, b2]"
+  shows "w = encode_32 (decode_32 w)" 
+  using assms 
+  by (simp add: rsplit_rcat_32_eq)
+
+lemma decode_encode_32:
+  assumes "i \<le> 2 ^ LENGTH(32) - 1"
+  shows "i = decode_32 (encode_32 i)" 
+  by (metis assms le_unat_uoi unat_minus_one_word word_rcat_rsplit)
+  
+
+abbreviation flatten_int :: "64 word \<Rightarrow> 8 word list"
+  where
+  "flatten_int x \<equiv> (word_rsplit :: 64 word \<Rightarrow> 8 word list) x"
+
+lemma flatten_int_length[simp]:
+  "length (flatten_int x) = 8"
+  by (simp add: length_word_rsplit_even_size wsst_TYs(3))
+
+abbreviation cat_int :: "8 word list \<Rightarrow> 64 word"
+  where
+  "cat_int x \<equiv> word_rcat x"
+
+abbreviation encode_int :: "nat \<Rightarrow> 8 word list"
+  where
+  "encode_int x \<equiv> flatten_int (word_of_nat x)"
+
+abbreviation decode_int :: "8 word list \<Rightarrow> nat"
+  where
+  "decode_int x \<equiv> unat (cat_int x)"
+
+lemma encode_decode_int:
+  assumes "w = [a1, a2, b1, b2, c1, c2, d1, d2]"
+  shows "w = encode_int (decode_int w)"
+  using assms 
+  by (simp add: rsplit_rcat_eq)
+
+lemma decode_encode_int:
+  assumes "i \<le> 2 ^ LENGTH(64) - 1"
+  shows "i = decode_int (encode_int i)" 
+  by (metis assms le_unat_uoi unat_minus_one_word word_rcat_rsplit)
+
+(*
+text \<open>Obtaining size of types\<close>
+definition typ_siz :: "mtype \<Rightarrow> nat"
+  where
+  "typ_siz t \<equiv> case t of I8 \<Rightarrow> 1
+                       | I64 \<Rightarrow> 8
+                       | Ptr t' \<Rightarrow> 8"
+
+definition sizeof :: "mtype \<Rightarrow> nat"
+  where
+  "sizeof t \<equiv> case t of I8 \<Rightarrow> 1
+                      | I64 \<Rightarrow> 8
+                      | Ptr t' \<Rightarrow> 32"
+
+definition type_upd :: "(vname \<Rightarrow> mtype option) \<Rightarrow> vname \<Rightarrow> mtype option \<Rightarrow> (vname \<Rightarrow> mtype option)"
+  where
+  "type_upd f v t \<equiv> f(v := t)"
+*)
+
+text \<open>convenient function for updating the state environment\<close>
+abbreviation env_upd :: "(vname \<Rightarrow> 'a mval) \<Rightarrow> vname \<Rightarrow> 'a mval \<Rightarrow> (vname \<Rightarrow> 'a mval)"
+  where
+  "env_upd f v va \<equiv> f(v := va)"
+
+end

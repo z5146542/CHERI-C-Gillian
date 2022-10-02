@@ -1,5 +1,0 @@
-CORE
-MyContract_underflow_loop.solast
---function func_loop --incremental-bmc --contract MyContract_underflow_loop.sol
-.*line 12 function func_loop$
-^VERIFICATION FAILED$

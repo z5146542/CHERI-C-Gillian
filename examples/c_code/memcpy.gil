@@ -1,0 +1,325 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil",
+       "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil";
+
+
+@nopath
+proc main() {
+    x := undefined;
+    retval_malloc_1 := undefined;
+    tmp_108 := "i__binops_mul"({{ "uint64", 4i }}, {{ "uint64", 3i }});
+    tmp_109 := "i__malloc"(tmp_108);
+    retval_malloc_1 := tmp_109;
+    tmp_110 := "i__unops_cast"(4i, retval_malloc_1);
+    x := tmp_110;
+    tmp_111 := "i__binops_add"(x, {{ "int64", 0i }});
+    tmp := "i__store"(tmp_111, {{ "int32", 7i }});
+    tmp_113 := "i__binops_add"(x, {{ "int64", 1i }});
+    tmp := "i__store"(tmp_113, {{ "int32", 14i }});
+    tmp_115 := "i__binops_add"(x, {{ "int64", 2i }});
+    tmp := "i__store"(tmp_115, {{ "int32", 21i }});
+    y := undefined;
+    retval_malloc_2 := undefined;
+    tmp_117 := "i__binops_mul"({{ "uint64", 4i }}, {{ "uint64", 3i }});
+    tmp_118 := "i__malloc"(tmp_117);
+    retval_malloc_2 := tmp_118;
+    tmp_119 := "i__unops_cast"(4i, retval_malloc_2);
+    y := tmp_119;
+    z := undefined;
+    retval_malloc_3 := undefined;
+    tmp_120 := "i__binops_mul"({{ "uint64", 4i }}, {{ "uint64", 3i }});
+    tmp_121 := "i__malloc"(tmp_120);
+    retval_malloc_3 := tmp_121;
+    tmp_122 := "i__unops_cast"(4i, retval_malloc_3);
+    z := tmp_122;
+    tmp_123 := "i__unops_cast"(1i, y);
+    tmp_124 := "i__unops_cast"(1i, x);
+    tmp_125 := "i__binops_mul"({{ "uint64", 4i }}, {{ "uint64", 3i }});
+    tmp := "my_memcpy"(tmp_123, tmp_124, tmp_125);
+    tmp_126 := "i__unops_cast"(1i, z);
+    tmp_127 := "i__unops_cast"(1i, x);
+    tmp_128 := "i__binops_mul"({{ "uint64", 4i }}, {{ "uint64", 3i }});
+    tmp := "i__memcpy"(tmp_126, tmp_127, tmp_128);
+    y0 := undefined;
+    tmp_129 := "i__binops_add"(y, {{ "int64", 0i }});
+    tmp_130 := "i__load"(tmp_129, "int32");
+    y0 := tmp_130;
+    y1 := undefined;
+    tmp_131 := "i__binops_add"(y, {{ "int64", 1i }});
+    tmp_132 := "i__load"(tmp_131, "int32");
+    y1 := tmp_132;
+    y2 := undefined;
+    tmp_133 := "i__binops_add"(y, {{ "int64", 2i }});
+    tmp_134 := "i__load"(tmp_133, "int32");
+    y2 := tmp_134;
+    z0 := undefined;
+    tmp_135 := "i__binops_add"(z, {{ "int64", 0i }});
+    tmp_136 := "i__load"(tmp_135, "int32");
+    z0 := tmp_136;
+    z1 := undefined;
+    tmp_137 := "i__binops_add"(z, {{ "int64", 1i }});
+    tmp_138 := "i__load"(tmp_137, "int32");
+    z1 := tmp_138;
+    z2 := undefined;
+    tmp_139 := "i__binops_add"(z, {{ "int64", 2i }});
+    tmp_140 := "i__load"(tmp_139, "int32");
+    z2 := tmp_140;
+    ret := {{ "int32", 0i }};
+    return;
+    return
+};
+
+
+@nopath
+proc baz() {
+      x := undefined;
+      retval_malloc_1 := undefined;
+      tmp_62 := "i__malloc"({{ "uint64", 32i }});
+      retval_malloc_1 := tmp_62;
+      tmp_63 := "i__unops_cast"(32i, retval_malloc_1);
+      x := tmp_63;
+      x1 := undefined;
+      retval_malloc_2 := undefined;
+      tmp_64 := "i__malloc"({{ "uint64", 4i }});
+      retval_malloc_2 := tmp_64;
+      tmp_65 := "i__unops_cast"(4i, retval_malloc_2);
+      x1 := tmp_65;
+      tmp := "i__store"(x, x1);
+      y := undefined;
+      retval_malloc_3 := undefined;
+      tmp_67 := "i__malloc"({{ "uint64", 32i }});
+      retval_malloc_3 := tmp_67;
+      tmp_68 := "i__unops_cast"(32i, retval_malloc_3);
+      y := tmp_68;
+      tmp_69 := "i__unops_cast"(1i, y);
+      tmp_70 := "i__unops_cast"(1i, x);
+      tmp := "my_memcpy"(tmp_69, tmp_70, {{ "uint64", 32i }});
+      a := undefined;
+      tmp_71 := "i__load"(x, "cap");
+      a := tmp_71;
+      b := undefined;
+      tmp_72 := "i__load"(y, "cap");
+      b := tmp_72;
+      is_same := undefined;
+      tmp_73 := "i__binops_cmp_eq"(a, b);
+      tmp_74 := "i__unops_cast"("signed int", tmp_73);
+      is_same := tmp_74;
+      z := undefined;
+      retval_malloc_4 := undefined;
+      tmp_75 := "i__binops_mul"({{ "uint64", 4i }}, {{ "uint64", 3i }});
+      tmp_76 := "i__malloc"(tmp_75);
+      retval_malloc_4 := tmp_76;
+      tmp_77 := "i__unops_cast"(4i, retval_malloc_4);
+      z := tmp_77;
+      tmp_78 := "i__binops_add"(z, {{ "int64", 0i }});
+      tmp := "i__store"(tmp_78, {{ "int32", 7i }});
+      tmp_80 := "i__binops_add"(z, {{ "int64", 1i }});
+      tmp := "i__store"(tmp_80, {{ "int32", 14i }});
+      tmp_82 := "i__binops_add"(z, {{ "int64", 2i }});
+      tmp := "i__store"(tmp_82, {{ "int32", 21i }});
+      w := undefined;
+      retval_malloc_5 := undefined;
+      tmp_84 := "i__binops_mul"({{ "uint64", 4i }}, {{ "uint64", 3i }});
+      tmp_85 := "i__malloc"(tmp_84);
+      retval_malloc_5 := tmp_85;
+      tmp_86 := "i__unops_cast"(4i, retval_malloc_5);
+      w := tmp_86;
+      tmp_87 := "i__unops_cast"(1i, w);
+      tmp_88 := "i__unops_cast"(1i, z);
+      tmp_89 := "i__binops_mul"({{ "uint64", 4i }}, {{ "uint64", 3i }});
+      tmp := "my_memcpy"(tmp_87, tmp_88, tmp_89);
+      is_same_2 := undefined;
+      is_same_2 := {{ "int32", 1i }};
+      tmp_90 := "i__binops_add"(z, {{ "int64", 0i }});
+      tmp_91 := "i__load"(tmp_90, "int32");
+      tmp_92 := "i__binops_add"(w, {{ "int64", 0i }});
+      tmp_93 := "i__load"(tmp_92, "int32");
+      tmp_94 := "i__binops_cmp_neq"(tmp_91, tmp_93);
+      tmp_95 := "i__unops_negb"(tmp_94);
+      vtb := "i__bool_of_value"(tmp_95);
+      goto [vtb] t1 s1;
+  s1: skip;
+      is_same_2 := {{ "int32", 0i }};
+  t1: tmp_96 := "i__binops_add"(z, {{ "int64", 1i }});
+      tmp_97 := "i__load"(tmp_96, "int32");
+      tmp_98 := "i__binops_add"(w, {{ "int64", 1i }});
+      tmp_99 := "i__load"(tmp_98, "int32");
+      tmp_100 := "i__binops_cmp_neq"(tmp_97, tmp_99);
+      tmp_101 := "i__unops_negb"(tmp_100);
+      vtb := "i__bool_of_value"(tmp_101);
+      goto [vtb] t2 s2;
+  s2: skip;
+      is_same_2 := {{ "int32", 0i }};
+  t2: tmp_102 := "i__binops_add"(z, {{ "int64", 2i }});
+      tmp_103 := "i__load"(tmp_102, "int32");
+      tmp_104 := "i__binops_add"(w, {{ "int64", 2i }});
+      tmp_105 := "i__load"(tmp_104, "int32");
+      tmp_106 := "i__binops_cmp_neq"(tmp_103, tmp_105);
+      tmp_107 := "i__unops_negb"(tmp_106);
+      vtb := "i__bool_of_value"(tmp_107);
+      goto [vtb] t3 s3;
+  s3: skip;
+      is_same_2 := {{ "int32", 0i }};
+  t3: ret := {{ "int32", 0i }};
+      return;
+      return
+};
+
+
+@nopath
+proc foo() {
+    src := undefined;
+    retval_malloc_1 := undefined;
+    tmp_17 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 2i }});
+    tmp_18 := "i__malloc"(tmp_17);
+    retval_malloc_1 := tmp_18;
+    tmp_19 := "i__unops_cast"(32i, retval_malloc_1);
+    src := tmp_19;
+    src1 := undefined;
+    retval_malloc_2 := undefined;
+    tmp_20 := "i__malloc"({{ "uint64", 4i }});
+    retval_malloc_2 := tmp_20;
+    tmp_21 := "i__unops_cast"(4i, retval_malloc_2);
+    src1 := tmp_21;
+    src2 := undefined;
+    retval_malloc_3 := undefined;
+    tmp_22 := "i__malloc"({{ "uint64", 4i }});
+    retval_malloc_3 := tmp_22;
+    tmp_23 := "i__unops_cast"(4i, retval_malloc_3);
+    src2 := tmp_23;
+    tmp_24 := "i__binops_add"(src, {{ "int64", 0i }});
+    tmp := "i__store"(tmp_24, src1);
+    tmp_26 := "i__binops_add"(src, {{ "int64", 1i }});
+    tmp := "i__store"(tmp_26, src2);
+    tmp_28 := "i__unops_cast"(1i, src);
+    tmp_29 := "i__unops_cast"(1i, src);
+    tmp_30 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 2i }});
+    tmp := "i__memmove"(tmp_28, tmp_29, tmp_30);
+    ret := {{ "int32", 0i }};
+    return;
+    return
+};
+
+
+@nopath
+proc my_memmove(dest, src, n) {
+    temp := undefined;
+    retval_malloc_1 := undefined;
+    tmp_11 := "i__binops_mul"({{ "uint64", 1i }}, n);
+    tmp_12 := "i__malloc"(tmp_11);
+    retval_malloc_1 := tmp_12;
+    tmp_13 := "i__unops_cast"(1i, retval_malloc_1);
+    temp := tmp_13;
+    tmp_14 := "i__unops_cast"(1i, temp);
+    tmp := "my_memcpy"(tmp_14, src, n);
+    tmp_15 := "i__unops_cast"(1i, temp);
+    tmp := "my_memcpy"(dest, tmp_15, n);
+    temp := "i__free"(temp);
+    ret := undefined;
+    return
+};
+
+
+@nopath
+proc genv_init() {
+    ret := undefined;
+    return
+};
+
+
+@nopath
+proc my_memcpy(dest, src, n) {
+      csrc := undefined;
+      tmp_0 := "i__unops_cast"(1i, src);
+      csrc := tmp_0;
+      cdst := undefined;
+      tmp_1 := "i__unops_cast"(1i, dest);
+      cdst := tmp_1;
+      i := undefined;
+      i := {{ "uint64", 0i }};
+  t1: tmp_2 := "i__binops_cmp_lt"(i, n);
+      tmp_3 := "i__unops_negb"(tmp_2);
+      vtb := "i__bool_of_value"(tmp_3);
+      goto [vtb] t2 s2;
+  s2: skip;
+      tmp_4 := "i__unops_cast"("signed long int", i);
+      tmp_5 := "i__binops_add"(cdst, tmp_4);
+      tmp_7 := "i__unops_cast"("signed long int", i);
+      tmp_8 := "i__binops_add"(csrc, tmp_7);
+      tmp_9 := "i__load"(tmp_8, "int8");
+      tmp := "i__store"(tmp_5, tmp_9);
+      tmp_10 := "i__binops_add"(i, {{ "uint64", 1i }});
+      i := tmp_10;
+      goto t1;
+  t2: skip;
+      ret := undefined;
+      return
+};
+
+
+@nopath
+proc bar() {
+    src := undefined;
+    retval_malloc_1 := undefined;
+    tmp_31 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 2i }});
+    tmp_32 := "i__malloc"(tmp_31);
+    retval_malloc_1 := tmp_32;
+    tmp_33 := "i__unops_cast"(32i, retval_malloc_1);
+    src := tmp_33;
+    src1 := undefined;
+    retval_malloc_2 := undefined;
+    tmp_34 := "i__malloc"({{ "uint64", 4i }});
+    retval_malloc_2 := tmp_34;
+    tmp_35 := "i__unops_cast"(4i, retval_malloc_2);
+    src1 := tmp_35;
+    src2 := undefined;
+    retval_malloc_3 := undefined;
+    tmp_36 := "i__malloc"({{ "uint64", 4i }});
+    retval_malloc_3 := tmp_36;
+    tmp_37 := "i__unops_cast"(4i, retval_malloc_3);
+    src2 := tmp_37;
+    tmp_38 := "i__binops_add"(src, {{ "int64", 0i }});
+    tmp := "i__store"(tmp_38, src1);
+    tmp_40 := "i__binops_add"(src, {{ "int64", 1i }});
+    tmp := "i__store"(tmp_40, src2);
+    dt1 := undefined;
+    retval_malloc_4 := undefined;
+    tmp_42 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 2i }});
+    tmp_43 := "i__malloc"(tmp_42);
+    retval_malloc_4 := tmp_43;
+    tmp_44 := "i__unops_cast"(32i, retval_malloc_4);
+    dt1 := tmp_44;
+    dt2 := undefined;
+    retval_malloc_5 := undefined;
+    tmp_45 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 2i }});
+    tmp_46 := "i__malloc"(tmp_45);
+    retval_malloc_5 := tmp_46;
+    tmp_47 := "i__unops_cast"(32i, retval_malloc_5);
+    dt2 := tmp_47;
+    tmp_48 := "i__unops_cast"(1i, dt1);
+    tmp_49 := "i__unops_cast"(1i, src);
+    tmp_50 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 2i }});
+    tmp := "my_memmove"(tmp_48, tmp_49, tmp_50);
+    tmp_51 := "i__unops_cast"(1i, dt2);
+    tmp_52 := "i__unops_cast"(1i, src);
+    tmp_53 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 2i }});
+    tmp := "i__memmove"(tmp_51, tmp_52, tmp_53);
+    dt11 := undefined;
+    tmp_54 := "i__binops_add"(dt1, {{ "int64", 0i }});
+    tmp_55 := "i__load"(tmp_54, "cap");
+    dt11 := tmp_55;
+    dt12 := undefined;
+    tmp_56 := "i__binops_add"(dt1, {{ "int64", 1i }});
+    tmp_57 := "i__load"(tmp_56, "cap");
+    dt12 := tmp_57;
+    dt21 := undefined;
+    tmp_58 := "i__binops_add"(dt2, {{ "int64", 0i }});
+    tmp_59 := "i__load"(tmp_58, "cap");
+    dt21 := tmp_59;
+    dt22 := undefined;
+    tmp_60 := "i__binops_add"(dt2, {{ "int64", 1i }});
+    tmp_61 := "i__load"(tmp_60, "cap");
+    dt22 := tmp_61;
+    ret := {{ "int32", 0i }};
+    return;
+    return
+};

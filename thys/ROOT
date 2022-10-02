@@ -1,0 +1,8 @@
+session thys = HOL + 
+  sessions
+    "HOL-Library"
+    "Word_Lib"
+    "Separation_Algebra"
+    "Containers"
+  theories [document = false]
+    CHERI_C_Global_Environment

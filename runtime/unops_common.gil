@@ -2,68 +2,62 @@
 
 proc i__unops_negb (val) {
        goto [ l-nth(val, 1.) = 0i ] ctn utd;
-  ctn: ret := {{ l-nth(val, 0.), 1i }};
+  ctn: ret := {{ "int32", 1i }};
        return;
-  utd: ret := {{ l-nth(val, 0.), 0i }};
+  utd: ret := {{ "int32", 0i }};
        return
 };
 
+(** casting involves three processes:
+  * 1. Casting capabilities: "i__unops_cast"(ni, cap);
+  *    Casting capabilities changes the cap "offsiz" value
+  * 2. Casting primitive values: "i__unops_cast"("type", value)
+  *    Casting values internally calls [cast_val].
+  * 3. Casting anything to _Bool: "i__unops_cast"("_Bool", value);
+  *    needed for assert(a);
+  *)
 proc i__unops_cast (typ, val) {
-       goto [ typ = "signed int" ] i32s i32f; 
- i32f: goto [ typ = "unsigned char" ] u8s u8f;
-  u8f: goto [ typ = "unsigned short" ] u16s u16f;
- u16f: goto [ typ = "unsigned int" ] u32s u32f;
- u32f: goto [ typ = "unsigned long int"] u64s u64f;
- u64f: goto feil;
- i32s: newtyp := "int32";
-       newval := l-nth(val, 1.) i% 2147483648i;
-       goto end;
-  u8s: newtyp := "uint8";
-       newval := l-nth(val, 1.) i% 256i;
-       goto end;
- u16s: newtyp := "uint16";
-       newval := l-nth(val, 1.) i% 65536i;
-       goto end;
- u32s: newtyp := "uint32";
-       newval := l-nth(val, 1.) i% 4294967296i;
-       goto end;
- u64s: newtyp := "uint64";
-       newval := l-nth(val, 1.) i% 9223372036854775808i;
-       goto end;
-  end: ret := {{ newtyp, newval }};
+       (* case 1 *)
+       goto [ typeOf(typ) = Int ] nct tptr;
+ tptr: goto [ typ = "_Bool" ] bct nptr;
+  bct: asdf := "i__is_cap"(val);
+       goto [ asdf ] t1 t2;
+       (* case 3 *)
+   t1: tmp := [NULL]();
+       ret := "i__binops_cmp_neq"(val, tmp);
+       return;
+   t2: ret := "i__binops_cmp_neq"(val, {{ l-nth(val, 0.), 0i }});
+       return;
+  nct: ptrt := "i__is_cap"(val);
+       goto [ ptrt ] pend feil;
+ pend: ret := {{ l-nth(val, 0.), l-nth(val, 1.), l-nth(val, 2.), l-nth(val, 3.), 
+                 l-nth(val, 4.), l-nth(val, 5.), l-nth(val, 6.), l-nth(val, 7.), 
+                 l-nth(val, 8.), l-nth(val, 9.), l-nth(val, 10.), typ }};
+       return;
+       (* case 2 *)
+ nptr: goto [ typeOf(typ) = Str ] tval feil;
+ tval: ret := [cast_val](typ, val);
        return;
  feil: fail[comparison]("Cast not supported or invalid arg")
 };
 
-proc i__unop_uintofubyte (i) {
-       goto [ l-nth(i, 0.) = "uint8" ] ctn utd;
-  ctn: ret := {{ "uint64", l-nth(i, 1.) }};
+proc i__is_cap (cap) {
+       goto [ l-len(cap) = 12i ] nxt utd;
+  nxt: goto [( (typeOf(l-nth(cap, 0.)) = Obj) and
+               (typeOf(l-nth(cap, 1.)) = Int) and
+               (typeOf(l-nth(cap, 2.)) = Int) and
+               (typeOf(l-nth(cap, 3.)) = Int) and
+               (typeOf(l-nth(cap, 4.)) = Bool) and
+               (typeOf(l-nth(cap, 5.)) = Bool) and
+               (typeOf(l-nth(cap, 6.)) = Bool) and
+               (typeOf(l-nth(cap, 7.)) = Bool) and
+               (typeOf(l-nth(cap, 8.)) = Bool) and
+               (typeOf(l-nth(cap, 9.)) = Bool) and
+               (typeOf(l-nth(cap, 10.)) = Bool) and
+               (typeOf(l-nth(cap, 11.)) = Int) )] ctn utd;
+  ctn: ret := true;
        return;
-  utd: ret := undefined;
+  utd: ret := false;
        return
 };
 
-proc i__unop_ubyteofuint (i) {
-       goto [ l-nth(i, 0.) = "uint64" ] ctn utd;
-  ctn: ret := {{ "uint8", l-nth(i, 1. )}};
-       return;
-  utd: ret := undefined;
-       return
-};
-
-proc i__cap_addr_add (cap, val) {
-       goto [( (typeOf(l-nth(cap, 0.)) = Bool) and
-               (typeOf(l-nth(cap, 1.)) = Bool) and
-               (typeOf(l-nth(cap, 2.)) = Bool) and
-               (typeOf(l-nth(cap, 3.)) = Bool) and
-               (typeOf(l-nth(cap, 4.)) = Obj ) and
-               (typeOf(l-nth(cap, 5.)) = Int ) and
-               (typeOf(l-nth(cap, 6.)) = Int ) and
-               (typeOf(l-nth(cap, 7.)) = Bool) )] ctn utd;
-  ctn: ret := {{ l-nth(cap, 0.), l-nth(cap, 1.), l-nth(cap, 2.), l-nth(cap, 3.),
-                 l-nth(cap, 4.), l-nth(cap, 5.), l-nth(cap, 6.) i+ val, 
-                 l-nth(cap, 7.) }};
-       return;
-  utd: ret := undefined; 
-       return
-};

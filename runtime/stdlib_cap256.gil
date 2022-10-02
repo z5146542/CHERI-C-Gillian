@@ -1,7 +1,51 @@
 #internal
 
-proc i__malloc(typ) {
-      bl := [alloc](typ);
+proc i__memcpy(dst, src, n) {
+     ret := [memcpy](dst, src, n);
+     return
+};
+
+proc i__memmove(dst, src, n) {
+     tmp := [alloc](n);
+     ret := [memcpy](tmp, src, n);
+     ret := [memcpy](dst, tmp, n);
+     tmp := [free](tmp);
+     return
+};
+
+proc i__malloc(siz) {
+      bl := [alloc](siz);
+      ret := bl;
+      return
+};
+
+proc calloc(siz) {
+      bl := [alloc](siz);
+      i := 0i;
+      cl := "i__unops_cast"(1i, bl);
+  l1: goto [ i i< l-nth(siz, 1.) ] t1 f1;
+  t1: tmp := [store](cl, {{ "uint8", 0i }});
+      cl := "i__binops_add"(cl, {{ "int32", 1i }});
+      i := i i+ 1i;
+      goto l1;
+  f1: ret := bl;
+      return
+};
+
+proc realloc(cap, siz) {
+      tmp := [NULL]();
+      res := "i__binops_cmp_eq"(cap, tmp);
+      bool := "i__bool_of_value"(res);
+      goto [ bool ] tru fal;
+ tru: ret := [alloc](siz);
+      return;
+ fal: bl := [alloc](siz);
+      goto [ l-nth(siz, 1.) i< l-nth(cap, 3.) ] lt ge;
+  lt: minv := l-nth(siz, 1.);
+      goto nt;
+  ge: minv := l-nth(cap, 3.);
+  nt: tmp := [memcpy](bl, cap, minv);
+      tmp := [free](cap);
       ret := bl;
       return
 };

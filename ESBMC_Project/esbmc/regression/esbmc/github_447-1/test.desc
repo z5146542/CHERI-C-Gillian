@@ -1,4 +1,0 @@
-CORE
-main.c
-
-\n\s*res = ([^ ]+) .*\n.*\n.*\n.*\s*a = \1 

@@ -1,4 +1,0 @@
-KNOWNBUG
-main.c
---k-induction-parallel --32
-^VERIFICATION SUCCESSFUL$

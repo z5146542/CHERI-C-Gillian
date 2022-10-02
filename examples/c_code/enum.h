@@ -1,0 +1,10 @@
+enum {
+    LOAD,
+    STORE,
+    LOAD_CAPABILITY,
+    STORE_CAPABILITY,
+    STORE_LOCAL_CAPABILITY,
+    GLOBAL
+};
+
+

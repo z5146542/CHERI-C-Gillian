@@ -1,0 +1,15 @@
+import "stdlib_cap256.gil", "internals.gil", "unops_common.gil"; 
+
+proc main() {
+    y  := "i__malloc"({{ "int32", 2i}});
+    ys := "i__store"(y, {{ "uint16", 65535i }});
+    yl := "i__load"(y, "uint16");
+    s8 := "i__unops_cast"("signed char", yl);
+    u8 := "i__unops_cast"("unsigned char", yl);
+    s16 := "i__unops_cast"("signed short int", yl);
+    yf := "i__free"(y);
+    ret := {{ "uint64", 1. }};
+    return
+};
+
+

@@ -1,4 +1,0 @@
-CORE
-main.c
---claim 3 --unwind 42
-^VERIFICATION SUCCESSFUL$

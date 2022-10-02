@@ -1,0 +1,8 @@
+import "stdlib_cap256.gil", "internals.gil", "unops_common.gil"; 
+
+proc main() {
+    ret := "i__not_implemented"();
+    return
+};
+
+

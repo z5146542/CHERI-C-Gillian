@@ -1,0 +1,39 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil";
+
+(* signed int (  ) *)
+proc main() {
+        x := undefined; (* signed int [{{ "int32", 3i }}] x; *)
+        x := {{ {{ "int32", 7i }}, {{ "int32", 14i }}, {{ "int32", 21i }} }};
+        a := undefined; (* signed int a; *)
+        a := x[{{ "int64", 0i }}];
+        b := undefined; (* signed int b; *)
+        b := x[{{ "int64", 1i }}];
+        c := undefined; (* signed int c; *)
+        c := x[{{ "int64", 2i }}];
+        ret := NONDET(signed int);
+        return;
+        return
+};
+
+(* signed int (  ) *)
+proc foo() {
+        x := undefined; (* signed int [{{ "int32", 3i }}] x; *)
+        x[{{ "int64", 0i }}] := {{ "int32", 7i }};
+        x[{{ "int64", 1i }}] := {{ "int32", 14i }};
+        x[{{ "int64", 2i }}] := {{ "int32", 21i }};
+        a := undefined; (* signed int a; *)
+        a := x[{{ "int64", 0i }}];
+        b := undefined; (* signed int b; *)
+        b := x[{{ "int64", 1i }}];
+        c := undefined; (* signed int c; *)
+        c := x[{{ "int64", 2i }}];
+        ret := NONDET(signed int);
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};

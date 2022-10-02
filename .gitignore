@@ -32,6 +32,10 @@ _esy
 esy.lock
 node_modules
 
+#
+file.log
+
+
 # ESBMC release binaries
 bin/esbmc
 ESBMC_Project/release/

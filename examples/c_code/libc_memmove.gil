@@ -1,0 +1,284 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil";
+
+(* signed int (  ) *)
+proc main() {
+        pointees := undefined; (* signed char * pointees; *)
+        retval_malloc_1 := undefined; (* void * retval_malloc_1; *)
+        tmp_0 := "i__binops_mul"({{ "uint64", 1i }}, {{ "uint64", 10i }});
+        tmp_1 := "i__malloc"(tmp_0);
+        retval_malloc_1 := tmp_1;
+        tmp_2 := "i__unops_cast"(1i, retval_malloc_1);
+        pointees := tmp_2;
+        tmp_3 := "i__binops_add"(pointees, {{ "int64", 0i }});
+        tmp := "i__store"(tmp_3, {{ "int8", 48i }});
+        tmp_5 := "i__binops_add"(pointees, {{ "int64", 1i }});
+        tmp := "i__store"(tmp_5, {{ "int8", 49i }});
+        tmp_7 := "i__binops_add"(pointees, {{ "int64", 2i }});
+        tmp := "i__store"(tmp_7, {{ "int8", 50i }});
+        tmp_9 := "i__binops_add"(pointees, {{ "int64", 3i }});
+        tmp := "i__store"(tmp_9, {{ "int8", 51i }});
+        tmp_11 := "i__binops_add"(pointees, {{ "int64", 4i }});
+        tmp := "i__store"(tmp_11, {{ "int8", 52i }});
+        tmp_13 := "i__binops_add"(pointees, {{ "int64", 5i }});
+        tmp := "i__store"(tmp_13, {{ "int8", 53i }});
+        tmp_15 := "i__binops_add"(pointees, {{ "int64", 6i }});
+        tmp := "i__store"(tmp_15, {{ "int8", 54i }});
+        tmp_17 := "i__binops_add"(pointees, {{ "int64", 7i }});
+        tmp := "i__store"(tmp_17, {{ "int8", 55i }});
+        tmp_19 := "i__binops_add"(pointees, {{ "int64", 8i }});
+        tmp := "i__store"(tmp_19, {{ "int8", 56i }});
+        tmp_21 := "i__binops_add"(pointees, {{ "int64", 9i }});
+        tmp := "i__store"(tmp_21, {{ "int8", 57i }});
+        buffer := undefined; (* signed char * * buffer; *)
+        retval_malloc_2 := undefined; (* void * retval_malloc_2; *)
+        tmp_23 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 10i }});
+        tmp_24 := "i__malloc"(tmp_23);
+        retval_malloc_2 := tmp_24;
+        tmp_25 := "i__unops_cast"(32i, retval_malloc_2);
+        buffer := tmp_25;
+        buffer1 := undefined; (* signed char * * buffer1; *)
+        retval_malloc_3 := undefined; (* void * retval_malloc_3; *)
+        tmp_26 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 10i }});
+        tmp_27 := "i__malloc"(tmp_26);
+        retval_malloc_3 := tmp_27;
+        tmp_28 := "i__unops_cast"(32i, retval_malloc_3);
+        buffer1 := tmp_28;
+        bufferx := undefined; (* signed char * * bufferx; *)
+        retval_malloc_4 := undefined; (* void * retval_malloc_4; *)
+        tmp_29 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 11i }});
+        tmp_30 := "i__malloc"(tmp_29);
+        retval_malloc_4 := tmp_30;
+        tmp_31 := "i__unops_cast"(32i, retval_malloc_4);
+        bufferx := tmp_31;
+        buffer2 := undefined; (* signed char * * buffer2; *)
+        retval_malloc_5 := undefined; (* void * retval_malloc_5; *)
+        tmp_32 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 10i }});
+        tmp_33 := "i__malloc"(tmp_32);
+        retval_malloc_5 := tmp_33;
+        tmp_34 := "i__unops_cast"(32i, retval_malloc_5);
+        buffer2 := tmp_34;
+        tmp_35 := "i__binops_add"(buffer, {{ "int64", 0i }});
+        tmp := "i__store"(tmp_35, pointees);
+        tmp_37 := "i__binops_add"(buffer, {{ "int64", 1i }});
+        tmp_39 := "i__binops_add"(pointees, {{ "int32", 1i }});
+        tmp := "i__store"(tmp_37, tmp_39);
+        tmp_40 := "i__binops_add"(buffer, {{ "int64", 2i }});
+        tmp_42 := "i__binops_add"(pointees, {{ "int32", 2i }});
+        tmp := "i__store"(tmp_40, tmp_42);
+        tmp_43 := "i__binops_add"(buffer, {{ "int64", 3i }});
+        tmp_45 := "i__binops_add"(pointees, {{ "int32", 3i }});
+        tmp := "i__store"(tmp_43, tmp_45);
+        tmp_46 := "i__binops_add"(buffer, {{ "int64", 4i }});
+        tmp_48 := "i__binops_add"(pointees, {{ "int32", 4i }});
+        tmp := "i__store"(tmp_46, tmp_48);
+        tmp_49 := "i__binops_add"(buffer, {{ "int64", 5i }});
+        tmp_51 := "i__binops_add"(pointees, {{ "int32", 5i }});
+        tmp := "i__store"(tmp_49, tmp_51);
+        tmp_52 := "i__binops_add"(buffer, {{ "int64", 6i }});
+        tmp_54 := "i__binops_add"(pointees, {{ "int32", 6i }});
+        tmp := "i__store"(tmp_52, tmp_54);
+        tmp_55 := "i__binops_add"(buffer, {{ "int64", 7i }});
+        tmp_57 := "i__binops_add"(pointees, {{ "int32", 7i }});
+        tmp := "i__store"(tmp_55, tmp_57);
+        tmp_58 := "i__binops_add"(buffer, {{ "int64", 8i }});
+        tmp_60 := "i__binops_add"(pointees, {{ "int32", 8i }});
+        tmp := "i__store"(tmp_58, tmp_60);
+        tmp_61 := "i__binops_add"(buffer, {{ "int64", 9i }});
+        tmp_63 := "i__binops_add"(pointees, {{ "int32", 9i }});
+        tmp := "i__store"(tmp_61, tmp_63);
+        tmp_64 := "i__unops_cast"(1i, buffer1);
+        tmp_65 := "i__unops_cast"(1i, buffer);
+        tmp_66 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 10i }});
+        tmp := "i__memcpy"(tmp_64, tmp_65, tmp_66);
+        tmp_67 := "i__unops_cast"(1i, bufferx);
+        tmp_68 := "i__binops_add"(tmp_67, {{ "int32", 1i }});
+        tmp_69 := "i__unops_cast"(1i, tmp_68);
+        tmp_70 := "i__unops_cast"(1i, buffer);
+        tmp_71 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 10i }});
+        tmp := "i__memcpy"(tmp_69, tmp_70, tmp_71);
+        tmp_72 := "i__unops_cast"(1i, buffer2);
+        tmp_73 := "i__unops_cast"(1i, bufferx);
+        tmp_74 := "i__binops_add"(tmp_73, {{ "int32", 1i }});
+        tmp_75 := "i__unops_cast"(1i, tmp_74);
+        tmp_76 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 10i }});
+        tmp := "i__memcpy"(tmp_72, tmp_75, tmp_76);
+        i := undefined; (* signed int i; *)
+        i := {{ "int32", 0i }};
+    t1: tmp_77 := "i__binops_cmp_lt"(i, {{ "int32", 10i }});
+        tmp_78 := "i__unops_negb"(tmp_77);
+        vtb := "i__bool_of_value"(tmp_78);
+        goto [vtb] t5 s5;
+    s5: skip;
+        retval_i__cheri_tag_get_6 := undefined; (* _Bool retval_i__cheri_tag_get_6; *)
+        tmp_79 := "i__unops_cast"("signed long int", i);
+        tmp_80 := "i__binops_add"(buffer1, tmp_79);
+        tmp_81 := "i__load"(tmp_80, "cap");
+        tmp_82 := "i__unops_cast"(1i, tmp_81);
+        retval_i__cheri_tag_get_6 := "i__cheri_tag_get"(tmp_82);
+        tmp_83 := "i__unops_cast"("signed int", retval_i__cheri_tag_get_6);
+        tmp_84 := "i__unops_cast"("_Bool", tmp_83);
+        assert (tmp_84 == {{ "int32", 1i }});
+        tmp_85 := "i__unops_cast"("signed int", retval_i__cheri_tag_get_6);
+        tmp_86 := "i__unops_cast"("_Bool", tmp_85);
+        tmp_87 := "i__unops_negb"(tmp_86);
+        vtb := "i__bool_of_value"(tmp_87);
+        goto [vtb] t2 s2;
+    s2: skip;
+    t2: retval_i__cheri_tag_get_7 := undefined; (* _Bool retval_i__cheri_tag_get_7; *)
+        tmp_88 := "i__unops_cast"("signed long int", i);
+        tmp_89 := "i__binops_add"(buffer2, tmp_88);
+        tmp_90 := "i__load"(tmp_89, "cap");
+        tmp_91 := "i__unops_cast"(1i, tmp_90);
+        retval_i__cheri_tag_get_7 := "i__cheri_tag_get"(tmp_91);
+        tmp_92 := "i__unops_negb"(retval_i__cheri_tag_get_7);
+        assert (tmp_92 == {{ "int32", 1i }});
+        tmp_93 := "i__unops_negb"(retval_i__cheri_tag_get_7);
+        tmp_94 := "i__unops_negb"(tmp_93);
+        vtb := "i__bool_of_value"(tmp_94);
+        goto [vtb] t3 s3;
+    s3: skip;
+    t3: tmp_95 := "i__unops_cast"("signed long int", i);
+        tmp_96 := "i__binops_add"(buffer1, tmp_95);
+        tmp_97 := "i__load"(tmp_96, "cap");
+        tmp_98 := "i__unops_cast"("signed long int", i);
+        tmp_99 := "i__binops_add"(buffer2, tmp_98);
+        tmp_100 := "i__load"(tmp_99, "cap");
+        tmp_101 := "i__binops_cmp_eq"(tmp_97, tmp_100);
+        assert (tmp_101 == {{ "int32", 1i }});
+        tmp_102 := "i__unops_cast"("signed long int", i);
+        tmp_103 := "i__binops_add"(buffer1, tmp_102);
+        tmp_104 := "i__load"(tmp_103, "cap");
+        tmp_105 := "i__unops_cast"("signed long int", i);
+        tmp_106 := "i__binops_add"(buffer2, tmp_105);
+        tmp_107 := "i__load"(tmp_106, "cap");
+        tmp_108 := "i__binops_cmp_eq"(tmp_104, tmp_107);
+        tmp_109 := "i__unops_negb"(tmp_108);
+        vtb := "i__bool_of_value"(tmp_109);
+        goto [vtb] t4 s4;
+    s4: skip;
+    t4: skip;
+        tmp_110 := "i__binops_add"(i, {{ "int32", 1i }});
+        i := tmp_110;
+        goto t1;
+    t5: skip;
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* signed int (  ) *)
+proc foo() {
+        pointees := undefined; (* signed char * pointees; *)
+        retval_malloc_1 := undefined; (* void * retval_malloc_1; *)
+        tmp_111 := "i__binops_mul"({{ "uint64", 1i }}, {{ "uint64", 10i }});
+        tmp_112 := "i__malloc"(tmp_111);
+        retval_malloc_1 := tmp_112;
+        tmp_113 := "i__unops_cast"(1i, retval_malloc_1);
+        pointees := tmp_113;
+        tmp_114 := "i__binops_add"(pointees, {{ "int64", 0i }});
+        tmp := "i__store"(tmp_114, {{ "int8", 48i }});
+        tmp_116 := "i__binops_add"(pointees, {{ "int64", 1i }});
+        tmp := "i__store"(tmp_116, {{ "int8", 49i }});
+        tmp_118 := "i__binops_add"(pointees, {{ "int64", 2i }});
+        tmp := "i__store"(tmp_118, {{ "int8", 50i }});
+        tmp_120 := "i__binops_add"(pointees, {{ "int64", 3i }});
+        tmp := "i__store"(tmp_120, {{ "int8", 51i }});
+        tmp_122 := "i__binops_add"(pointees, {{ "int64", 4i }});
+        tmp := "i__store"(tmp_122, {{ "int8", 52i }});
+        tmp_124 := "i__binops_add"(pointees, {{ "int64", 5i }});
+        tmp := "i__store"(tmp_124, {{ "int8", 53i }});
+        tmp_126 := "i__binops_add"(pointees, {{ "int64", 6i }});
+        tmp := "i__store"(tmp_126, {{ "int8", 54i }});
+        tmp_128 := "i__binops_add"(pointees, {{ "int64", 7i }});
+        tmp := "i__store"(tmp_128, {{ "int8", 55i }});
+        tmp_130 := "i__binops_add"(pointees, {{ "int64", 8i }});
+        tmp := "i__store"(tmp_130, {{ "int8", 56i }});
+        tmp_132 := "i__binops_add"(pointees, {{ "int64", 9i }});
+        tmp := "i__store"(tmp_132, {{ "int8", 57i }});
+        buffer := undefined; (* signed char * * buffer; *)
+        retval_malloc_2 := undefined; (* void * retval_malloc_2; *)
+        tmp_134 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 10i }});
+        tmp_135 := "i__malloc"(tmp_134);
+        retval_malloc_2 := tmp_135;
+        tmp_136 := "i__unops_cast"(32i, retval_malloc_2);
+        buffer := tmp_136;
+        tmp_137 := "i__binops_add"(buffer, {{ "int64", 0i }});
+        tmp := "i__store"(tmp_137, pointees);
+        tmp_139 := "i__binops_add"(buffer, {{ "int64", 1i }});
+        tmp_141 := "i__binops_add"(pointees, {{ "int32", 1i }});
+        tmp := "i__store"(tmp_139, tmp_141);
+        tmp_142 := "i__binops_add"(buffer, {{ "int64", 2i }});
+        tmp_144 := "i__binops_add"(pointees, {{ "int32", 2i }});
+        tmp := "i__store"(tmp_142, tmp_144);
+        tmp_145 := "i__binops_add"(buffer, {{ "int64", 3i }});
+        tmp_147 := "i__binops_add"(pointees, {{ "int32", 3i }});
+        tmp := "i__store"(tmp_145, tmp_147);
+        tmp_148 := "i__binops_add"(buffer, {{ "int64", 4i }});
+        tmp_150 := "i__binops_add"(pointees, {{ "int32", 4i }});
+        tmp := "i__store"(tmp_148, tmp_150);
+        tmp_151 := "i__binops_add"(buffer, {{ "int64", 5i }});
+        tmp_153 := "i__binops_add"(pointees, {{ "int32", 5i }});
+        tmp := "i__store"(tmp_151, tmp_153);
+        tmp_154 := "i__binops_add"(buffer, {{ "int64", 6i }});
+        tmp_156 := "i__binops_add"(pointees, {{ "int32", 6i }});
+        tmp := "i__store"(tmp_154, tmp_156);
+        tmp_157 := "i__binops_add"(buffer, {{ "int64", 7i }});
+        tmp_159 := "i__binops_add"(pointees, {{ "int32", 7i }});
+        tmp := "i__store"(tmp_157, tmp_159);
+        tmp_160 := "i__binops_add"(buffer, {{ "int64", 8i }});
+        tmp_162 := "i__binops_add"(pointees, {{ "int32", 8i }});
+        tmp := "i__store"(tmp_160, tmp_162);
+        tmp_163 := "i__binops_add"(buffer, {{ "int64", 9i }});
+        tmp_165 := "i__binops_add"(pointees, {{ "int32", 9i }});
+        tmp := "i__store"(tmp_163, tmp_165);
+        tmp_166 := "i__unops_cast"(1i, buffer);
+        tmp_167 := "i__binops_add"(buffer, {{ "int32", 2i }});
+        tmp_168 := "i__unops_cast"(1i, tmp_167);
+        tmp_169 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 10i }});
+        tmp_170 := "i__binops_mul"({{ "uint64", 2i }}, {{ "uint64", 32i }});
+        tmp_171 := "i__binops_sub"(tmp_169, tmp_170);
+        tmp := "i__memmove"(tmp_166, tmp_168, tmp_171);
+        i := undefined; (* signed int i; *)
+        i := {{ "int32", 0i }};
+    t1: tmp_172 := "i__binops_cmp_lt"(i, {{ "int32", 8i }});
+        tmp_173 := "i__unops_negb"(tmp_172);
+        vtb := "i__bool_of_value"(tmp_173);
+        goto [vtb] t3 s3;
+    s3: skip;
+        tmp_174 := "i__unops_cast"("signed long int", i);
+        tmp_175 := "i__binops_add"(buffer, tmp_174);
+        tmp_176 := "i__load"(tmp_175, "cap");
+        tmp_177 := "i__load"(tmp_176, "int8");
+        tmp_178 := "i__unops_cast"("signed long int", tmp_177);
+        tmp_179 := "i__binops_add"({{ "int32", 48i }}, i);
+        tmp_180 := "i__binops_add"(tmp_179, {{ "int32", 2i }});
+        tmp_181 := "i__unops_cast"("signed long int", tmp_180);
+        tmp_182 := "i__binops_cmp_eq"(tmp_178, tmp_181);
+        assert (tmp_182 == {{ "int32", 1i }});
+        tmp_183 := "i__unops_cast"("signed long int", i);
+        tmp_184 := "i__binops_add"(buffer, tmp_183);
+        tmp_185 := "i__load"(tmp_184, "cap");
+        tmp_186 := "i__load"(tmp_185, "int8");
+        tmp_187 := "i__unops_cast"("signed long int", tmp_186);
+        tmp_188 := "i__binops_add"({{ "int32", 48i }}, i);
+        tmp_189 := "i__binops_add"(tmp_188, {{ "int32", 2i }});
+        tmp_190 := "i__unops_cast"("signed long int", tmp_189);
+        tmp_191 := "i__binops_cmp_eq"(tmp_187, tmp_190);
+        tmp_192 := "i__unops_negb"(tmp_191);
+        vtb := "i__bool_of_value"(tmp_192);
+        goto [vtb] t2 s2;
+    s2: skip;
+    t2: tmp_193 := "i__binops_add"(i, {{ "int32", 1i }});
+        i := tmp_193;
+        goto t1;
+    t3: skip;
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};

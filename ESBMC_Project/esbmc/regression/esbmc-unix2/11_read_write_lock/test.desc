@@ -1,4 +1,0 @@
-CORE
-read_write_lock.c
---unwind 1 --no-unwinding-assertions
-^VERIFICATION SUCCESSFUL$

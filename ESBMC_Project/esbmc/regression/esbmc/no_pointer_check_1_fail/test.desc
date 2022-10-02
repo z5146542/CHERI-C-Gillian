@@ -1,4 +1,0 @@
-CORE
-main.c
---no-pointer-relation-check --force-malloc-success
-^VERIFICATION FAILED$

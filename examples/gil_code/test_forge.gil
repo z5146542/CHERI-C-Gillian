@@ -1,0 +1,14 @@
+import "stdlib_cap256.gil", "internals.gil", "unops_common.gil"; 
+
+proc main() {
+    x  := "i__malloc"(1i);
+    y  := "i__malloc"(32i);
+    ys := "i__store"(y, x);
+    yn := "i__cap_addr_add"(y, 7i);
+    ys := "i__store"(yn, {{ "uint8", 15i }});
+    yl := "i__load"(y, "cap");
+    ret := {{ "uint64", 1. }};
+    return
+};
+
+

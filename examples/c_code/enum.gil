@@ -1,0 +1,19 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil",
+       "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil";
+
+
+@nopath
+proc main() {
+    x := undefined;
+    x := {{ "int32", 1i }};
+    ret := {{ "int32", 0i }};
+    return;
+    return
+};
+
+
+@nopath
+proc genv_init() {
+    ret := undefined;
+    return
+};

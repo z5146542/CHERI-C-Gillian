@@ -1,0 +1,54 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil";
+
+(* signed int (  ) *)
+proc main() {
+        x1 := undefined; (* signed int * x1; *)
+        retval_malloc_1 := undefined; (* void * retval_malloc_1; *)
+        tmp_0 := "i__malloc"({{ "uint64", 4i }});
+        retval_malloc_1 := tmp_0;
+        tmp_1 := "i__unops_cast"(4i, retval_malloc_1);
+        x1 := tmp_1;
+        x2 := undefined; (* signed int * x2; *)
+        retval_malloc_2 := undefined; (* void * retval_malloc_2; *)
+        tmp_2 := "i__malloc"({{ "uint64", 4i }});
+        retval_malloc_2 := tmp_2;
+        tmp_3 := "i__unops_cast"(4i, retval_malloc_2);
+        x2 := tmp_3;
+        x := undefined; (* signed int * * x; *)
+        retval_malloc_3 := undefined; (* void * retval_malloc_3; *)
+        tmp_4 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 2i }});
+        tmp_5 := "i__malloc"(tmp_4);
+        retval_malloc_3 := tmp_5;
+        tmp_6 := "i__unops_cast"(32i, retval_malloc_3);
+        x := tmp_6;
+        tmp_7 := "i__binops_add"(x, {{ "int64", 0i }});
+        tmp := "i__store"(tmp_7, x1);
+        tmp_9 := "i__binops_add"(x, {{ "int64", 1i }});
+        tmp := "i__store"(tmp_9, x2);
+        y1 := undefined; (* signed int * y1; *)
+        tmp_11 := "i__binops_add"(x, {{ "int64", 0i }});
+        tmp_12 := "i__load"(tmp_11, "cap");
+        y1 := tmp_12;
+        y2 := undefined; (* signed int * y2; *)
+        tmp_13 := "i__binops_add"(x, {{ "int64", 1i }});
+        tmp_14 := "i__load"(tmp_13, "cap");
+        y2 := tmp_14;
+        c1 := undefined; (* signed char c1; *)
+        tmp_15 := "i__unops_cast"(1i, x);
+        tmp_16 := "i__load"(tmp_15, "int8");
+        c1 := tmp_16;
+        c2 := undefined; (* signed char c2; *)
+        tmp_17 := "i__unops_cast"(1i, x);
+        tmp_18 := "i__binops_add"(tmp_17, {{ "int32", 1i }});
+        tmp_19 := "i__load"(tmp_18, "int8");
+        c2 := tmp_19;
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};
