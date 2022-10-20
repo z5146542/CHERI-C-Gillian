@@ -1,0 +1,62 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil";
+
+(* unsigned int ( unsigned int ) *)
+proc fibonacci(n) {
+        tmp_0 := "i__binops_cmp_eq"(n, {{ "uint32", 0i }});
+        tmp_1 := "i__unops_negb"(tmp_0);
+        vtb := "i__bool_of_value"(tmp_1);
+        goto [vtb] t1 s1;
+    s1: skip;
+        ret := {{ "uint32", 1i }};
+        return;
+    t1: tmp_2 := "i__binops_cmp_eq"(n, {{ "uint32", 1i }});
+        tmp_3 := "i__unops_negb"(tmp_2);
+        vtb := "i__bool_of_value"(tmp_3);
+        goto [vtb] t2 s2;
+    s2: skip;
+        ret := {{ "uint32", 1i }};
+        return;
+    t2: retval_fibonacci_1 := undefined; (* unsigned int retval_fibonacci_1; *)
+        tmp_4 := "i__binops_sub"(n, {{ "uint32", 1i }});
+        retval_fibonacci_1 := "fibonacci"(tmp_4);
+        retval_fibonacci_2 := undefined; (* unsigned int retval_fibonacci_2; *)
+        tmp_5 := "i__binops_sub"(n, {{ "uint32", 2i }});
+        retval_fibonacci_2 := "fibonacci"(tmp_5);
+        tmp_6 := "i__binops_add"(retval_fibonacci_1, retval_fibonacci_2);
+        ret := tmp_6;
+        return;
+        return
+};
+
+(* signed int (  ) *)
+proc main() {
+        a0 := undefined; (* unsigned int a0; *)
+        a1 := undefined; (* unsigned int a1; *)
+        a2 := undefined; (* unsigned int a2; *)
+        a3 := undefined; (* unsigned int a3; *)
+        a4 := undefined; (* unsigned int a4; *)
+        a5 := undefined; (* unsigned int a5; *)
+        a6 := undefined; (* unsigned int a6; *)
+        a7 := undefined; (* unsigned int a7; *)
+        a8 := undefined; (* unsigned int a8; *)
+        a9 := undefined; (* unsigned int a9; *)
+        a0 := "fibonacci"({{ "uint32", 0i }});
+        a1 := "fibonacci"({{ "uint32", 1i }});
+        a2 := "fibonacci"({{ "uint32", 2i }});
+        a3 := "fibonacci"({{ "uint32", 3i }});
+        a4 := "fibonacci"({{ "uint32", 4i }});
+        a5 := "fibonacci"({{ "uint32", 5i }});
+        a6 := "fibonacci"({{ "uint32", 6i }});
+        a7 := "fibonacci"({{ "uint32", 7i }});
+        a8 := "fibonacci"({{ "uint32", 8i }});
+        a9 := "fibonacci"({{ "uint32", 9i }});
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};

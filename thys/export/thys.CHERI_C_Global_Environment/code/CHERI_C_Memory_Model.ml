@@ -197,6 +197,7 @@ module Arith : sig
   val integer_of_nat : nat -> Z.t
   val equal_nata : nat -> nat -> bool
   val equal_nat : nat HOL.equal
+  val less_nat : nat -> nat -> bool
   val ord_nat : nat Orderings.ord
   val linorder_nat : nat Orderings.linorder
   val equal_integer : Z.t HOL.equal
@@ -2457,6 +2458,8 @@ module CHERI_C_Concrete_Memory_Model : sig
               More_Word_Library.mem_capability_ext)
             result
   val init_heap : unit heap_ext
+  val get_unfreed_blocks : unit heap_ext -> Arith.nat -> Z.t list
+  val get_memory_leak_size : unit heap_ext -> Arith.nat -> Arith.nat
 end = struct
 
 let rec plus_unita u1 u2 = ();;
@@ -2587,28 +2590,35 @@ let rec free
                                  (if not (Arith.equal_inta
    (More_Word_Library.offset comp_countable_integer c) Arith.zero_inta)
                                    then Error (LogicErr (Unhandled ""))
-                                   else (let cap_bound =
-   (More_Word_Library.base comp_countable_integer c,
-     Arith.plus_nat (More_Word_Library.base comp_countable_integer c)
-       (More_Word_Library.len comp_countable_integer c))
-   in
-  (if not (Product_Type.equal_prod Arith.equal_nat Arith.equal_nat cap_bound
-            (bounds m))
-    then Error (LogicErr (Unhandled ""))
-    else (let ha =
-            heap_map_update
-              (fun _ ->
-                Mapping.update
-                  (Collection_Order.ccompare_integer, Arith.equal_integer)
-                  (More_Word_Library.block_id comp_countable_integer c) Freed
-                  (heap_map h))
-              h
-            in
-          let cap =
-            More_Word_Library.tag_update comp_countable_integer (fun _ -> false)
-              c
-            in
-           Success (ha, cap)))))))));;
+                                   else (if Arith.less_int
+      (Arith.int_of_nat
+        (Arith.plus_nat (More_Word_Library.base comp_countable_integer c)
+          (More_Word_Library.len comp_countable_integer c)))
+      (More_Word_Library.offset comp_countable_integer c)
+  then Error (LogicErr (Unhandled ""))
+  else (let cap_bound =
+          (More_Word_Library.base comp_countable_integer c,
+            Arith.plus_nat (More_Word_Library.base comp_countable_integer c)
+              (More_Word_Library.len comp_countable_integer c))
+          in
+         (if not (Product_Type.equal_prod Arith.equal_nat Arith.equal_nat
+                   cap_bound (bounds m))
+           then Error (LogicErr (Unhandled ""))
+           else (let ha =
+                   heap_map_update
+                     (fun _ ->
+                       Mapping.update
+                         (Collection_Order.ccompare_integer,
+                           Arith.equal_integer)
+                         (More_Word_Library.block_id comp_countable_integer c)
+                         Freed (heap_map h))
+                     h
+                   in
+                 let cap =
+                   More_Word_Library.tag_update comp_countable_integer
+                     (fun _ -> false) c
+                   in
+                  Success (ha, cap))))))))));;
 
 let rec is_contiguous_zeros_prim
   uu uv siz =
@@ -2897,10 +2907,17 @@ let rec load
  with None -> Error (LogicErr MissingResource)
  | Some Freed -> Error (LogicErr UseAfterFree)
  | Some (Map m) ->
-   Success
-     (retrieve_tval m
-       (Arith.nat (More_Word_Library.offset comp_countable_integer c)) t
-       (More_Word_Library.perm_cap_load comp_countable_integer c))))))));;
+   (if Arith.less_int (More_Word_Library.offset comp_countable_integer c)
+         (Arith.int_of_nat (Product_Type.fst (bounds m))) ||
+         Arith.less_int (Arith.int_of_nat (Product_Type.snd (bounds m)))
+           (Arith.plus_inta (More_Word_Library.offset comp_countable_integer c)
+             (Arith.int_of_nat (sizeof t)))
+     then Error (LogicErr BufferOverrun)
+     else Success
+            (retrieve_tval m
+              (Arith.nat (More_Word_Library.offset comp_countable_integer c)) t
+              (More_Word_Library.perm_cap_load comp_countable_integer
+                c)))))))));;
 
 let rec next_block_update
   next_blocka (Heap_ext (next_block, heap_map, more)) =
@@ -3256,20 +3273,32 @@ let rec store
                       with None -> Error (LogicErr MissingResource)
                       | Some Freed -> Error (LogicErr UseAfterFree)
                       | Some (Map m) ->
-                        Success
-                          (heap_map_update
-                            (fun _ ->
-                              Mapping.update
-                                (Collection_Order.ccompare_integer,
-                                  Arith.equal_integer)
-                                (More_Word_Library.block_id
-                                  comp_countable_integer c)
-                                (Map (store_tval m
-                                       (Arith.nat
- (More_Word_Library.offset comp_countable_integer c))
-                                       v))
-                                (heap_map h))
-                            h))))))))));;
+                        (if Arith.less_int
+                              (More_Word_Library.offset comp_countable_integer
+                                c)
+                              (Arith.int_of_nat
+                                (Product_Type.fst (bounds m))) ||
+                              Arith.less_int
+                                (Arith.int_of_nat (Product_Type.snd (bounds m)))
+                                (Arith.plus_inta
+                                  (More_Word_Library.offset
+                                    comp_countable_integer c)
+                                  (Arith.int_of_nat
+                                    (sizeof (More_Word_Library.memval_type v))))
+                          then Error (LogicErr BufferOverrun)
+                          else Success
+                                 (heap_map_update
+                                   (fun _ ->
+                                     Mapping.update
+                                       (Collection_Order.ccompare_integer,
+ Arith.equal_integer)
+                                       (More_Word_Library.block_id
+ comp_countable_integer c)
+                                       (Map
+ (store_tval m (Arith.nat (More_Word_Library.offset comp_countable_integer c))
+   v))
+                                       (heap_map h))
+                                   h)))))))))));;
 
 let rec res (Success x1) = x1;;
 
@@ -3530,6 +3559,69 @@ let rec memcmp
                                     else memcmp h s1 s2
    (Arith.minus_nat n Arith.one_nat)))))));;
 
+let rec memcpy_cap
+  h uw ux n =
+    (if Arith.equal_nata n Arith.zero_nat then Success h
+      else (if Arith.less_nat (Arith.suc (Arith.minus_nat n Arith.one_nat))
+                 (sizeof More_Word_Library.Cap)
+             then memcpy_prim h uw ux
+                    (Arith.suc (Arith.minus_nat n Arith.one_nat))
+             else (let x = load h ux More_Word_Library.Cap in
+                    (if not (is_Success x)
+                      then memcpy_prim h uw ux
+                             (Arith.suc (Arith.minus_nat n Arith.one_nat))
+                      else (let xs = res x in
+                             (if More_Word_Library.equal_ccvala
+                                   (Arith.equal_integer, comp_countable_integer)
+                                   xs More_Word_Library.Undef
+                               then memcpy_prim h uw ux
+                                      (Arith.suc
+(Arith.minus_nat n Arith.one_nat))
+                               else (let y = store h uw xs in
+                                      (if not (is_Success y)
+then memcpy_prim h uw ux (Arith.suc (Arith.minus_nat n Arith.one_nat))
+else (let ys = res y in
+       memcpy_cap ys
+         (More_Word_Library.offset_update comp_countable_integer
+           (fun _ ->
+             Arith.plus_inta
+               (More_Word_Library.offset comp_countable_integer uw)
+               (Arith.int_of_nat (sizeof More_Word_Library.Cap)))
+           uw)
+         (More_Word_Library.offset_update comp_countable_integer
+           (fun _ ->
+             Arith.plus_inta
+               (More_Word_Library.offset comp_countable_integer ux)
+               (Arith.int_of_nat (sizeof More_Word_Library.Cap)))
+           ux)
+         (Arith.minus_nat (Arith.suc (Arith.minus_nat n Arith.one_nat))
+           (sizeof More_Word_Library.Cap)))))))))))
+and memcpy_prim
+  h uu uv n =
+    (if Arith.equal_nata n Arith.zero_nat then Success h
+      else (let x = load h uv More_Word_Library.Uint8 in
+             (if not (is_Success x) then Error (err x)
+               else (let xs = res x in
+                      (if More_Word_Library.equal_ccvala
+                            (Arith.equal_integer, comp_countable_integer) xs
+                            More_Word_Library.Undef
+                        then Error (LogicErr (Unhandled ""))
+                        else (let y = store h uu xs in
+                               (if not (is_Success y) then Error (err y)
+                                 else (let ys = res y in
+memcpy_cap ys
+  (More_Word_Library.offset_update comp_countable_integer
+    (fun _ ->
+      Arith.plus_inta (More_Word_Library.offset comp_countable_integer uu)
+        Arith.one_inta)
+    uu)
+  (More_Word_Library.offset_update comp_countable_integer
+    (fun _ ->
+      Arith.plus_inta (More_Word_Library.offset comp_countable_integer uv)
+        Arith.one_inta)
+    uv)
+  (Arith.minus_nat n Arith.one_nat)))))))));;
+
 let rec memcpy
   h dst src n =
     (if Arith.equal_nata n Arith.zero_nat then Success h
@@ -3551,7 +3643,8 @@ let rec memcpy
                        (Arith.plus_inta
                          (More_Word_Library.offset comp_countable_integer src)
                          (Arith.int_of_nat n)))
-             then Error (LogicErr (Unhandled "")) else failwith "undefined"));;
+             then Error (LogicErr (Unhandled ""))
+             else memcpy_cap h dst src n));;
 
 let rec memmove
   h dst src n = (let (h1, tmp) = res (alloc h true n) in
@@ -3587,6 +3680,47 @@ let rec zero_heap_ext _A
 let init_heap : unit heap_ext
   = next_block_update (fun _ -> (Z.of_int 1))
       (zero_heap_ext cancellative_sep_algebra_unit);;
+
+let rec the_map (Map x2) = x2;;
+
+let rec get_block_size
+  h b = (match
+          Mapping.lookup
+            (Collection_Order.ccompare_integer, Arith.equal_integer)
+            (heap_map h) b
+          with None -> None
+          | Some m ->
+            (match m with Freed -> None
+              | Map _ -> Some (Product_Type.snd (bounds (the_map m)))));;
+
+let rec get_unfreed_blocks
+  uu n =
+    (if Arith.equal_nata n Arith.zero_nat then []
+      else (match
+             Mapping.lookup
+               (Collection_Order.ccompare_integer, Arith.equal_integer)
+               (heap_map uu)
+               (Arith.integer_of_nat
+                 (Arith.suc (Arith.minus_nat n Arith.one_nat)))
+             with None ->
+               get_unfreed_blocks uu (Arith.minus_nat n Arith.one_nat)
+             | Some Freed ->
+               get_unfreed_blocks uu (Arith.minus_nat n Arith.one_nat)
+             | Some (Map _) ->
+               Arith.integer_of_nat
+                 (Arith.suc (Arith.minus_nat n Arith.one_nat)) ::
+                 get_unfreed_blocks uu (Arith.minus_nat n Arith.one_nat)));;
+
+let rec get_memory_leak_size
+  uu n =
+    (if Arith.equal_nata n Arith.zero_nat then Arith.zero_nat
+      else Arith.plus_nat
+             (get_memory_leak_size uu (Arith.minus_nat n Arith.one_nat))
+             (match
+               get_block_size uu
+                 (Arith.integer_of_nat
+                   (Arith.suc (Arith.minus_nat n Arith.one_nat)))
+               with None -> Arith.zero_nat | Some na -> na));;
 
 end;; (*struct CHERI_C_Concrete_Memory_Model*)
 

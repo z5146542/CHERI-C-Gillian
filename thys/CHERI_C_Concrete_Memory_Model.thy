@@ -4,11 +4,13 @@ theory CHERI_C_Concrete_Memory_Model
           "Containers.Containers"
           "HOL-Library.Mapping"
           "HOL-Library.Code_Target_Numeral"
-          (*"HOL-Imperative_HOL.Imperative_HOL"*)
 begin
 
-\<comment> \<open>These are coprocessor 2 excessptions thrown by the hardware. 
-    BadAddressViolation is not a coprocessor 2 exception but remains one given by the hardware. \<close>
+section \<open>CHERI-C Error System\<close>
+text \<open>In this section, we formalise the error system used by the memory model.\<close>
+text \<open>Below are coprocessor 2 excessptions thrown by the hardware. 
+      BadAddressViolation is not a coprocessor 2 exception but remains one given by the hardware. 
+      This corresponds to CapErr in the paper.\<close>
 datatype c2errtype = 
   TagViolation
   | PermitLoadViolation
@@ -18,8 +20,12 @@ datatype c2errtype =
   | LengthViolation
   | BadAddressViolation
 
-\<comment> \<open>These are logical errors produced by the language. In practice, Some of these errors would never
-    be caught due to the inherent spatial safety guarantees given by capabilities. \<close>
+text \<open>These are logical errors produced by the language. In practice, Some of these errors would never
+      be caught due to the inherent spatial safety guarantees given by capabilities. 
+      This corresponds to LogicErr in the paper. \\
+      NOTE: Unhandled corresponds to a custom error not mentioned in logicerrtype. One can provide
+      the custom error as a string, but here, for custom errors, we leave it empty to simplify the
+      proof. Ultimately, the important point is that the memory model can still catch custom errors.\<close>
 datatype logicerrtype =
   UseAfterFree
   | BufferOverrun
@@ -28,10 +34,12 @@ datatype logicerrtype =
   | MemoryNotFreed
   | Unhandled "String.literal"
 
+text \<open>We make the distinction between the error types. This corresponds to Err in the paper.\<close>
 datatype errtype = 
   C2Err c2errtype
   | LogicErr logicerrtype
 
+text \<open>Finally, we have the `return' type $\mathcal{R}\ \rho$ in the paper.\<close>
 datatype 'a result =
   Success (res: 'a)
   | Error (err: errtype)
@@ -42,7 +50,8 @@ type_synonym block = integer
 type_synonym memcap = "block mem_capability"
 type_synonym cap = "block capability"
 
-text \<open>Because sizeof depends on the architeture, it shall be given via the memory model\<close>
+text \<open>Because sizeof depends on the architecture, it shall be given via the memory model. We also
+      use uncompressed capabilities.\<close>
 definition sizeof :: "cctype \<Rightarrow> nat" ("|_|\<^sub>\<tau>")
   where
   "sizeof \<tau> \<equiv> case \<tau> of
@@ -56,6 +65,7 @@ definition sizeof :: "cctype \<Rightarrow> nat" ("|_|\<^sub>\<tau>")
    | Sint64 \<Rightarrow> 8
    | Cap \<Rightarrow> 32"
 
+text \<open>We provide some helper lemmas\<close>
 lemma size_type_align:
   "|t|\<^sub>\<tau> = x \<Longrightarrow> \<exists> n. 2 ^ n = x"
   apply (simp add: sizeof_def split: cctype.split_asm)
@@ -154,6 +164,7 @@ lemma sizeof_nonzero:
   "|t|\<^sub>\<tau> > 0"
   by (simp add: sizeof_def split: cctype.split)
 
+text \<open>We prove that integer is a countable type.\<close>
 instance int :: comp_countable ..
 
 lemma integer_encode_eq: "(int_encode \<circ> int_of_integer) x = (int_encode \<circ> int_of_integer) y \<longleftrightarrow> x = y"
@@ -165,9 +176,46 @@ instance integer :: countable
 
 instance integer :: comp_countable ..
 
+section \<open>Memory\<close>
+text \<open>In this section, we formalise the heap and prove some initial properties.\<close>
+subsection \<open>Definitions\<close>
+
+text \<open>First, we provide $\mathcal{V}_\mathcal{M}$. We note that this representation allows us to
+      make the distinction between what is a a capability and what is a primitive value stored in
+      memory. This allows us define a tag-preserving \texttt{memcpy} by checking ahead whether
+      there are valid capabilities stored in memory or whether there are simply bytes. The downside
+      to this approach is that overwriting primitive values to where capabilities were stored (and
+      vice versa) will lead to an undefined load operation. However, this tends not to be a big problem,
+      as (1) overwritten capabilities are tag-invalidated anyway, so the capabilities cannot
+      be dereferenced even if the user obtained the capability somehow, and (2) for legacy C programs
+      that do not have access to CHERI library functions, there is no way to access to metadata of
+      the invalidated capabilities. For compatibility purposes, this imposes hardly any problems.\<close>
 datatype memval =
   Byte (of_byte: "8 word")
   | ACap (of_cap: "memcap") (of_nth: "nat")
+
+text \<open>In general, the bound is irrelevant, as capability bound ensures spatial safety. We add bounds
+      in the heap so that we can incorporate \textit{hybrid} CHERI C programs in the future, where 
+      pointers and capabilities co-exist, but strictly speaking, this is not required in 
+      \textit{purecap} CHERI C programs, which is what this memory model is based on. Ultimately, 
+      this is the pair of mapping defined in the paper.\<close>
+record object =
+  bounds :: "nat \<times> nat"
+  content :: "(nat, memval) mapping"
+  tags :: "(nat, bool) mapping"
+
+text \<open>t is the datatype that allows us to make the distinction between blocks that are freed and blocks
+      that are valid.\<close>
+datatype t = 
+  Freed
+  | Map (the_map: "object")
+
+text \<open>heap\_map in heap is essentially $\mathcal{H}$ defined in the paper. We extend the structure
+      and keep track of the next block for the allocator for efficiency --- much like how CompCert's
+      C memory model does this.\<close>
+record heap =
+  next_block :: "block"
+  heap_map :: "(block, t) mapping"
 
 definition memval_is_byte :: "memval \<Rightarrow> bool"
   where
@@ -193,21 +241,8 @@ lemma memval_memcap_not_byte:
   "memval_is_cap m \<Longrightarrow> m \<noteq> Byte b"
   by (simp add: memval_is_byte_def split: memval.split_asm)
 
-record object =
-  bounds :: "nat \<times> nat"
-  content :: "(nat, memval) mapping"
-  tags :: "(nat, bool) mapping"
-
-datatype t = 
-  Freed
-  | Map (the_map: "object")
-
-record heap =
-  next_block :: "block"
-  heap_map :: "(block, t) mapping"
-
-section \<open>Proving heap is an instance of a separation algebra\<close>
-
+subsection \<open>Properties\<close>
+text \<open>We prove that the heap is an instance of separation algebra.\<close>
 instantiation unit :: cancellative_sep_algebra
 begin
 definition "0 \<equiv> ()"
@@ -224,6 +259,7 @@ instance
   by (standard; (blast | simp add: sep_disj_nat_def))
 end
 
+text \<open>This proof ultimately shows that heap\_map forms a separation algebra.\<close>
 instantiation mapping :: (type, type) cancellative_sep_algebra
 begin
 
@@ -301,7 +337,7 @@ definition "0 \<equiv> \<lparr> tag = False, \<dots> = 0\<rparr>"
 instance ..
 end
 
-\<comment> \<open>Section 4.5 of CHERI C/C++ Programming Guide defines what a NULL capability is.\<close>
+text \<open>Section 4.5 of CHERI C/C++ Programming Guide defines what a NULL capability is.\<close>
 definition null_capability :: "cap" ("NULL")
   where
   "NULL \<equiv> 0"
@@ -352,242 +388,54 @@ lemma null_capability_tag[simp]:
 
 end
 
-\<comment> \<open>Note that the starting block is 1, as 0 loosely refers to the null capability\<close>
+text \<open>Here, we define the initial heap.\<close>
 definition init_heap :: "heap"
   where
   "init_heap \<equiv> 0 \<lparr> next_block := 1 \<rparr>"
 
-definition alloc :: "heap \<Rightarrow> bool \<Rightarrow> nat \<Rightarrow> (heap \<times> cap) result"
+abbreviation cap_offset :: "nat \<Rightarrow> nat"
   where
-  "alloc h c s \<equiv> 
-     let cap = \<lparr> block_id = (next_block h),
-                 offset = 0,
-                 base = 0,
-                 len = s,
-                 perm_load = True,
-                 perm_cap_load = c,
-                 perm_store = True,
-                 perm_cap_store = c,
-                 perm_cap_store_local = c,
-                 perm_global = False,
-                 tag = True
-               \<rparr> in
-     let h' = h \<lparr> next_block := (next_block h) + 1,
-                  heap_map := Mapping.update 
-                                (next_block h) 
-                                (Map \<lparr> bounds = (0, s), 
-                                       content = Mapping.empty, 
-                                       tags = Mapping.empty 
-                                     \<rparr>
-                                 ) (heap_map h)
-                \<rparr> in
-     Success (h', cap)"
+  "cap_offset p \<equiv> if p mod |Cap|\<^sub>\<tau> = 0 then p else p - p mod |Cap|\<^sub>\<tau>"
 
-lemma alloc_always_success:
-  "\<exists>! res. alloc h c s = Success res"
-  by (simp add: alloc_def)
-
-schematic_goal alloc_updated_heap_and_cap:
-  "alloc h c s = Success (?h', ?cap)"
-  by (fastforce simp add: alloc_def)
-
-lemma alloc_never_fails:
-  "alloc h c s = Error e \<Longrightarrow> False"
-  by (simp add: alloc_def)
-
-\<comment> \<open>In practice, malloc may actually return NULL when allocation fails. However, this still complies
-    with The C Standard.\<close>
-lemma alloc_no_null_ret:
-  assumes "alloc h c s = Success (h', cap)"
-  shows "cap \<noteq> NULL"
-proof -
-  have "perm_load cap"
-    using assms alloc_def
-    by force
-  moreover have "\<not> perm_load NULL"
-    unfolding null_capability_def zero_capability_ext_def zero_mem_capability_ext_def
-    by force
-  ultimately show ?thesis 
-    by blast
-qed
-
-lemma alloc_correct:
-  assumes "alloc h c s = Success (h', cap)"
-  shows "next_block h' = next_block h + 1"
-    and "Mapping.lookup (heap_map h') (next_block h) 
-         = Some (Map \<lparr> bounds = (0, s), content = Mapping.empty, tags = Mapping.empty\<rparr>)"
-  using assms alloc_def
-  by auto
-
-definition free :: "heap \<Rightarrow> cap \<Rightarrow> (heap \<times> cap) result"
+text \<open>We state the well-formedness property $\mathcal{W}^\mathcal{C}_f$ stated in the paper.\<close>
+definition wellformed :: "(block, t) mapping \<Rightarrow> bool" ("\<W>\<^sub>\<ff>/(_/)")
   where
-  "free h c \<equiv>
-     if c = NULL then Success (h, c) else
-     if tag c = False then Error (C2Err (TagViolation)) else
-     if perm_global c = True then Error (LogicErr (Unhandled 0)) else
-     let obj = Mapping.lookup (heap_map h) (block_id c) in
-     (case obj of None      \<Rightarrow> Error (LogicErr (MissingResource))
-               | Some cobj \<Rightarrow>
-       (case cobj of Freed \<Rightarrow> Error (LogicErr (UseAfterFree))
-                  | Map m \<Rightarrow>
-         if offset c \<noteq> 0 then Error (LogicErr (Unhandled 0)) 
-         else
-       let cap_bound = (base c, base c + len c) in
-       if cap_bound \<noteq> bounds m then Error (LogicErr (Unhandled 0)) else
-       let h' = h \<lparr> heap_map := Mapping.update (block_id c) Freed (heap_map h) \<rparr> in 
-       let cap = c \<lparr> tag := False \<rparr> in
-       Success (h', cap)))"
+  "\<W>\<^sub>\<ff>(h) \<equiv> 
+     \<forall> b obj. Mapping.lookup h b = Some (Map obj) 
+     \<longrightarrow> Set.filter (\<lambda>x. x mod |Cap|\<^sub>\<tau> \<noteq> 0) (Mapping.keys (tags obj)) = {}"
 
-\<comment> \<open>Section 7.20.3.2 of The C Standard states free(NULL) results in no action occuring.\<close>
-lemma free_null:
-  "free h NULL = Success (h, NULL)"
-  by (simp add: free_def)
-
-lemma free_false_tag:
-  assumes "c \<noteq> NULL"
-    and "tag c = False"
-  shows "free h c = Error (C2Err (TagViolation))"
-  by (presburger add: assms free_def)
-
-lemma free_global_cap:
-  assumes "c \<noteq> NULL"
-    and "tag c = True"
-    and "perm_global c = True"
-  shows "free h c = Error (LogicErr (Unhandled 0))"
-  by (presburger add: assms free_def)
-
-lemma free_nonexistant_obj:
-  assumes "c \<noteq> NULL"
-    and "tag c = True"
-    and "perm_global c = False"
-    and "Mapping.lookup (heap_map h) (block_id c) = None"
-  shows "free h c = Error (LogicErr (MissingResource))"
-  using assms free_def
-  by auto
-
-text \<open>This case may arise if there are copies of the same capability, where only one was freed.
-      It is worth noting that due to this, temporal safety is not guaranteed.\<close>
-lemma free_double_free:
-  assumes "c \<noteq> NULL"
-    and "tag c = True"
-    and "perm_global c = False"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some Freed"
-  shows "free h c = Error (LogicErr (UseAfterFree))"
-  using free_def assms
-  by force
-
-\<comment> \<open>An incorrect offset implies the actual ptr value is not that returned by alloc.
-    Section 7.20.3.2 of The C Standard states this leads to undefined behaviour.
-    Clang, in practice, however, terminates the C program with an invalid pointer error. \<close>
-lemma free_incorrect_cap_offset:
-  assumes "c \<noteq> NULL"
-    and "tag c = True"
-    and "perm_global c = False"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "offset c \<noteq> 0"
-  shows "free h c = Error (LogicErr (Unhandled 0))"
-  using free_def assms
-  by force
-
-(* This I don't know if the check is necessary. *)
-lemma free_incorrect_bounds:
-  assumes "c \<noteq> NULL"
-    and "tag c = True"
-    and "perm_global c = False"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "offset c = 0"
-    and "bounds m \<noteq> (base c, base c + len c)"
-  shows "free h c = Error (LogicErr (Unhandled 0))"
-  unfolding free_def
-  using assms 
-  by force
-
-lemma free_non_null_correct:
-  assumes "c \<noteq> NULL"
-    and valid_tag: "tag c = True"
-    and "perm_global c = False"
-    and map_has_contents: "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and offset_correct: "offset c = 0"
-    and bounds_correct: "bounds m = (base c, base c + len c)"
-  shows "free h c = Success (h \<lparr> heap_map := Mapping.update (block_id c) Freed (heap_map h) \<rparr>, 
-                             c \<lparr> tag := False \<rparr>)"
-  unfolding free_def 
-  using assms
+lemma init_heap_empty:
+  "Mapping.keys (heap_map init_heap) = {}"
+  unfolding init_heap_def zero_heap_ext_def
   by simp
 
-lemma free_cond:
-  assumes "free h c = Success (h', cap)"
-  shows "c \<noteq> NULL \<Longrightarrow> tag c = True"
-    and "c \<noteq> NULL \<Longrightarrow> perm_global c = False"
-    and "c \<noteq> NULL \<Longrightarrow> offset c = 0"
-    and "c \<noteq> NULL \<Longrightarrow> \<exists> m. Mapping.lookup (heap_map h) (block_id c) = Some (Map m) \<and> 
-              bounds m = (base c, base c + len c)"
-    and "c \<noteq> NULL \<Longrightarrow> Mapping.lookup (heap_map h') (block_id c) = Some Freed"
-    and "c \<noteq> NULL \<Longrightarrow> cap = c \<lparr> tag := False \<rparr>"
-    and "c = NULL \<Longrightarrow> (h, c) = (h', cap)"
-proof -
-  assume "c \<noteq> NULL"
-  thus "tag c = True"
-    using assms unfolding free_def
-    by (meson result.simps(4))
-next
-  assume "c \<noteq> NULL"
-  thus "perm_global c = False"
-    using assms unfolding free_def
-    by (meson result.simps(4))
-next
-  assume "c \<noteq> NULL"
-  thus "offset c = 0"
-    using assms unfolding free_def
-    by (smt (verit, ccfv_SIG) not_None_eq option.simps(4) option.simps(5) 
-        result.distinct(1) t.exhaust t.simps(4) t.simps(5))
-next
-  assume "c \<noteq> NULL"
-  thus "\<exists> m. Mapping.lookup (heap_map h) (block_id c) = Some (Map m) \<and> 
-             bounds m = (base c, base c + len c)"
-    using assms unfolding free_def
-    by (metis assms free_double_free free_incorrect_bounds free_incorrect_cap_offset 
-        free_nonexistant_obj not_Some_eq result.distinct(1) t.exhaust)
-next 
-  assume "c \<noteq> NULL"
-  hence "h' = h \<lparr> heap_map := Mapping.update (block_id c) Freed (heap_map h) \<rparr>"
-    using assms unfolding free_def
-    by (smt (verit, ccfv_SIG) free_nonexistant_obj not_Some_eq option.simps(4) option.simps(5) 
-        prod.inject result.distinct(1) result.exhaust result.inject(1) t.exhaust t.simps(4) t.simps(5))
-  thus "Mapping.lookup (heap_map h') (block_id c) = Some Freed"
-    by fastforce
-next
-  assume "c \<noteq> NULL"
-  thus "cap = c \<lparr> tag := False \<rparr>"
-    using assms unfolding free_def
-    by (smt (verit, ccfv_SIG) not_Some_eq option.simps(4) option.simps(5) prod.inject 
-        result.distinct(1) result.inject(1) t.exhaust t.simps(4) t.simps(5))
-next
-  assume "c = NULL"
-  thus "(h, c) = (h', cap)"
-    using free_null assms 
-    by force
-qed
+text \<open>Below shows $\mathcal{W}^\mathcal{C}_f(\mu_0)$\<close>
+lemma init_wellformed:
+  "\<W>\<^sub>\<ff>(heap_map init_heap)"
+  unfolding init_heap_def wellformed_def zero_heap_ext_def
+  by simp
 
-lemma double_free:
-  assumes "free h c = Success (h', cap)"
-    and "cap \<noteq> NULL"
-  shows "free h' cap = Error (C2Err TagViolation)"
-proof -
-  have "cap = c \<lparr> tag := False \<rparr> \<Longrightarrow> tag cap = False"
-    by fastforce
-  thus ?thesis
-    using assms free_cond(6)[where ?h=h and ?c=c and ?h'=h' and ?cap=cap] 
-      free_false_tag[where ?c=cap and ?h=h'] free_cond(7)[where ?h=h and ?c=c and ?h'=h' and ?cap=cap]
-    by blast
-qed
+lemma mapping_lookup_disj1:
+  "m1 ## m2 \<Longrightarrow> Mapping.lookup m1 n = Some x \<Longrightarrow> Mapping.lookup (m1 + m2) n = Some x"
+  by (metis Mapping.keys.rep_eq Mapping.lookup.abs_eq Mapping.lookup.rep_eq disjoint_iff 
+      is_none_simps(2) keys_is_none_rep map_add_dom_app_simps(3) plus_map_def sep_disj_map_def)
 
-lemma alloc_free:
-  assumes "alloc h c s = Success (h', cap)"
-  shows "\<exists>! ret. free h' cap = Success ret"
-  using alloc_def assms free_non_null_correct alloc_no_null_ret
-  by force
+lemma mapping_lookup_disj2:
+  "m1 ## m2 \<Longrightarrow> Mapping.lookup m2 n = Some x \<Longrightarrow> Mapping.lookup (m1 + m2) n = Some x"
+  by (metis Mapping.keys.rep_eq Mapping.lookup.abs_eq Mapping.lookup.rep_eq disjoint_iff 
+      is_none_simps(2) keys_is_none_rep map_add_dom_app_simps(2) plus_map_def sep_disj_map_def)
 
+text \<open>Below shows that well-formedness is composition-compatible\<close>
+lemma "heap_map h1 ## heap_map h2 \<Longrightarrow> \<W>\<^sub>\<ff>(heap_map h1 + heap_map h2) 
+   \<Longrightarrow> \<W>\<^sub>\<ff>(heap_map h1) \<and> \<W>\<^sub>\<ff>(heap_map h2)"
+  apply (unfold wellformed_def)
+  apply safe
+     apply (erule_tac x=b in allE)
+   apply (erule_tac x=obj in allE)
+  apply (fastforce intro: mapping_lookup_disj1 mapping_lookup_disj2)+
+  done
+
+section \<open>Helper functions and lemmas\<close>
 primrec is_memval_defined :: "(nat, memval) mapping \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> bool"
   where
   "is_memval_defined _ _ 0 = True"
@@ -673,10 +521,6 @@ primrec is_same_cap :: "(nat, memval) mapping \<Rightarrow> memcap \<Rightarrow>
   "is_same_cap _ _ _ 0 = True"
 | "is_same_cap m c off (Suc siz) = (of_cap (the (Mapping.lookup m off)) = c \<and> is_same_cap m c (Suc off) siz)"
 
-abbreviation cap_offset :: "nat \<Rightarrow> nat"
-  where
-  "cap_offset p \<equiv> if p mod |Cap|\<^sub>\<tau> = 0 then p else p - p mod |Cap|\<^sub>\<tau>"
-
 (* tag retrieval must be based on offset now *)
 definition retrieve_tval :: "object \<Rightarrow> nat \<Rightarrow> cctype \<Rightarrow> bool \<Rightarrow> block ccval"
   where
@@ -696,540 +540,14 @@ definition retrieve_tval :: "object \<Rightarrow> nat \<Rightarrow> cctype \<Rig
        let cap = get_cap (content obj) off in
        let tv = the (Mapping.lookup (tags obj) (cap_offset off)) in
        let t = (case pcl of False \<Rightarrow> False | True \<Rightarrow> tv) in
-       let cv = mem_capability.extend cap \<lparr> tag = t \<rparr> in 
+       let cv = mem_capability.extend cap \<lparr> tag = t \<rparr> in
        let nth_frag = of_nth (the (Mapping.lookup (content obj) off)) in 
        (case typ of 
-          Uint8 \<Rightarrow> Cap_v_frag cv nth_frag
-        | Sint8 \<Rightarrow> Cap_v_frag cv nth_frag
+          Uint8 \<Rightarrow> Cap_v_frag (mem_capability.extend cap \<lparr> tag = False \<rparr>) nth_frag
+        | Sint8 \<Rightarrow> Cap_v_frag (mem_capability.extend cap \<lparr> tag = False \<rparr>) nth_frag
         | Cap   \<Rightarrow> if is_contiguous_cap (content obj) cap off |typ|\<^sub>\<tau> then Cap_v cv else Undef
         | _     \<Rightarrow> Undef)
      else Undef"
-
-text \<open>How load works:
-      The hardware would perform a CL[C] operation on the given capability first.
-      An invalid capability for load would be caught by the hardware.
-      Once all the hardware checks are performed, we then proceed to the logical checks.\<close>
-definition load :: "heap \<Rightarrow> cap \<Rightarrow> cctype \<Rightarrow> block ccval result"
-  where
-  "load h c t \<equiv> 
-     if tag c = False then
-       Error (C2Err TagViolation)
-     else if perm_load c = False then 
-       Error (C2Err PermitLoadViolation)
-     else if offset c + |t|\<^sub>\<tau> > base c + len c then
-       Error (C2Err LengthViolation)
-     else if offset c < base c then
-       Error (C2Err LengthViolation)
-     else if offset c mod |t|\<^sub>\<tau> \<noteq> 0 then
-       Error (C2Err BadAddressViolation)
-     else
-       let obj = Mapping.lookup (heap_map h) (block_id c) in
-      (case obj of None      \<Rightarrow> Error (LogicErr (MissingResource))
-                 | Some cobj \<Rightarrow>
-        (case cobj of Freed \<Rightarrow> Error (LogicErr (UseAfterFree))
-                    | Map m \<Rightarrow> Success (retrieve_tval m (nat (offset c)) t (perm_cap_load c))))"
-
-lemma load_null_error:
-  "load h NULL t = Error (C2Err TagViolation)" 
-  unfolding load_def
-  by simp
-
-lemma load_false_tag:
-  assumes "tag c = False"
-  shows "load h c t = Error (C2Err TagViolation)"
-  unfolding load_def
-  using assms
-  by presburger
-
-lemma load_false_perm_load:
-  assumes "tag c = True"
-    and "perm_load c = False"
-  shows "load h c t = Error (C2Err PermitLoadViolation)"
-  unfolding load_def
-  using assms 
-  by presburger
-
-lemma load_bound_over:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> > base c + len c"
-  shows "load h c t = Error (C2Err LengthViolation)"
-  unfolding load_def
-  using assms 
-  by presburger
-
-lemma load_bound_under:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c < base c"
-  shows "load h c t = Error (C2Err LengthViolation)"
-  unfolding load_def
-  using assms 
-  by presburger
-
-lemma load_misaligned:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> \<noteq> 0"
-  shows "load h c t = Error (C2Err BadAddressViolation)"
-  unfolding load_def
-  using assms 
-  by force
-
-lemma load_nonexistant_obj:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = None"
-  shows "load h c t = Error (LogicErr MissingResource)"
-  unfolding load_def
-  using assms
-  by auto
-
-lemma load_load_after_free:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some Freed"
-  shows "load h c t = Error (LogicErr UseAfterFree)"
-  unfolding load_def
-  using assms
-  by fastforce
-
-lemma load_cap_on_membytes_fail:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Cap"
-    and "\<not> is_contiguous_zeros (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-  shows "load h c t = Success Undef"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_null_cap_on_membytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Cap"
-    and "is_contiguous_zeros (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-  shows "load h c t = Success (Cap_v NULL)"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_u8_on_membytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Uint8"
-  shows "load h c t = Success (Uint8_v (decode_u8_list (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_s8_on_membytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Sint8"
-  shows "load h c t = Success (Sint8_v (decode_s8_list (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_u16_on_membytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Uint16"
-  shows "load h c t = Success (Uint16_v (cat_u16 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_s16_on_membytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Sint16"
-  shows "load h c t = Success (Sint16_v (cat_s16 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_u32_on_membytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Uint32"
-  shows "load h c t = Success (Uint32_v (cat_u32 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_s32_on_membytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Sint32"
-  shows "load h c t = Success (Sint32_v (cat_s32 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_u64_on_membytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Uint64"
-  shows "load h c t = Success (Uint64_v (cat_u64 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_s64_on_membytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Sint64"
-  shows "load h c t = Success (Sint64_v (cat_s64 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_not_cap_in_mem:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "\<not> is_cap (content m) (nat (offset c))"
-  shows "load h c t = Success Undef"
-  unfolding load_def retrieve_tval_def 
-  using assms
-  by fastforce
-
-lemma load_not_contiguous_cap_in_mem:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "is_cap (content m) (nat (offset c))"
-    and "mc = get_cap (content m) (nat (offset c))"
-    and "\<not> is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t \<noteq> Uint8"
-    and "t \<noteq> Sint8"
-  shows "load h c t = Success Undef"
-  unfolding load_def retrieve_tval_def Let_def
-  using assms
-  by (clarsimp split: cctype.split)
-
-lemma load_cap_frag_u8:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "is_cap (content m) (nat (offset c))"
-    and "mc = get_cap (content m) (nat (offset c))"
-    and "t = Uint8"
-    and "tagval = the (Mapping.lookup (tags m) (cap_offset (nat (offset c))))"
-    and "tg = (case perm_cap_load c of False \<Rightarrow> False | True \<Rightarrow> tagval)"
-    and "nth_frag = of_nth (the (Mapping.lookup (content m) (nat (offset c))))"
-  shows "load h c t = Success (Cap_v_frag (mem_capability.extend mc \<lparr> tag = tg \<rparr>) nth_frag)"
-  unfolding load_def retrieve_tval_def Let_def
-  using assms
-  by (clarsimp simp add: sizeof_def split: cctype.split)
-
-lemma load_cap_frag_s8:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "is_cap (content m) (nat (offset c))"
-    and "mc = get_cap (content m) (nat (offset c))"
-    and "\<not> is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Sint8"
-    and "tagval = the (Mapping.lookup (tags m) (cap_offset (nat (offset c))))"
-    and "tg = (case perm_cap_load c of False \<Rightarrow> False | True \<Rightarrow> tagval)"
-    and "nth_frag = of_nth (the (Mapping.lookup (content m) (nat (offset c))))"
-  shows "load h c t = Success (Cap_v_frag (mem_capability.extend mc \<lparr> tag = tg \<rparr>) nth_frag)"
-  unfolding load_def retrieve_tval_def Let_def
-  using assms
-  by (clarsimp simp add: sizeof_def split: cctype.split)
-
-lemma load_bytes_on_capbytes_fail:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "is_cap (content m) (nat (offset c))"
-    and "mc = get_cap (content m) (nat (offset c))"
-    and "is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t \<noteq> Cap"
-    and "t \<noteq> Uint8"
-    and "t \<noteq> Sint8"
-  shows "load h c t = Success Undef"
-  unfolding load_def retrieve_tval_def Let_def
-  using assms 
-  by (clarsimp split: cctype.split)
-
-lemma load_cap_on_capbytes:
-  assumes "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
-    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-    and "is_cap (content m) (nat (offset c))"
-    and "mc = get_cap (content m) (nat (offset c))"
-    and "is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau>"
-    and "t = Cap"
-    and "tagval = the (Mapping.lookup (tags m) (nat (offset c)))"
-    and "tg = (case perm_cap_load c of False \<Rightarrow> False | True \<Rightarrow> tagval)"
-  shows "load h c t = Success (Cap_v (mem_capability.extend mc \<lparr> tag = tg \<rparr>))"
-  unfolding load_def retrieve_tval_def 
-  using assms 
-  by (clarsimp split: cctype.split) 
-    (smt (verit) assms(5) nat_int nat_less_le nat_mod_distrib of_nat_0_le_iff semiring_1_class.of_nat_0)
-
-lemma load_after_alloc:
-  assumes "alloc h c s = Success (h', cap)"
-    and "|t|\<^sub>\<tau> \<le> s"
-  shows "load h' cap t = Success Undef"
-proof -
-  let ?m = "\<lparr>bounds = (0, s), content = Mapping.empty, tags = Mapping.empty\<rparr>"
-  have "tag cap = True"
-    using assms(1) alloc_def 
-    by fastforce
-  moreover have "perm_load cap = True"
-    using assms(1) alloc_def
-    by fastforce
-  moreover have "offset cap + |t|\<^sub>\<tau> \<le> base cap + len cap"
-    using assms alloc_def 
-    by fastforce
-  moreover have "offset cap \<ge> base cap"
-    using assms alloc_def
-    by fastforce
-  moreover have "offset cap mod |t|\<^sub>\<tau> = 0"
-    using assms alloc_def
-    by fastforce
-  moreover have "Mapping.lookup (heap_map h') (block_id cap) = Some (Map ?m)"
-    using assms alloc_def
-    by fastforce
-  moreover have "\<not> is_contiguous_bytes (content ?m) (nat (offset cap)) |t|\<^sub>\<tau>"
-  proof -
-    have "\<exists> n. |t|\<^sub>\<tau> = Suc n"
-      using not0_implies_Suc sizeof_nonzero 
-      by force
-    thus ?thesis 
-      using assms alloc_def
-      by fastforce
-  qed
-  moreover have "\<not> is_cap (content ?m) (nat (offset cap))"
-    by simp
-  ultimately show ?thesis
-    using load_not_cap_in_mem
-    by presburger
-qed
-
-lemma load_after_alloc_size_fail:
-  assumes "alloc h c s = Success (h', cap)"
-    and "|t|\<^sub>\<tau> > s"
-  shows "load h' cap t = Error (C2Err LengthViolation)"
-proof -
-  have "tag cap = True"
-    using assms alloc_def
-    by auto
-  moreover have "perm_load cap = True"
-    using assms alloc_def
-    by force
-  moreover have "base cap = 0"
-    using assms alloc_def
-    by fastforce
-  moreover have "len cap = s"
-    using assms alloc_def 
-    by auto
-  ultimately show ?thesis 
-    using assms load_def by auto
-qed
-
-lemma load_after_free:
-  assumes "free h c = Success (h', cap)"
-  shows "load h cap t = Error (C2Err TagViolation)"
-proof -
-  consider (null) "c = NULL" | (non_null) "c \<noteq> NULL" by blast
-  then show ?thesis
-  proof (cases)
-    case null
-    moreover hence "c = cap"
-      using assms free_null
-      by force
-    ultimately show ?thesis
-      using load_null_error assms
-      by blast
-  next
-    case non_null
-    hence "cap = c \<lparr> tag := False \<rparr>"
-      using assms free_cond(6)[where ?h=h and ?c=c and ?h'=h' and ?cap=cap] 
-      by presburger
-    moreover hence "tag cap = False"
-      using assms
-      by force
-    ultimately show ?thesis using load_false_tag
-      by blast
-  qed
-qed
-
-lemma load_cond_hard_cap:
-  assumes "load h c t = Success ret"
-  shows "tag c = True"
-    and "perm_load c = True"
-    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    and "offset c \<ge> base c"
-    and "offset c mod |t|\<^sub>\<tau> = 0"
-proof -
-  show "tag c = True"
-    using assms result.distinct(1) 
-    unfolding load_def
-    by metis
-next
-  show "perm_load c = True"
-    using assms result.distinct(1) 
-    unfolding load_def
-    by metis
-next
-  show "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
-    using assms result.distinct(1) linorder_not_le
-    unfolding load_def 
-    by metis
-next 
-  show "offset c \<ge> base c"
-    using assms result.distinct(1) linorder_not_le
-    unfolding load_def 
-    by metis
-next
-  show "offset c mod |t|\<^sub>\<tau> = 0"
-    using assms result.distinct(1)
-    unfolding load_def 
-    by metis
-qed
-
-lemma load_cond_bytes:
-  assumes "load h c t = Success ret"
-    and "ret \<noteq> Undef"
-    and "\<forall> x. ret \<noteq> Cap_v x"
-    and "\<forall> x n . ret \<noteq> Cap_v_frag x n"
-  shows "\<exists> m. Mapping.lookup (heap_map h) (block_id c) = Some (Map m)
-            \<and> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
-proof (cases ret)
-  case (Cap_v x9)
-  thus ?thesis 
-    using assms(3)
-    by blast
-next
-  case (Cap_v_frag x101 x102)
-  thus ?thesis
-    using assms(4)
-    by blast
-next
-  case Undef
-  thus ?thesis
-    using assms(2)
-    by simp
-(* WARNING: takes quite some time to prove the remaining cases *)
-qed (insert assms(1) load_cond_hard_cap[where ?h=h and ?c=c and ?t=t and ?ret=ret], clarsimp, 
-    unfold load_def retrieve_tval_def, clarsimp split: option.split_asm t.split_asm, 
-    smt (z3) assms(2) assms(3) assms(4) cctype.exhaust cctype.simps(73) cctype.simps(74) 
-    cctype.simps(75) cctype.simps(76) cctype.simps(77) cctype.simps(78) cctype.simps(79) 
-    cctype.simps(80) cctype.simps(81))+
-
-lemma load_cond_cap:
-  assumes "load h c t = Success ret"
-    and "\<exists> x. ret = Cap_v x"
-  shows "\<exists> m mc tagval tg. 
-              Mapping.lookup (heap_map h) (block_id c) = Some (Map m) \<and>
-              (is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau> \<longrightarrow> 
-               is_contiguous_zeros (content m) (nat (offset c)) |t|\<^sub>\<tau> \<and>
-               ret = Cap_v NULL) \<and>
-              (\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>  \<longrightarrow>
-               is_cap (content m) (nat (offset c)) \<and>
-               mc = get_cap (content m) (nat (offset c)) \<and>
-               is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau> \<and>
-               t = Cap \<and>
-               tagval = the (Mapping.lookup (tags m) (nat (offset c))) \<and> 
-               tg = (case perm_cap_load c of False \<Rightarrow> False | True \<Rightarrow> tagval))"
-  using assms(2)
-proof (cases ret)
-  case (Cap_v ca)
-  show ?thesis
-    by (insert assms load_cond_hard_cap[where ?h=h and ?c=c and ?t=t and ?ret=ret], clarsimp,
-        unfold load_def retrieve_tval_def Let_def, clarsimp split: option.split_asm, 
-        clarsimp split: t.split_asm cctype.split_asm, safe; force?)
-      (metis ccval.distinct(105) ccval.distinct(107) ccval.inject(9) is_cap.elims(2))+
-qed blast+
 
 primrec store_bytes :: "(nat, memval) mapping \<Rightarrow> nat \<Rightarrow> 8 word list \<Rightarrow> (nat, memval) mapping"
   where
@@ -1274,6 +592,12 @@ lemma stored_bytes_prev:
   shows "Mapping.lookup (store_bytes obj off vs) x = Mapping.lookup obj x"
   using assms 
   by (induct vs arbitrary: obj off) fastforce+
+
+lemma stored_tags_prev:
+  assumes "x < off"
+  shows "Mapping.lookup (store_tag obj off vs) x = Mapping.lookup obj x"
+  using assms 
+  by force
 
 lemma stored_cap_prev:
   assumes "x < off"
@@ -2207,6 +1531,784 @@ lemma retrieve_stored_tval_with_perm_cap_load:
     (insert retrieve_stored_tval_prim[where ?obj=obj and ?off=off and ?val=val and ?b=True]
       retrieve_stored_tval_cap[where ?obj=obj and ?off=off and ?val=val], simp)
 
+lemma store_bytes_domain_1:
+  assumes "x + length vs \<le> n"
+  shows "Mapping.lookup (store_bytes m n vs) x = Mapping.lookup m x"
+  using assms 
+  by (induct vs arbitrary: x m n) simp_all
+
+lemma store_bytes_domain_2:
+  assumes "n + length vs \<le> x"
+  shows "Mapping.lookup (store_bytes m n vs) x = Mapping.lookup m x"
+  using assms 
+  by (induct vs arbitrary: x m n) simp_all
+
+lemma store_bytes_keys_1:
+  "Set.filter (\<lambda> x. x + length vs \<le> n) (Mapping.keys m) = 
+   Set.filter (\<lambda> x. x + length vs \<le> n) (Mapping.keys (store_bytes m n vs))"
+  by (induct vs arbitrary: m n)
+    (simp, smt (verit, best) Collect_cong Set.filter_def keys_is_none_rep store_bytes_domain_1)
+
+lemma store_bytes_keys_2:
+  "Set.filter (\<lambda> x. n + length vs \<le> x) (Mapping.keys m) = 
+   Set.filter (\<lambda> x. n + length vs \<le> x) (Mapping.keys (store_bytes m n vs))"
+  by (induct vs arbitrary: m n)
+    (simp, smt (verit, best) Collect_cong Set.filter_def keys_is_none_rep store_bytes_domain_2)
+
+lemma store_cap_domain_1:
+  assumes "x + n \<le> p"
+  shows "Mapping.lookup (store_cap m p c n) x = Mapping.lookup m x"
+  using assms 
+  by (induct n arbitrary: x m p) simp_all
+
+lemma store_cap_domain_2:
+  assumes "p + n \<le> x"
+  shows "Mapping.lookup (store_cap m p c n) x = Mapping.lookup m x"
+  using assms 
+  by (induct n arbitrary: x m p) simp_all
+
+lemma store_cap_keys_1:
+  "Set.filter (\<lambda> x. x + n \<le> p) (Mapping.keys m) = 
+   Set.filter (\<lambda> x. x + n \<le> p) (Mapping.keys (store_cap m p c n))"
+  by (induct n arbitrary: m p) 
+    (force, smt (verit, best) Collect_cong Set.filter_def keys_is_none_rep store_cap_domain_1)
+
+lemma store_cap_keys_2:
+  "Set.filter (\<lambda> x. p + n \<le> x) (Mapping.keys m) = 
+   Set.filter (\<lambda> x. p + n \<le> x) (Mapping.keys (store_cap m p c n))"
+  by (induct n arbitrary: m p)
+    (force, smt (verit, best) Collect_cong Set.filter_def keys_is_none_rep store_cap_domain_2)
+
+lemma store_tags_domain_1:
+  assumes "x < n"
+  shows "Mapping.lookup (store_tag m n b) x = Mapping.lookup m x"
+  using assms by auto
+
+lemma store_tags_domain_2:
+  assumes "n < x"
+  shows "Mapping.lookup (store_tag m n b) x = Mapping.lookup m x"
+  using assms by auto
+
+lemma store_tags_keys_1:
+  "Set.filter (\<lambda> x. x < n) (Mapping.keys m) = 
+   Set.filter (\<lambda> x. x < n) (Mapping.keys (store_tag m n b))"
+  by fastforce
+
+lemma store_tags_keys_2:
+  "Set.filter (\<lambda> x. n < x) (Mapping.keys m) = 
+   Set.filter (\<lambda> x. n < x) (Mapping.keys (store_tag m n b))"
+  by fastforce
+
+lemma cap_offset_aligned: 
+  "(cap_offset n) mod |Cap|\<^sub>\<tau> = 0"
+  unfolding sizeof_def
+  by force
+  
+lemma store_tags_offset: 
+  assumes "Set.filter (\<lambda> x. x mod |Cap|\<^sub>\<tau> \<noteq> 0) (Mapping.keys m) = {}"
+  shows "Set.filter (\<lambda> x. x mod |Cap|\<^sub>\<tau> \<noteq> 0) (Mapping.keys (store_tag m (cap_offset n) b)) = {}"
+  using assms 
+  unfolding sizeof_def 
+  by force
+
+lemma store_tval_disjoint_bounds:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+  shows "bounds obj = bounds obj'"
+  using assms
+  unfolding store_tval_def 
+  by (clarsimp split: ccval.split_asm)
+
+lemma store_tval_disjoint_1_content:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off' < off"
+  shows "Mapping.lookup (content obj) off' = Mapping.lookup (content obj') off'"
+  using assms
+  by (clarsimp simp add: store_tval_def split: ccval.split_asm)
+         (presburger add: stored_bytes_prev stored_cap_prev)+
+
+lemma store_tval_disjoint_1_content_bytes:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off' + n \<le> off"
+  shows "retrieve_bytes (content obj) off' n  = retrieve_bytes (content obj') off' n"
+  using assms
+  apply (induct n arbitrary: obj obj' off val off')
+   apply force
+  apply (metis (no_types, lifting) Suc_eq_plus1 add.assoc le_eq_less_or_eq less_add_same_cancel1 
+      order_le_less_trans plus_1_eq_Suc retrieve_bytes.simps(2) store_tval_disjoint_1_content zero_less_Suc)
+  done
+
+lemma store_tval_disjoint_1_content_contiguous_bytes:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off' + n \<le> off"
+  shows "is_contiguous_bytes (content obj) off' n  = is_contiguous_bytes (content obj') off' n"
+  using assms
+  apply (induct n arbitrary: obj obj' off val off')
+   apply force 
+  apply(smt (verit, best) add.assoc add.commute domIff is_contiguous_bytes.simps(2) keys_dom_lookup 
+      le_eq_less_or_eq less_add_same_cancel1 order_le_less_trans plus_1_eq_Suc 
+      store_tval_disjoint_1_content zero_less_Suc)
+  done
+
+lemma store_tval_disjoint_1_content_contiguous_caps:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off' + n \<le> off"
+  shows "is_contiguous_cap (content obj) cap off' n  = is_contiguous_cap (content obj') cap off' n"
+  using assms
+  apply (induct n arbitrary: obj obj' off val off')
+   apply force 
+  apply(smt (verit, best) add.assoc add.commute domIff is_contiguous_cap.simps(2) keys_dom_lookup 
+      le_eq_less_or_eq less_add_same_cancel1 order_le_less_trans plus_1_eq_Suc 
+      store_tval_disjoint_1_content zero_less_Suc)
+  done
+
+lemma store_tval_disjoint_1_tags:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off' + |Cap|\<^sub>\<tau> \<le> off"
+  shows "Mapping.lookup (tags obj) off' = Mapping.lookup (tags obj') off'"
+  using assms
+  by (clarsimp simp add: store_tval_def split: ccval.split_asm)
+    (metis Mapping.lookup_update_neq add.commute add_cancel_right_right 
+      bot_nat_0.extremum_strict diff_diff_cancel le_add1 le_add_diff_inverse less_diff_conv2 
+      mod_less_divisor mod_less_eq_dividend sizeof_nonzero)+
+
+lemma store_tval_disjoint_2_content:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off + |memval_type val|\<^sub>\<tau> \<le> off'"
+  shows "Mapping.lookup (content obj) off' = Mapping.lookup (content obj') off'"
+  using assms
+  apply (clarsimp simp add: store_tval_def split: ccval.split_asm)
+           apply (force simp add: sizeof_def)+
+         apply (metis assms(3) memval_size_u16 store_bytes_domain_2 u16_split_length)
+        apply (metis assms(3) flatten_s16_length memval_size_s16 store_bytes_domain_2)
+       apply (metis assms(3) flatten_u32_length memval_size_u32 store_bytes_domain_2)
+      apply (metis assms(3) flatten_s32_length memval_size_s32 store_bytes_domain_2)
+     apply (metis assms(3) flatten_u64_length memval_size_u64 store_bytes_domain_2)
+    apply (metis assms(3) flatten_s64_length memval_size_s64 store_bytes_domain_2)
+   apply (presburger add: store_cap_domain_2)
+  apply (metis Mapping.lookup_update_neq add_diff_cancel_left' bot_nat_0.extremum_strict diff_is_0_eq' sizeof_nonzero)
+  done
+
+lemma store_tval_disjoint_2_content_bytes:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off + |memval_type val|\<^sub>\<tau> \<le> off'"
+  shows "retrieve_bytes (content obj) off' n = retrieve_bytes (content obj') off' n"
+  using assms
+  apply (induct n arbitrary: obj obj' off off' val)
+   apply force
+  apply (metis less_Suc_eq_le less_or_eq_imp_le retrieve_bytes.simps(2) store_tval_disjoint_2_content)
+  done
+
+lemma store_tval_disjoint_2_content_contiguous_bytes:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off + |memval_type val|\<^sub>\<tau> \<le> off'"
+  shows "is_contiguous_bytes (content obj) off' n  = is_contiguous_bytes (content obj') off' n"
+  using assms
+  apply (induct n arbitrary: obj obj' off val off')
+   apply force 
+  apply (smt (verit, best) domIff is_contiguous_bytes.simps(2) keys_dom_lookup le_eq_less_or_eq lessI 
+      order_le_less_trans store_tval_disjoint_2_content)
+  done
+
+lemma store_tval_disjoint_2_content_contiguous_caps:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off + |memval_type val|\<^sub>\<tau> \<le> off'"
+  shows "is_contiguous_cap (content obj) cap off' n  = is_contiguous_cap (content obj') cap off' n"
+  using assms
+  apply (induct n arbitrary: obj obj' off val off')
+   apply force 
+  apply (smt (verit, best) domIff is_contiguous_cap.simps(2) keys_dom_lookup le_eq_less_or_eq lessI 
+      order_le_less_trans store_tval_disjoint_2_content)
+  done
+
+lemma store_tval_disjoint_2_tags:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off + |memval_type val|\<^sub>\<tau> \<le> off'"
+  shows "Mapping.lookup (tags obj) off' = Mapping.lookup (tags obj') off'"
+  using assms
+  apply (clarsimp simp add: store_tval_def split: ccval.split_asm)
+  using Mapping.lookup_update_neq add_diff_cancel_left' assms(3) diff_diff_cancel sizeof_def apply force+
+  done
+
+lemma zero_imp_bytes:
+  "is_contiguous_zeros obj off n  \<Longrightarrow> \<not> is_contiguous_bytes obj off n \<Longrightarrow> False"
+  apply (simp add: is_contiguous_zeros_code)
+  apply (induct n arbitrary: obj off)
+   apply simp
+  using keys_dom_lookup memval_memcap_not_byte by fastforce
+
+lemma retrieve_stored_tval_disjoint_1:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off' + |t|\<^sub>\<tau> \<le> off"
+  shows "retrieve_tval obj off' t b = retrieve_tval obj' off' t b"
+  using assms 
+  apply (clarsimp simp add: retrieve_tval_def)
+  apply (rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI,
+      rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI)
+         apply (simp split: cctype.split, (safe)[1]; (force simp add: numeral_2_eq_2 numeral_4_eq_4 numeral_8_eq_8 sizeof_def)+)
+        apply (simp split: cctype.split, (safe)[1], (force simp add: sizeof_def numeral_2_eq_2 numeral_4_eq_4 numeral_8_eq_8)+)
+        apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+       apply (rule impI, rule conjI, rule impI)
+        apply (simp split: cctype.split, (safe)[1]; (force simp add: numeral_2_eq_2 numeral_4_eq_4 numeral_8_eq_8 sizeof_def)+)
+       apply (rule impI)
+       apply (simp split: cctype.split, metis is_contiguous_bytes.simps(1) is_contiguous_bytes.simps(2) old.nat.exhaust)
+      apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+        apply (simp split: cctype.split, metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+       apply (rule impI)
+       apply clarsimp
+       apply (simp add: Let_def split: cctype.split)
+       apply (rule conjI, rule impI, rule conjI) 
+         apply (metis One_nat_def cctype.simps(73) is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) 
+      memval_memcap_not_byte option.sel sizeof_def)
+        apply (simp add: is_contiguous_zeros_code sizeof_def)
+       apply (rule conjI, rule impI, rule conjI) 
+         apply (metis Suc_n_not_le_n add_diff_cancel_left' cctype.simps(74) diff_is_0_eq 
+      is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) memval_memcap_not_byte 
+      old.nat.exhaust option.sel plus_1_eq_Suc sizeof_def)
+        apply (simp add: is_contiguous_zeros_code sizeof_def)
+       apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+         apply (metis is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) less_imp_Suc_add 
+      memval_memcap_not_byte option.sel sizeof_nonzero)
+        apply (metis is_contiguous_bytes.simps(1) is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) 
+      memval_memcap_not_byte old.nat.exhaust option.sel)
+       apply (rule impI)
+       apply (metis Some_to_the is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2)
+      less_imp_Suc_add memval_memcap_not_byte sizeof_nonzero)
+      apply (rule impI, rule conjI, rule impI)
+       apply (simp add: Let_def)
+       apply (rule conjI, rule impI)
+        apply (simp split: cctype.split) 
+        apply (metis (no_types, opaque_lifting) is_contiguous_bytes.simps(2) is_contiguous_zeros_code 
+      is_contiguous_zeros_prim.simps(2) less_imp_Suc_add sizeof_nonzero)
+       apply (rule impI)
+       apply (simp split: cctype.split) 
+       apply (metis (no_types, opaque_lifting) is_contiguous_bytes.simps(2) is_contiguous_zeros_code 
+      is_contiguous_zeros_prim.simps(2) less_imp_Suc_add sizeof_nonzero)
+      apply (rule impI)
+      apply (metis (no_types, lifting) domIff is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) 
+      keys_dom_lookup less_imp_Suc_add sizeof_nonzero)
+     apply (rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI)
+        apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+       apply (rule impI)
+       apply (simp split: cctype.split)
+       apply (metis (no_types, lifting) is_contiguous_bytes.simps(2) is_contiguous_zeros_code 
+      is_contiguous_zeros_prim.simps(2) less_imp_Suc_add sizeof_nonzero)
+      apply (rule impI, rule conjI, rule impI)
+       apply (simp split: cctype.split)
+       apply (intro impI conjI)
+              apply (force simp add: sizeof_def is_contiguous_zeros_code)+
+            apply (simp add: sizeof_def)
+            apply (subgoal_tac "cat_u16 (retrieve_bytes (content obj) off' 2) = 0 \<and> 
+           cat_u16 (retrieve_bytes (content (store_tval obj off val)) off' 2) = 0")
+             apply presburger
+            apply (rule conjI)
+             apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+            apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+           apply (simp add: sizeof_def)
+           apply (subgoal_tac "cat_s16 (retrieve_bytes (content obj) off' 2) = 0 \<and> 
+          cat_s16 (retrieve_bytes (content (store_tval obj off val)) off' 2) = 0")
+            apply presburger
+           apply (rule conjI)
+            apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+           apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+          apply (simp add: sizeof_def)
+          apply (subgoal_tac "cat_u32 (retrieve_bytes (content obj) off' 4) = 0 \<and> 
+         cat_u32 (retrieve_bytes (content (store_tval obj off val)) off' 4) = 0")
+           apply presburger
+          apply (rule conjI)
+           apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+          apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+         apply (simp add: sizeof_def)
+         apply (subgoal_tac "cat_s32 (retrieve_bytes (content obj) off' 4) = 0 \<and> 
+        cat_s32 (retrieve_bytes (content (store_tval obj off val)) off' 4) = 0")
+          apply presburger
+         apply (rule conjI)
+          apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+         apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+        apply (simp add: sizeof_def)
+        apply (subgoal_tac "cat_u64 (retrieve_bytes (content obj) off' 8) = 0 \<and> 
+       cat_u64 (retrieve_bytes (content (store_tval obj off val)) off' 8) = 0")
+         apply presburger
+        apply (rule conjI)
+         apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+        apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+       apply (simp add: sizeof_def)
+       apply (subgoal_tac "cat_s64 (retrieve_bytes (content obj) off' 8) = 0 \<and> 
+      cat_s64 (retrieve_bytes (content (store_tval obj off val)) off' 8) = 0")
+        apply presburger
+       apply (rule conjI)
+        apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+       apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+      apply (rule impI)
+      apply (metis zero_imp_bytes)
+     apply (intro impI conjI)
+       apply (metis zero_imp_bytes)
+      apply (metis zero_imp_bytes)
+     apply (metis zero_imp_bytes) 
+    apply (intro impI conjI)
+                  apply (simp split: cctype.split)
+                  apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+                 apply (simp split: cctype.split)
+                 apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+                apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+               apply (metis is_contiguous_bytes.simps(1) is_contiguous_bytes.simps(2) old.nat.exhaust)
+              apply (simp split: cctype.split)
+              apply (metis zero_imp_bytes)
+             apply (metis zero_imp_bytes) 
+            apply (metis zero_imp_bytes) 
+           apply (metis zero_imp_bytes) 
+          apply (metis gr_implies_not_zero is_contiguous_bytes.simps(2) list_decode.cases sizeof_nonzero)
+         apply (elim impE conjE)
+          apply (metis is_contiguous_bytes.simps(1) is_contiguous_bytes.simps(2) not0_implies_Suc)
+         apply (clarsimp simp add: memval_is_byte_def)
+         apply (metis add_diff_cancel_right' le_eq_less_or_eq less_add_same_cancel1 less_imp_diff_less 
+      sizeof_nonzero store_tval_disjoint_1_content)
+  apply (simp split: cctype.split)
+        apply (intro impI conjI; simp add: sizeof_def)
+                apply (metis Suc_le_lessD store_tval_disjoint_1_content)
+               apply (metis Suc_le_lessD store_tval_disjoint_1_content)
+              apply (metis add_2_eq_Suc' store_tval_disjoint_1_content_bytes)
+             apply (metis add_2_eq_Suc' store_tval_disjoint_1_content_bytes)
+            apply (metis store_tval_disjoint_1_content_bytes)
+           apply (metis store_tval_disjoint_1_content_bytes)
+          apply (metis store_tval_disjoint_1_content_bytes)
+         apply (metis store_tval_disjoint_1_content_bytes)
+        apply ((fold sizeof_def)[1], simp add: is_contiguous_zeros_def)
+        apply (metis add.commute add_le_less_mono add_less_cancel_left store_tval_disjoint_1_content)
+       apply (simp add: is_contiguous_zeros_def)
+       apply (metis add.commute add_le_less_mono add_less_cancel_left store_tval_disjoint_1_content)
+      apply (simp add: is_contiguous_zeros_def)
+      apply (metis add.commute add_le_less_mono add_less_cancel_left store_tval_disjoint_1_content)
+     apply (simp add: is_contiguous_zeros_def)
+     apply (metis add.commute add_le_less_mono add_less_cancel_left store_tval_disjoint_1_content)
+    apply (simp add: is_contiguous_zeros_def)
+    apply (metis add.commute add_le_less_mono add_less_cancel_left store_tval_disjoint_1_content)
+   apply (rule impI, rule conjI, rule impI)
+    apply (simp add: is_contiguous_zeros_def, metis add.commute add_le_less_mono add_less_cancel_left store_tval_disjoint_1_content)
+   apply (rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI)
+       apply (metis gr_implies_not_zero is_contiguous_bytes.simps(2) old.nat.exhaust sizeof_nonzero)
+      apply (rule impI)
+      apply (metis is_contiguous_bytes.simps(1) is_contiguous_bytes.simps(2) old.nat.exhaust)
+     apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+    apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+      apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+     apply (rule impI)
+     apply (simp add: Let_def split: cctype.split)
+     apply safe[1]
+           apply (metis add_diff_cancel_right' get_cap_def le_eq_less_or_eq less_add_same_cancel1 
+      less_imp_diff_less sizeof_nonzero store_tval_disjoint_1_content)
+          apply (metis le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero store_tval_disjoint_1_content trans_less_add2)
+         apply (metis add_diff_cancel_right' get_cap_def le_eq_less_or_eq less_add_same_cancel1 
+      less_imp_diff_less sizeof_nonzero store_tval_disjoint_1_content)
+        apply (metis le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero store_tval_disjoint_1_content trans_less_add2)
+       apply (metis add_diff_cancel_right' get_cap_def le_eq_less_or_eq less_add_same_cancel1 
+      less_imp_diff_less sizeof_nonzero store_tval_disjoint_1_content store_tval_disjoint_1_tags)
+      apply (simp add: sizeof_def)
+      apply (metis assms(3) get_cap_def le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero 
+      store_tval_disjoint_1_content store_tval_disjoint_1_content_contiguous_caps trans_less_add2)
+     apply (metis add_diff_cancel_right' get_cap_def le_eq_less_or_eq less_add_same_cancel1 
+      less_imp_diff_less sizeof_nonzero store_tval_disjoint_1_content 
+      store_tval_disjoint_1_content_contiguous_caps)
+    apply (rule impI, rule conjI, rule impI)
+     apply (metis add_leD1 domIff keys_dom_lookup le_def less_add_same_cancel1 nat_less_le 
+      sizeof_nonzero store_tval_disjoint_1_content)
+    apply (rule impI)
+    apply (metis add_leE add_le_same_cancel1 domIff keys_dom_lookup le_def nat_less_le 
+      sizeof_nonzero store_tval_disjoint_1_content)
+   apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+     apply (metis add_leE domIff keys_dom_lookup le_def less_add_same_cancel1 nat_less_le 
+      sizeof_nonzero store_tval_disjoint_1_content)
+    apply (rule impI, rule conjI, rule impI)
+     apply (simp split: cctype.split)
+     apply (metis store_tval_disjoint_1_content_bytes)
+    apply (metis store_tval_disjoint_1_content_contiguous_bytes)
+   apply (rule impI, rule conjI, rule impI)
+    apply (metis add_leE domIff keys_dom_lookup le_def less_add_same_cancel1 nat_less_le 
+      sizeof_nonzero store_tval_disjoint_1_content)
+   apply (insert store_tval_disjoint_1_content_contiguous_bytes, blast)[1]
+  apply (rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI) 
+     apply (smt (z3) store_tval_disjoint_1_content_bytes zero_imp_bytes)
+    apply (rule impI, rule conjI, rule impI, rule conjI, rule impI) 
+      apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero zero_imp_bytes)
+     apply (rule impI, rule conjI, rule impI) 
+      apply (smt (verit, best) store_tval_disjoint_1_content_bytes)
+     apply (rule impI) 
+     apply (insert zero_imp_bytes, blast)[1]
+    apply (rule impI, rule conjI, rule impI)
+     apply (insert zero_imp_bytes, blast)[1]
+    apply (rule impI, rule impI)
+    apply (insert zero_imp_bytes, blast)[1]
+   apply (rule impI)
+   apply (simp add: is_contiguous_zeros_def)
+   apply (smt (z3) le_add_diff_inverse2 store_tval_disjoint_1_content trans_less_add2)
+  apply (rule impI, rule conjI, rule impI)
+   apply (simp add: is_contiguous_zeros_def)
+   apply (smt (z3) le_add_diff_inverse2 store_tval_disjoint_1_content trans_less_add2)
+  apply (rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI)
+      apply (metis is_contiguous_bytes.simps(2) less_nat_zero_code old.nat.exhaust sizeof_nonzero)
+     apply (rule impI)
+     apply (insert store_tval_disjoint_1_content_contiguous_bytes, blast)[1]
+    apply (rule impI, rule conjI, rule impI)
+     apply (metis is_contiguous_bytes.simps(2) less_nat_zero_code list_decode.cases sizeof_nonzero)
+    apply (rule impI)
+    apply (insert store_tval_disjoint_1_content_contiguous_bytes, blast)[1]
+   apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+     apply (insert store_tval_disjoint_1_content_contiguous_bytes, blast)[1]
+    apply (rule impI)
+    apply (simp add: Let_def)
+    apply (intro impI conjI)
+       apply (simp split: cctype.split; clarsimp)
+       apply (intro impI conjI)
+           apply (metis get_cap_def le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero 
+      store_tval_disjoint_1_content trans_less_add2)
+          apply (metis le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero 
+      store_tval_disjoint_1_content trans_less_add2)
+         apply (metis get_cap_def le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero 
+      store_tval_disjoint_1_content trans_less_add2)
+        apply (metis le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero 
+      store_tval_disjoint_1_content trans_less_add2)
+       apply clarsimp
+       apply (smt (verit, best) Nat.add_diff_assoc2 add.commute add.right_neutral 
+      diff_commute diff_is_0_eq get_cap_def linorder_not_le nat_less_le sizeof_nonzero 
+      store_tval_disjoint_1_content store_tval_disjoint_1_tags)
+      apply (metis get_cap_def le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero 
+      store_tval_disjoint_1_content store_tval_disjoint_1_content_contiguous_caps trans_less_add2)
+     apply (metis get_cap_def le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero 
+      store_tval_disjoint_1_content store_tval_disjoint_1_content_contiguous_caps trans_less_add2)
+    apply (smt (verit, best) get_cap_def le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero 
+      store_tval_disjoint_1_content trans_less_add2)
+   apply (rule impI)
+   apply (metis add.right_neutral add_less_cancel_left domIff keys_dom_lookup le_add_diff_inverse2 
+      sizeof_nonzero store_tval_disjoint_1_content trans_less_add2)
+  apply (rule impI, rule conjI, rule impI)
+   apply (smt (verit, best) store_tval_disjoint_1_content_bytes store_tval_disjoint_1_content_contiguous_bytes)
+  apply (metis domIff keys_dom_lookup le_add_diff_inverse2 less_add_same_cancel1 sizeof_nonzero 
+      store_tval_disjoint_1_content store_tval_disjoint_1_content_contiguous_bytes trans_less_add2)
+  done
+
+lemma retrieve_stored_tval_disjoint_2:
+  assumes "store_tval obj off val = obj'"
+    and "val \<noteq> Undef"
+    and "off + |memval_type val|\<^sub>\<tau> \<le> off'"
+    and "t = Cap \<Longrightarrow> off' mod |Cap|\<^sub>\<tau> = 0"
+  shows "retrieve_tval obj off' t b = retrieve_tval obj' off' t b"
+  using assms(1) assms(2) assms(3)
+  apply (clarsimp simp add: retrieve_tval_def)
+  apply (rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI,
+      rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI)
+         apply (simp split: cctype.split, (safe)[1]; (force simp add: numeral_2_eq_2 numeral_4_eq_4 numeral_8_eq_8 sizeof_def)+)
+        apply (simp split: cctype.split, (safe)[1], (force simp add: sizeof_def numeral_2_eq_2 numeral_4_eq_4 numeral_8_eq_8)+)
+        apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+       apply (rule impI, rule conjI, rule impI)
+        apply (simp split: cctype.split, (safe)[1]; (force simp add: numeral_2_eq_2 numeral_4_eq_4 numeral_8_eq_8 sizeof_def)+)
+       apply (rule impI)
+       apply (simp split: cctype.split, metis is_contiguous_bytes.simps(1) is_contiguous_bytes.simps(2) old.nat.exhaust)
+      apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+        apply (simp split: cctype.split, metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+       apply (rule impI)
+       apply clarsimp
+       apply (simp add: Let_def split: cctype.split)
+       apply (rule conjI, rule impI, rule conjI) 
+         apply (metis One_nat_def cctype.simps(73) is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) 
+      memval_memcap_not_byte option.sel sizeof_def)
+        apply (simp add: is_contiguous_zeros_code sizeof_def)
+       apply (rule conjI, rule impI, rule conjI) 
+         apply (metis Suc_n_not_le_n add_diff_cancel_left' cctype.simps(74) diff_is_0_eq 
+      is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) memval_memcap_not_byte 
+      old.nat.exhaust option.sel plus_1_eq_Suc sizeof_def)
+        apply (simp add: is_contiguous_zeros_code sizeof_def)
+       apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+         apply (metis is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) less_imp_Suc_add 
+      memval_memcap_not_byte option.sel sizeof_nonzero)
+        apply (metis is_contiguous_bytes.simps(1) is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) 
+      memval_memcap_not_byte old.nat.exhaust option.sel)
+       apply (rule impI)
+       apply (metis Some_to_the is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2)
+      less_imp_Suc_add memval_memcap_not_byte sizeof_nonzero)
+      apply (rule impI, rule conjI, rule impI)
+       apply (simp add: Let_def)
+       apply (rule conjI, rule impI)
+        apply (simp split: cctype.split) 
+        apply (metis (no_types, opaque_lifting) is_contiguous_bytes.simps(2) is_contiguous_zeros_code 
+      is_contiguous_zeros_prim.simps(2) less_imp_Suc_add sizeof_nonzero)
+       apply (rule impI)
+       apply (simp split: cctype.split) 
+       apply (metis (no_types, opaque_lifting) is_contiguous_bytes.simps(2) is_contiguous_zeros_code 
+      is_contiguous_zeros_prim.simps(2) less_imp_Suc_add sizeof_nonzero)
+      apply (rule impI)
+      apply (metis (no_types, lifting) domIff is_contiguous_zeros_code is_contiguous_zeros_prim.simps(2) 
+      keys_dom_lookup less_imp_Suc_add sizeof_nonzero)
+     apply (rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI)
+        apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+       apply (rule impI)
+       apply (simp split: cctype.split)
+       apply (metis (no_types, lifting) is_contiguous_bytes.simps(2) is_contiguous_zeros_code 
+      is_contiguous_zeros_prim.simps(2) less_imp_Suc_add sizeof_nonzero)
+      apply (rule impI, rule conjI, rule impI)
+       apply (simp split: cctype.split)
+       apply (intro impI conjI)
+              apply (force simp add: sizeof_def is_contiguous_zeros_code)+
+            apply (simp add: sizeof_def)
+            apply (subgoal_tac "cat_u16 (retrieve_bytes (content obj) off' 2) = 0 \<and> 
+           cat_u16 (retrieve_bytes (content (store_tval obj off val)) off' 2) = 0")
+             apply presburger
+            apply (rule conjI)
+             apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+            apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+           apply (simp add: sizeof_def)
+           apply (subgoal_tac "cat_s16 (retrieve_bytes (content obj) off' 2) = 0 \<and> 
+          cat_s16 (retrieve_bytes (content (store_tval obj off val)) off' 2) = 0")
+            apply presburger
+           apply (rule conjI)
+            apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+           apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+          apply (simp add: sizeof_def)
+          apply (subgoal_tac "cat_u32 (retrieve_bytes (content obj) off' 4) = 0 \<and> 
+         cat_u32 (retrieve_bytes (content (store_tval obj off val)) off' 4) = 0")
+           apply presburger
+          apply (rule conjI)
+           apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+          apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+         apply (simp add: sizeof_def)
+         apply (subgoal_tac "cat_s32 (retrieve_bytes (content obj) off' 4) = 0 \<and> 
+        cat_s32 (retrieve_bytes (content (store_tval obj off val)) off' 4) = 0")
+          apply presburger
+         apply (rule conjI)
+          apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+         apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+        apply (simp add: sizeof_def)
+        apply (subgoal_tac "cat_u64 (retrieve_bytes (content obj) off' 8) = 0 \<and> 
+       cat_u64 (retrieve_bytes (content (store_tval obj off val)) off' 8) = 0")
+         apply presburger
+        apply (rule conjI)
+         apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+        apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+       apply (simp add: sizeof_def)
+       apply (subgoal_tac "cat_s64 (retrieve_bytes (content obj) off' 8) = 0 \<and> 
+      cat_s64 (retrieve_bytes (content (store_tval obj off val)) off' 8) = 0")
+        apply presburger
+       apply (rule conjI)
+        apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+       apply (simp add: retrieve_bytes_def is_contiguous_zeros_def word_rcat_def)
+      apply (rule impI)
+      apply (metis zero_imp_bytes)
+     apply (intro impI conjI)
+       apply (metis zero_imp_bytes)
+      apply (metis zero_imp_bytes)
+     apply (metis zero_imp_bytes) 
+    apply (intro impI conjI)
+                  apply (simp split: cctype.split)
+                  apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+                 apply (simp split: cctype.split)
+                 apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+                apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+               apply (metis is_contiguous_bytes.simps(1) is_contiguous_bytes.simps(2) old.nat.exhaust)
+              apply (simp split: cctype.split)
+              apply (metis zero_imp_bytes)
+             apply (metis zero_imp_bytes) 
+            apply (metis zero_imp_bytes) 
+           apply (metis zero_imp_bytes) 
+          apply (metis gr_implies_not_zero is_contiguous_bytes.simps(2) list_decode.cases sizeof_nonzero)
+         apply (elim impE conjE)
+          apply (metis is_contiguous_bytes.simps(1) is_contiguous_bytes.simps(2) not0_implies_Suc)
+         apply (clarsimp simp add: memval_is_byte_def)
+         apply (insert assms(3) store_tval_disjoint_2_content_contiguous_bytes, blast)[1] 
+        apply (simp split: cctype.split)
+        apply (intro impI conjI; simp add: sizeof_def)
+                apply (metis assms(3)  store_tval_disjoint_2_content)
+               apply (metis assms(3) store_tval_disjoint_2_content)
+              apply (metis assms(3) store_tval_disjoint_2_content_bytes)
+             apply (metis assms(3) store_tval_disjoint_2_content_bytes)
+            apply (metis assms(3) store_tval_disjoint_2_content_bytes)
+           apply (metis assms(3) store_tval_disjoint_2_content_bytes)
+          apply (metis assms(3) store_tval_disjoint_2_content_bytes)
+         apply (metis assms(3) store_tval_disjoint_2_content_bytes)
+        apply (simp add: is_contiguous_zeros_def)
+        apply (metis dual_order.trans memval_type.simps sizeof_def store_tval_disjoint_2_content)
+       apply (simp add: is_contiguous_zeros_def)
+       apply (metis dual_order.trans memval_type.simps store_tval_disjoint_2_content)
+      apply (simp add: is_contiguous_zeros_def)
+      apply (metis dual_order.trans memval_type.simps  store_tval_disjoint_2_content)
+     apply (simp add: is_contiguous_zeros_def)
+     apply (metis dual_order.trans memval_type.simps store_tval_disjoint_2_content)
+    apply (simp add: is_contiguous_zeros_def)
+    apply (metis dual_order.trans memval_type.simps  store_tval_disjoint_2_content)
+   apply (rule impI, rule conjI, rule impI)
+  apply (simp add: is_contiguous_zeros_def, metis assms(3) dual_order.trans store_tval_disjoint_2_content)
+   apply (rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI)
+       apply (metis gr_implies_not_zero is_contiguous_bytes.simps(2) old.nat.exhaust sizeof_nonzero)
+      apply (rule impI)
+      apply (metis is_contiguous_bytes.simps(1) is_contiguous_bytes.simps(2) old.nat.exhaust)
+     apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+    apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+      apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero)
+     apply (rule impI)
+     apply (simp add: Let_def split: cctype.split)
+     apply safe[1]
+           apply (metis get_cap_def store_tval_disjoint_2_content assms(3))
+          apply (metis assms(3) store_tval_disjoint_2_content)
+         apply (metis assms(3) get_cap_def store_tval_disjoint_2_content)
+        apply (metis assms(3) store_tval_disjoint_2_content)
+       apply (metis assms(3) get_cap_def store_tval_disjoint_2_content store_tval_disjoint_2_tags)
+      apply (simp add: sizeof_def)
+  apply (metis assms(3) get_cap_def store_tval_disjoint_2_content store_tval_disjoint_2_content_contiguous_caps)
+     apply (metis  get_cap_def store_tval_disjoint_2_content assms(3) 
+      store_tval_disjoint_2_content_contiguous_caps)
+    apply (rule impI, rule conjI, rule impI)
+     apply (metis domIff keys_dom_lookup store_tval_disjoint_2_content assms(3))
+    apply (rule impI)
+    apply (metis domIff keys_dom_lookup store_tval_disjoint_2_content assms(3))
+   apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+     apply (metis domIff keys_dom_lookup store_tval_disjoint_2_content assms(3))
+    apply (rule impI, rule conjI, rule impI)
+     apply (simp split: cctype.split)
+     apply (metis store_tval_disjoint_2_content_bytes assms(3))
+    apply (metis store_tval_disjoint_2_content_contiguous_bytes assms(3))
+   apply (rule impI, rule conjI, rule impI)
+    apply (metis domIff keys_dom_lookup store_tval_disjoint_2_content assms(3))
+   apply (insert store_tval_disjoint_2_content_contiguous_bytes assms(3), blast)[1]
+  apply (rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI) 
+     apply (smt (z3) store_tval_disjoint_2_content_bytes assms(3) zero_imp_bytes)
+    apply (rule impI, rule conjI, rule impI, rule conjI, rule impI) 
+      apply (metis is_contiguous_bytes.simps(2) less_imp_Suc_add sizeof_nonzero zero_imp_bytes)
+     apply (rule impI, rule conjI, rule impI) 
+      apply (smt (verit, best) store_tval_disjoint_2_content_bytes assms(3))
+     apply (rule impI) 
+     apply (insert zero_imp_bytes, blast)[1]
+    apply (rule impI, rule conjI, rule impI)
+     apply (insert zero_imp_bytes, blast)[1]
+    apply (rule impI, rule impI)
+    apply (insert zero_imp_bytes, blast)[1]
+   apply (rule impI)
+   apply (simp add: is_contiguous_zeros_def)
+  apply (metis assms(3) le_trans store_tval_disjoint_2_content)
+  apply (rule impI, rule conjI, rule impI)
+   apply (simp add: is_contiguous_zeros_def)
+   apply (metis assms(3) le_trans store_tval_disjoint_2_content)
+  apply (rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI, rule conjI, rule impI)
+      apply (metis is_contiguous_bytes.simps(2) less_nat_zero_code old.nat.exhaust sizeof_nonzero)
+     apply (rule impI)
+     apply (insert store_tval_disjoint_2_content_contiguous_bytes assms(3), blast)[1]
+    apply (rule impI, rule conjI, rule impI)
+     apply (metis is_contiguous_bytes.simps(2) less_nat_zero_code list_decode.cases sizeof_nonzero)
+    apply (rule impI)
+    apply (insert store_tval_disjoint_2_content_contiguous_bytes assms(3), blast)[1]
+   apply (rule impI, rule conjI, rule impI, rule conjI, rule impI)
+     apply (insert store_tval_disjoint_2_content_contiguous_bytes assms(3), blast)[1]
+    apply (rule impI)
+    apply (simp add: Let_def)
+    apply (intro impI conjI)
+       apply (simp split: cctype.split; clarsimp)
+       apply (intro impI conjI)
+           apply (metis get_cap_def store_tval_disjoint_2_content assms(3))
+          apply (metis store_tval_disjoint_2_content assms(3))
+         apply (metis get_cap_def store_tval_disjoint_2_content assms(3))
+        apply (metis store_tval_disjoint_2_content assms(3)) 
+       apply (clarsimp simp add: sizeof_def get_cap_def)
+       apply (metis assms(4) cctype.simps(81) less_numeral_extra(3) sizeof_def)
+      apply (metis get_cap_def store_tval_disjoint_2_content store_tval_disjoint_2_content_contiguous_caps assms(3))
+     apply (metis get_cap_def store_tval_disjoint_2_content store_tval_disjoint_2_content_contiguous_caps assms(3))
+    apply (metis get_cap_def store_tval_disjoint_2_content assms(3))
+   apply (rule impI)
+   apply (metis domIff keys_dom_lookup store_tval_disjoint_2_content assms(3))
+  apply (rule impI, rule conjI, rule impI)
+   apply (smt (verit, best) store_tval_disjoint_2_content_bytes store_tval_disjoint_2_content_contiguous_bytes assms(3))
+  apply (metis domIff keys_dom_lookup 
+      store_tval_disjoint_2_content store_tval_disjoint_2_content_contiguous_bytes assms(3))
+  done
+
+lemma type_uniq: 
+  assumes "\<exists> x n. ret = Cap_v_frag x n"
+  shows "ret \<noteq> Uint8_v v1" "ret \<noteq> Sint8_v v2" "ret \<noteq> Uint16_v v3" "ret \<noteq> Sint16_v v4"
+    "ret \<noteq> Uint32_v v5" "ret \<noteq> Sint32_v v6" "ret \<noteq> Uint64_v v7" "ret \<noteq> Sint64_v v8" 
+    "ret \<noteq> Cap_v v9" 
+  using assms 
+  by blast+
+
+section \<open>Memory Actions / Operations\<close>
+
+definition alloc :: "heap \<Rightarrow> bool \<Rightarrow> nat \<Rightarrow> (heap \<times> cap) result"
+  where
+  "alloc h c s \<equiv> 
+     let cap = \<lparr> block_id = (next_block h),
+                 offset = 0,
+                 base = 0,
+                 len = s,
+                 perm_load = True,
+                 perm_cap_load = c,
+                 perm_store = True,
+                 perm_cap_store = c,
+                 perm_cap_store_local = c,
+                 perm_global = False,
+                 tag = True
+               \<rparr> in
+     let h' = h \<lparr> next_block := (next_block h) + 1,
+                  heap_map := Mapping.update 
+                                (next_block h) 
+                                (Map \<lparr> bounds = (0, s), 
+                                       content = Mapping.empty, 
+                                       tags = Mapping.empty 
+                                     \<rparr>
+                                 ) (heap_map h)
+                \<rparr> in
+     Success (h', cap)"
+
+definition free :: "heap \<Rightarrow> cap \<Rightarrow> (heap \<times> cap) result"
+  where
+  "free h c \<equiv>
+     if c = NULL then Success (h, c) else
+     if tag c = False then Error (C2Err (TagViolation)) else
+     if perm_global c = True then Error (LogicErr (Unhandled 0)) else
+     let obj = Mapping.lookup (heap_map h) (block_id c) in
+     (case obj of None      \<Rightarrow> Error (LogicErr (MissingResource))
+               | Some cobj \<Rightarrow>
+       (case cobj of Freed \<Rightarrow> Error (LogicErr (UseAfterFree))
+                  | Map m \<Rightarrow>
+         if offset c \<noteq> 0 then Error (LogicErr (Unhandled 0)) 
+         else if offset c > base c + len c then Error (LogicErr (Unhandled 0)) else
+       let cap_bound = (base c, base c + len c) in
+       if cap_bound \<noteq> bounds m then Error (LogicErr (Unhandled 0)) else
+       let h' = h \<lparr> heap_map := Mapping.update (block_id c) Freed (heap_map h) \<rparr> in 
+       let cap = c \<lparr> tag := False \<rparr> in
+       Success (h', cap)))"
+
+text \<open>How load works:
+      The hardware would perform a CL[C] operation on the given capability first.
+      An invalid capability for load would be caught by the hardware.
+      Once all the hardware checks are performed, we then proceed to the logical checks.\<close>
+definition load :: "heap \<Rightarrow> cap \<Rightarrow> cctype \<Rightarrow> block ccval result"
+  where
+  "load h c t \<equiv> 
+     if tag c = False then
+       Error (C2Err TagViolation)
+     else if perm_load c = False then 
+       Error (C2Err PermitLoadViolation)
+     else if offset c + |t|\<^sub>\<tau> > base c + len c then
+       Error (C2Err LengthViolation)
+     else if offset c < base c then
+       Error (C2Err LengthViolation)
+     else if offset c mod |t|\<^sub>\<tau> \<noteq> 0 then
+       Error (C2Err BadAddressViolation)
+     else
+       let obj = Mapping.lookup (heap_map h) (block_id c) in
+      (case obj of None      \<Rightarrow> Error (LogicErr (MissingResource))
+                 | Some cobj \<Rightarrow>
+        (case cobj of Freed \<Rightarrow> Error (LogicErr (UseAfterFree))
+                    | Map m \<Rightarrow> if offset c < fst (bounds m) \<or> offset c + |t|\<^sub>\<tau> > snd (bounds m) then 
+                               Error (LogicErr BufferOverrun) else
+                               Success (retrieve_tval m (nat (offset c)) t (perm_cap_load c))))"
+
 definition store :: "heap \<Rightarrow> cap \<Rightarrow> block ccval \<Rightarrow> heap result"
   where
   "store h c v \<equiv> 
@@ -2231,10 +2333,736 @@ definition store :: "heap \<Rightarrow> cap \<Rightarrow> block ccval \<Rightarr
       (case obj of None      \<Rightarrow> Error (LogicErr (MissingResource))
                  | Some cobj \<Rightarrow>
         (case cobj of Freed \<Rightarrow> Error (LogicErr (UseAfterFree))
-                    | Map m \<Rightarrow> Success (h \<lparr> heap_map := Mapping.update 
+                    | Map m \<Rightarrow> if offset c < fst (bounds m) \<or> offset c + |memval_type v|\<^sub>\<tau> > snd (bounds m) then 
+                               Error (LogicErr BufferOverrun) else
+                               Success (h \<lparr> heap_map := Mapping.update 
                                                          (block_id c) 
                                                          (Map (store_tval m (nat (offset c)) v)) 
                                                          (heap_map h) \<rparr>)))"
+
+subsection \<open>Properties of the operations\<close>
+text \<open>Here we provide all the properties the operations satisfy. In general, you may find the following
+      forms of proofs:
+       \begin{itemize}
+           \item If we have valid input, the operation will succeed
+           \item If we have invalid inputs, the operations will return the appropriate error
+           \item If the operation succeeds, we have a valid input
+       \end{itemize}
+       good variable laws are also proven at the next subsubsection.\<close>
+
+subsubsection \<open>Correctness Properties\<close>
+
+lemma alloc_always_success:
+  "\<exists>! res. alloc h c s = Success res"
+  by (simp add: alloc_def)
+
+schematic_goal alloc_updated_heap_and_cap:
+  "alloc h c s = Success (?h', ?cap)"
+  by (fastforce simp add: alloc_def)
+
+lemma alloc_never_fails:
+  "alloc h c s = Error e \<Longrightarrow> False"
+  by (simp add: alloc_def)
+
+text \<open>In practice, malloc may actually return NULL when allocation fails. However, this still complies
+    with The C Standard.\<close>
+lemma alloc_no_null_ret:
+  assumes "alloc h c s = Success (h', cap)"
+  shows "cap \<noteq> NULL"
+proof -
+  have "perm_load cap"
+    using assms alloc_def
+    by force
+  moreover have "\<not> perm_load NULL"
+    unfolding null_capability_def zero_capability_ext_def zero_mem_capability_ext_def
+    by force
+  ultimately show ?thesis 
+    by blast
+qed
+
+lemma alloc_correct:
+  assumes "alloc h c s = Success (h', cap)"
+  shows "next_block h' = next_block h + 1"
+    and "Mapping.lookup (heap_map h') (next_block h) 
+         = Some (Map \<lparr> bounds = (0, s), content = Mapping.empty, tags = Mapping.empty\<rparr>)"
+  using assms alloc_def
+  by auto
+
+\<comment> \<open>Section 7.20.3.2 of The C Standard states free(NULL) results in no action occuring.\<close>
+lemma free_null:
+  "free h NULL = Success (h, NULL)"
+  by (simp add: free_def)
+
+lemma free_false_tag:
+  assumes "c \<noteq> NULL"
+    and "tag c = False"
+  shows "free h c = Error (C2Err (TagViolation))"
+  by (presburger add: assms free_def)
+
+lemma free_global_cap:
+  assumes "c \<noteq> NULL"
+    and "tag c = True"
+    and "perm_global c = True"
+  shows "free h c = Error (LogicErr (Unhandled 0))"
+  by (presburger add: assms free_def)
+
+lemma free_nonexistant_obj:
+  assumes "c \<noteq> NULL"
+    and "tag c = True"
+    and "perm_global c = False"
+    and "Mapping.lookup (heap_map h) (block_id c) = None"
+  shows "free h c = Error (LogicErr (MissingResource))"
+  using assms free_def
+  by auto
+
+text \<open>This case may arise if there are copies of the same capability, where only one was freed.
+      It is worth noting that due to this, temporal safety is not guaranteed by the CHERI hardware.\<close>
+lemma free_double_free:
+  assumes "c \<noteq> NULL"
+    and "tag c = True"
+    and "perm_global c = False"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some Freed"
+  shows "free h c = Error (LogicErr (UseAfterFree))"
+  using free_def assms
+  by force
+
+text \<open>An incorrect offset implies the actual ptr value is not that returned by alloc.
+    Section 7.20.3.2 of The C Standard states this leads to undefined behaviour.
+    Clang, in practice, however, terminates the C program with an invalid pointer error. \<close>
+lemma free_incorrect_cap_offset:
+  assumes "c \<noteq> NULL"
+    and "tag c = True"
+    and "perm_global c = False"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<noteq> 0"
+  shows "free h c = Error (LogicErr (Unhandled 0))"
+  using free_def assms
+  by force
+
+lemma free_incorrect_bounds:
+  assumes "c \<noteq> NULL"
+    and "tag c = True"
+    and "perm_global c = False"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c = 0"
+    and "bounds m \<noteq> (base c, base c + len c)"
+  shows "free h c = Error (LogicErr (Unhandled 0))"
+  unfolding free_def
+  using assms 
+  by force
+
+lemma free_non_null_correct:
+  assumes "c \<noteq> NULL"
+    and valid_tag: "tag c = True"
+    and "perm_global c = False"
+    and map_has_contents: "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and offset_correct: "offset c = 0"
+    and bounds_correct: "bounds m = (base c, base c + len c)"
+  shows "free h c = Success (h \<lparr> heap_map := Mapping.update (block_id c) Freed (heap_map h) \<rparr>, 
+                             c \<lparr> tag := False \<rparr>)"
+  unfolding free_def 
+  using assms
+  by simp
+
+lemma free_cond:
+  assumes "free h c = Success (h', cap)"
+  shows "c \<noteq> NULL \<Longrightarrow> tag c = True"
+    and "c \<noteq> NULL \<Longrightarrow> perm_global c = False"
+    and "c \<noteq> NULL \<Longrightarrow> offset c = 0"
+    and "c \<noteq> NULL \<Longrightarrow> \<exists> m. Mapping.lookup (heap_map h) (block_id c) = Some (Map m) \<and> 
+              bounds m = (base c, base c + len c)"
+    and "c \<noteq> NULL \<Longrightarrow> Mapping.lookup (heap_map h') (block_id c) = Some Freed"
+    and "c \<noteq> NULL \<Longrightarrow> cap = c \<lparr> tag := False \<rparr>"
+    and "c = NULL \<Longrightarrow> (h, c) = (h', cap)"
+proof -
+  assume "c \<noteq> NULL"
+  thus "tag c = True"
+    using assms unfolding free_def
+    by (meson result.simps(4))
+next
+  assume "c \<noteq> NULL"
+  thus "perm_global c = False"
+    using assms unfolding free_def
+    by (meson result.simps(4))
+next
+  assume "c \<noteq> NULL"
+  thus "offset c = 0"
+    using assms unfolding free_def
+    by (smt (verit, ccfv_SIG) not_None_eq option.simps(4) option.simps(5) 
+        result.distinct(1) t.exhaust t.simps(4) t.simps(5))
+next
+  assume "c \<noteq> NULL"
+  thus "\<exists> m. Mapping.lookup (heap_map h) (block_id c) = Some (Map m) \<and> 
+             bounds m = (base c, base c + len c)"
+    using assms unfolding free_def
+    by (metis assms free_double_free free_incorrect_bounds free_incorrect_cap_offset 
+        free_nonexistant_obj not_Some_eq result.distinct(1) t.exhaust)
+next 
+  assume "c \<noteq> NULL"
+  hence "h' = h \<lparr> heap_map := Mapping.update (block_id c) Freed (heap_map h) \<rparr>"
+    using assms unfolding free_def
+    by (smt (verit, ccfv_SIG) free_nonexistant_obj not_Some_eq option.simps(4) option.simps(5) 
+        prod.inject result.distinct(1) result.exhaust result.inject(1) t.exhaust t.simps(4) t.simps(5))
+  thus "Mapping.lookup (heap_map h') (block_id c) = Some Freed"
+    by fastforce
+next
+  assume "c \<noteq> NULL"
+  thus "cap = c \<lparr> tag := False \<rparr>"
+    using assms unfolding free_def
+    by (smt (verit, ccfv_SIG) not_Some_eq option.simps(4) option.simps(5) prod.inject 
+        result.distinct(1) result.inject(1) t.exhaust t.simps(4) t.simps(5))
+next
+  assume "c = NULL"
+  thus "(h, c) = (h', cap)"
+    using free_null assms 
+    by force
+qed
+
+lemmas free_cond_non_null = free_cond(1) free_cond(2) free_cond(3) free_cond(4) free_cond(5) free_cond(6)
+
+lemma double_free:
+  assumes "free h c = Success (h', cap)"
+    and "cap \<noteq> NULL"
+  shows "free h' cap = Error (C2Err TagViolation)"
+proof -
+  have "cap = c \<lparr> tag := False \<rparr> \<Longrightarrow> tag cap = False"
+    by fastforce
+  thus ?thesis
+    using assms free_cond(6)[where ?h=h and ?c=c and ?h'=h' and ?cap=cap] 
+      free_false_tag[where ?c=cap and ?h=h'] free_cond(7)[where ?h=h and ?c=c and ?h'=h' and ?cap=cap]
+    by blast
+qed
+
+lemma free_next_block:
+  assumes "free h cap = Success (h', cap')"
+  shows "next_block h = next_block h'"
+  proof -
+  consider (null) "cap = NULL" | (non_null) "cap \<noteq> NULL" by blast
+  then show ?thesis
+  proof (cases)
+    case null
+    then show ?thesis 
+      using free_null assms null
+      by simp
+  next
+    case non_null
+    then show ?thesis 
+      using assms free_cond_non_null[OF assms non_null]
+      unfolding free_def
+      by (auto split: option.split_asm t.split_asm)
+  qed
+qed
+
+lemma load_null_error:
+  "load h NULL t = Error (C2Err TagViolation)" 
+  unfolding load_def
+  by simp
+
+lemma load_false_tag:
+  assumes "tag c = False"
+  shows "load h c t = Error (C2Err TagViolation)"
+  unfolding load_def
+  using assms
+  by presburger
+
+lemma load_false_perm_load:
+  assumes "tag c = True"
+    and "perm_load c = False"
+  shows "load h c t = Error (C2Err PermitLoadViolation)"
+  unfolding load_def
+  using assms 
+  by presburger
+
+lemma load_bound_over:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> > base c + len c"
+  shows "load h c t = Error (C2Err LengthViolation)"
+  unfolding load_def
+  using assms 
+  by presburger
+
+lemma load_bound_under:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c < base c"
+  shows "load h c t = Error (C2Err LengthViolation)"
+  unfolding load_def
+  using assms 
+  by presburger
+
+lemma load_misaligned:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> \<noteq> 0"
+  shows "load h c t = Error (C2Err BadAddressViolation)"
+  unfolding load_def
+  using assms 
+  by force
+
+lemma load_nonexistant_obj:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = None"
+  shows "load h c t = Error (LogicErr MissingResource)"
+  unfolding load_def
+  using assms
+  by auto
+
+lemma load_load_after_free:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some Freed"
+  shows "load h c t = Error (LogicErr UseAfterFree)"
+  unfolding load_def
+  using assms
+  by fastforce
+
+lemma load_cap_on_heap_bounds_fail_1:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Cap"
+    and "\<not> is_contiguous_zeros (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "offset c < fst (bounds m)"
+  shows "load h c t = Error (LogicErr BufferOverrun)"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_cap_on_heap_bounds_fail_2:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Cap"
+    and "\<not> is_contiguous_zeros (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "offset c + |t|\<^sub>\<tau> > snd (bounds m)"
+  shows "load h c t = Error (LogicErr BufferOverrun)"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_cap_on_membytes_fail:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Cap"
+    and "\<not> is_contiguous_zeros (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+  shows "load h c t = Success Undef"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_null_cap_on_membytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Cap"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "is_contiguous_zeros (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+  shows "load h c t = Success (Cap_v NULL)"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_u8_on_membytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Uint8"
+  shows "load h c t = Success (Uint8_v (decode_u8_list (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_s8_on_membytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Sint8"
+  shows "load h c t = Success (Sint8_v (decode_s8_list (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_u16_on_membytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Uint16"
+  shows "load h c t = Success (Uint16_v (cat_u16 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_s16_on_membytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Sint16"
+  shows "load h c t = Success (Sint16_v (cat_s16 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_u32_on_membytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Uint32"
+  shows "load h c t = Success (Uint32_v (cat_u32 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_s32_on_membytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Sint32"
+  shows "load h c t = Success (Sint32_v (cat_s32 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_u64_on_membytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Uint64"
+  shows "load h c t = Success (Uint64_v (cat_u64 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_s64_on_membytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Sint64"
+  shows "load h c t = Success (Sint64_v (cat_s64 (retrieve_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>)))"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_not_cap_in_mem:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "\<not> is_cap (content m) (nat (offset c))"
+  shows "load h c t = Success Undef"
+  unfolding load_def retrieve_tval_def 
+  using assms
+  by fastforce
+
+lemma load_not_contiguous_cap_in_mem:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "is_cap (content m) (nat (offset c))"
+    and "mc = get_cap (content m) (nat (offset c))"
+    and "\<not> is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t \<noteq> Uint8"
+    and "t \<noteq> Sint8"
+  shows "load h c t = Success Undef"
+  unfolding load_def retrieve_tval_def Let_def
+  using assms
+  by (clarsimp split: cctype.split)
+
+lemma load_cap_frag_u8:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "is_cap (content m) (nat (offset c))"
+    and "mc = get_cap (content m) (nat (offset c))"
+    and "t = Uint8"
+    and "tagval = the (Mapping.lookup (tags m) (cap_offset (nat (offset c))))"
+    and "tg = (case perm_cap_load c of False \<Rightarrow> False | True \<Rightarrow> tagval)"
+    and "nth_frag = of_nth (the (Mapping.lookup (content m) (nat (offset c))))"
+  shows "load h c t = Success (Cap_v_frag (mem_capability.extend mc \<lparr> tag = False \<rparr>) nth_frag)"
+  unfolding load_def retrieve_tval_def Let_def
+  using assms
+  by (clarsimp simp add: sizeof_def split: cctype.split)
+
+
+lemma load_cap_frag_s8:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "is_cap (content m) (nat (offset c))"
+    and "mc = get_cap (content m) (nat (offset c))"
+    and "\<not> is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Sint8"
+    and "tagval = the (Mapping.lookup (tags m) (cap_offset (nat (offset c))))"
+    and "tg = (case perm_cap_load c of False \<Rightarrow> False | True \<Rightarrow> tagval)"
+    and "nth_frag = of_nth (the (Mapping.lookup (content m) (nat (offset c))))"
+  shows "load h c t = Success (Cap_v_frag (mem_capability.extend mc \<lparr> tag = False \<rparr>) nth_frag)"
+  unfolding load_def retrieve_tval_def Let_def
+  using assms
+  by (clarsimp simp add: sizeof_def split: cctype.split)
+
+lemma load_bytes_on_capbytes_fail:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "is_cap (content m) (nat (offset c))"
+    and "mc = get_cap (content m) (nat (offset c))"
+    and "is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t \<noteq> Cap"
+    and "t \<noteq> Uint8"
+    and "t \<noteq> Sint8"
+  shows "load h c t = Success Undef"
+  unfolding load_def retrieve_tval_def Let_def
+  using assms 
+  by (clarsimp split: cctype.split)
+
+lemma load_cap_on_capbytes:
+  assumes "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)"
+    and "\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+    and "is_cap (content m) (nat (offset c))"
+    and "mc = get_cap (content m) (nat (offset c))"
+    and "is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau>"
+    and "t = Cap"
+    and "tagval = the (Mapping.lookup (tags m) (nat (offset c)))"
+    and "tg = (case perm_cap_load c of False \<Rightarrow> False | True \<Rightarrow> tagval)"
+  shows "load h c t = Success (Cap_v (mem_capability.extend mc \<lparr> tag = tg \<rparr>))"
+  unfolding load_def retrieve_tval_def 
+  using assms 
+  by (clarsimp split: cctype.split) 
+    (smt (verit) assms(5) nat_int nat_less_le nat_mod_distrib of_nat_0_le_iff semiring_1_class.of_nat_0)
+
+lemma load_cond_hard_cap:
+  assumes "load h c t = Success ret"
+  shows "tag c = True"
+    and "perm_load c = True"
+    and "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |t|\<^sub>\<tau> = 0"
+proof -
+  show "tag c = True"
+    using assms result.distinct(1) 
+    unfolding load_def
+    by metis
+next
+  show "perm_load c = True"
+    using assms result.distinct(1) 
+    unfolding load_def
+    by metis
+next
+  show "offset c + |t|\<^sub>\<tau> \<le> base c + len c"
+    using assms result.distinct(1) linorder_not_le
+    unfolding load_def 
+    by metis
+next 
+  show "offset c \<ge> base c"
+    using assms result.distinct(1) linorder_not_le
+    unfolding load_def 
+    by metis
+next
+  show "offset c mod |t|\<^sub>\<tau> = 0"
+    using assms result.distinct(1)
+    unfolding load_def 
+    by metis
+qed
+
+lemma load_cond_bytes:
+  assumes "load h c t = Success ret"
+    and "ret \<noteq> Undef"
+    and "\<forall> x. ret \<noteq> Cap_v x"
+    and "\<forall> x n . ret \<noteq> Cap_v_frag x n"
+  shows "\<exists> m. Mapping.lookup (heap_map h) (block_id c) = Some (Map m)
+            \<and> offset c \<ge> fst (bounds m) 
+            \<and> offset c + |t|\<^sub>\<tau> \<le> snd (bounds m)
+            \<and> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>"
+proof (cases ret)
+  case (Cap_v x9)
+  thus ?thesis 
+    using assms(3)
+    by blast
+next
+  case (Cap_v_frag x101 x102)
+  thus ?thesis
+    using assms(4)
+    by blast
+next
+  case Undef
+  thus ?thesis
+    using assms(2)
+    by simp
+(* WARNING: takes quite some time to prove the remaining cases *)
+qed (insert assms(1) load_cond_hard_cap[where ?h=h and ?c=c and ?t=t and ?ret=ret], clarsimp,
+    unfold load_def retrieve_tval_def, clarsimp split: option.split_asm t.split_asm,
+    smt (z3) assms(2) assms(3) assms(4) cctype.exhaust cctype.simps(73) cctype.simps(74) 
+    cctype.simps(75) cctype.simps(76) cctype.simps(77) cctype.simps(78) cctype.simps(79) 
+    cctype.simps(80) cctype.simps(81) result.distinct(1) result.inject(1))+
+
+lemma load_cond_cap:
+  assumes "load h c t = Success ret"
+    and "\<exists> x. ret = Cap_v x"
+  shows "\<exists> m mc tagval tg. 
+              Mapping.lookup (heap_map h) (block_id c) = Some (Map m) \<and>
+              offset c \<ge> fst (bounds m) \<and>
+              offset c + |t|\<^sub>\<tau> \<le> snd (bounds m) \<and>
+              (is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau> \<longrightarrow> 
+               is_contiguous_zeros (content m) (nat (offset c)) |t|\<^sub>\<tau> \<and>
+               ret = Cap_v NULL) \<and>
+              (\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>  \<longrightarrow>
+               is_cap (content m) (nat (offset c)) \<and>
+               mc = get_cap (content m) (nat (offset c)) \<and>
+               is_contiguous_cap (content m) mc (nat (offset c)) |t|\<^sub>\<tau> \<and>
+               t = Cap \<and>
+               tagval = the (Mapping.lookup (tags m) (nat (offset c))) \<and> 
+               tg = (case perm_cap_load c of False \<Rightarrow> False | True \<Rightarrow> tagval))"
+  using assms(2)
+proof (cases ret)
+  case (Cap_v ca)
+  show ?thesis
+    by (insert assms load_cond_hard_cap[where ?h=h and ?c=c and ?t=t and ?ret=ret], clarsimp,
+        unfold load_def retrieve_tval_def Let_def, clarsimp split: option.split_asm,
+        clarsimp split: t.split_asm, subgoal_tac "int (fst (bounds x2a)) \<le> int |t|\<^sub>\<tau> * q \<and> 
+        int |t|\<^sub>\<tau> * q + int |t|\<^sub>\<tau> \<le> int (snd (bounds x2a))", clarsimp split: cctype.split_asm, safe; force?)
+        (metis ccval.distinct(105) ccval.distinct(107) ccval.inject(9) is_cap.elims(2) linorder_not_le result.distinct(1))+
+qed blast+
+
+lemma load_cond_cap_frag:
+  assumes "load h c t = Success ret"
+    and "\<exists> x n. ret = Cap_v_frag x n"
+  shows "\<exists> m mc tagval tg nth_frag. 
+              Mapping.lookup (heap_map h) (block_id c) = Some (Map m) \<and>
+              offset c \<ge> fst (bounds m) \<and>
+              offset c + |t|\<^sub>\<tau> \<le> snd (bounds m) \<and>
+              (is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau> \<longrightarrow> 
+               is_contiguous_zeros (content m) (nat (offset c)) |t|\<^sub>\<tau> \<and>
+               ret = Cap_v NULL) \<and>
+              (\<not> is_contiguous_bytes (content m) (nat (offset c)) |t|\<^sub>\<tau>  \<longrightarrow>
+               is_cap (content m) (nat (offset c)) \<and>
+               mc = get_cap (content m) (nat (offset c)) \<and>
+               (t = Uint8 \<or> t = Sint8) \<and>
+               tagval = the (Mapping.lookup (tags m) (nat (offset c))) \<and> 
+               tg = (case perm_cap_load c of False \<Rightarrow> False | True \<Rightarrow> tagval) \<and>
+               nth_frag = of_nth (the (Mapping.lookup (content m) (nat (offset c)))))"
+  using assms(2)
+proof (cases ret)
+  case (Cap_v_frag x101 x102)
+  show ?thesis 
+    by (insert assms load_cond_hard_cap[where ?h=h and ?c=c and ?t=t and ?ret=ret], clarsimp,
+        unfold load_def retrieve_tval_def Let_def, clarsimp split: option.split_asm,
+        clarsimp split: t.split_asm if_split_asm cctype.split_asm)
+  qed (simp add: type_uniq assms(2))+ 
+
 
 lemma store_null_error:
   "store h NULL v = Error (C2Err TagViolation)" 
@@ -2351,6 +3179,34 @@ lemma store_store_after_free:
   using assms
   by (clarsimp split: ccval.split)
 
+lemma store_bound_violated_1:
+  assumes "tag c = True"
+    and "perm_store c = True"
+    and "\<And> cv. \<lbrakk> v = Cap_v cv; tag cv \<rbrakk> \<Longrightarrow> perm_cap_store c \<and> (perm_cap_store_local c \<or> perm_global cv)"
+    and "offset c + |memval_type v|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |memval_type v|\<^sub>\<tau> = 0"
+    and "v \<noteq> Undef"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c < fst (bounds m)"
+  shows "store h c v = Error (LogicErr BufferOverrun)"
+  unfolding store_def using assms
+  by (clarsimp split: ccval.split)
+
+lemma store_bound_violated_2:
+  assumes "tag c = True"
+    and "perm_store c = True"
+    and "\<And> cv. \<lbrakk> v = Cap_v cv; tag cv \<rbrakk> \<Longrightarrow> perm_cap_store c \<and> (perm_cap_store_local c \<or> perm_global cv)"
+    and "offset c + |memval_type v|\<^sub>\<tau> \<le> base c + len c"
+    and "offset c \<ge> base c"
+    and "offset c mod |memval_type v|\<^sub>\<tau> = 0"
+    and "v \<noteq> Undef"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c + |memval_type v|\<^sub>\<tau> > snd (bounds m)"
+  shows "store h c v = Error (LogicErr BufferOverrun)"
+  unfolding store_def using assms
+  by (clarsimp split: ccval.split)
+
 lemma store_success:
   assumes "tag c = True"
     and "perm_store c = True"
@@ -2360,6 +3216,8 @@ lemma store_success:
     and "offset c mod |memval_type v|\<^sub>\<tau> = 0"
     and "v \<noteq> Undef"
     and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "offset c \<ge> fst (bounds m)"
+    and "offset c + |memval_type v|\<^sub>\<tau> \<le> snd (bounds m)"
   shows "\<exists> ret. store h c v = Success ret \<and>
                 next_block ret = next_block h \<and>
                 heap_map ret = Mapping.update (block_id c) (Map (store_tval m (nat (offset c)) v)) (heap_map h)"
@@ -2402,19 +3260,58 @@ next
     by (meson linorder_not_le result.simps(4))
 qed
 
+lemma store_cond_bytes_bounds:
+  assumes "store h c val = Success h'"
+    and "\<forall> x. val \<noteq> Cap_v x"
+shows "\<exists> m. Mapping.lookup (heap_map h) (block_id c) = Some (Map m)
+          \<and> offset c \<ge> fst (bounds m) 
+          \<and> offset c + |memval_type val|\<^sub>\<tau> \<le> snd (bounds m)"
+using store_cond_hard_cap[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)] assms
+  unfolding store_def
+  by (simp split: ccval.split_asm; simp split: option.split_asm t.split_asm)
+    (metis nle_le order.strict_iff_not result.distinct(1))+
+
+
 lemma store_cond_bytes:
   assumes "store h c val = Success h'"
     and "\<forall> x. val \<noteq> Cap_v x"
-  shows "val \<noteq> Undef"
-    and "\<exists> m. Mapping.lookup (heap_map h') (block_id c) = Some (Map m)"
+  shows "\<exists> m. Mapping.lookup (heap_map h') (block_id c) = Some (Map m)
+          \<and> offset c \<ge> fst (bounds m) 
+          \<and> offset c + |memval_type val|\<^sub>\<tau> \<le> snd (bounds m)"
   using store_cond_hard_cap[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)] assms
   unfolding store_def
-  by (simp split: ccval.split_asm; simp split: option.split_asm t.split_asm, fastforce?)+
+  by (simp split: ccval.split_asm; simp split: option.split_asm t.split_asm)
+    (auto split: if_split_asm simp add: store_tval_def)
+
+lemma store_cond_cap_bounds:
+  assumes "store h c val = Success h'"
+    and "val = Cap_v x"
+shows "\<exists> m. Mapping.lookup (heap_map h) (block_id c) = Some (Map m)
+          \<and> offset c \<ge> fst (bounds m) 
+          \<and> offset c + |memval_type val|\<^sub>\<tau> \<le> snd (bounds m)"
+  using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)]
+    store_cond_hard_cap(3)[where ?h=h and ?c=c and ?v=val and ?ret=h' and ?cv=x, OF assms(1)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)]
+    assms
+  apply (simp split: ccval.split)
+  apply (unfold store_def)
+  apply clarsimp
+  apply (subgoal_tac "\<not>(\<not> perm_cap_store c \<and> tag x) \<and> 
+                      \<not>(\<not> perm_cap_store_local c \<and> tag x \<and> \<not> perm_global x)"; blast?)
+  apply clarsimp
+  apply (simp split: option.split_asm t.split_asm) 
+  apply (metis linorder_not_le result.distinct(1))
+  done
 
 lemma store_cond_cap:
   assumes "store h c val = Success h'"
     and "val = Cap_v v"
-  shows "\<exists> m. Mapping.lookup (heap_map h') (block_id c) = Some (Map m)"
+  shows "\<exists> m. Mapping.lookup (heap_map h') (block_id c) = Some (Map m)
+          \<and> offset c \<ge> fst (bounds m) 
+          \<and> offset c + |memval_type val|\<^sub>\<tau> \<le> snd (bounds m)"
   using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)]
     store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)]
     store_cond_hard_cap(3)[where ?h=h and ?c=c and ?v=val and ?ret=h' and ?cv=v, OF assms(1)]
@@ -2427,9 +3324,32 @@ lemma store_cond_cap:
   apply clarsimp
   apply (subgoal_tac "\<not>(\<not> perm_cap_store c \<and> tag v) \<and> 
                       \<not>(\<not> perm_cap_store_local c \<and> tag v \<and> \<not> perm_global v)"; blast?)
-   apply clarsimp
-   apply (simp split: option.split_asm t.split_asm)
-   apply force
+  apply clarsimp
+  apply (simp split: option.split_asm t.split_asm)
+  apply (case_tac "int |Cap|\<^sub>\<tau> * q < int (fst (bounds x2a)) \<or> 
+                   int (snd (bounds x2a)) < int |Cap|\<^sub>\<tau> * q + int |Cap|\<^sub>\<tau>"; force?)
+  apply (simp add: store_tval_def, force)
+  done
+
+lemma store_cond:
+  assumes "store h c val = Success h'"
+  shows "\<exists> m. Mapping.lookup (heap_map h') (block_id c) = Some (Map m)
+          \<and> offset c \<ge> fst (bounds m) 
+          \<and> offset c + |memval_type val|\<^sub>\<tau> \<le> snd (bounds m)"
+  using store_cond_bytes[OF assms(1)] store_cond_cap[OF assms(1)]
+  by blast
+
+lemma store_bounds_preserved:
+  assumes "store h c v = Success h'"
+    and "Mapping.lookup (heap_map h) (block_id c) = Some (Map m)"
+    and "Mapping.lookup (heap_map h') (block_id c) = Some (Map m')"
+  shows "bounds m = bounds m'"
+  using assms store_cond_hard_cap[OF assms(1)] unfolding store_def
+  apply (simp split: ccval.split_asm)
+           prefer 9
+           apply (subgoal_tac "\<not>(\<not> perm_cap_store c \<and> tag x9) \<and> 
+                      \<not>(\<not> perm_cap_store_local c \<and> tag x9 \<and> \<not> perm_global x9)"; blast?)
+           apply (simp split: if_split_asm add: store_tval_def, (auto)[1], (auto)[1])+
   done
 
 lemma store_cond_cap_frag:
@@ -2438,28 +3358,242 @@ lemma store_cond_cap_frag:
   shows "\<exists> m. Mapping.lookup (heap_map h') (block_id c) = Some (Map m)"
   using store_cond_hard_cap[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)] assms
   unfolding store_def
-  by (simp split: ccval.split_asm; simp split: option.split_asm t.split_asm, fastforce?)+
+  by (simp split: ccval.split_asm; simp split: option.split_asm t.split_asm) 
+    (metis Mapping.lookup_update heap.select_convs(2) heap.surjective heap.update_convs(2) 
+      result.distinct(1) result.sel(1))
 
-lemma load_after_store_prim:
+lemma store_undef_false:
+  assumes "store h c Undef = Success ret"
+  shows "False"
+  using store_cond_hard_cap[where ?h=h and ?c=c and ?v="Undef" and ?ret=ret, OF assms] assms
+  unfolding store_def
+  by simp
+
+lemma load_after_alloc_size_fail:
+  assumes "alloc h c s = Success (h', cap)"
+    and "|t|\<^sub>\<tau> > s"
+  shows "load h' cap t = Error (C2Err LengthViolation)"
+proof -
+  have "tag cap = True"
+    using assms alloc_def
+    by auto
+  moreover have "perm_load cap = True"
+    using assms alloc_def
+    by force
+  moreover have "base cap = 0"
+    using assms alloc_def
+    by fastforce
+  moreover have "len cap = s"
+    using assms alloc_def 
+    by auto
+  ultimately show ?thesis 
+    using assms load_def by auto
+qed
+
+
+subsubsection \<open>Good Variable Laws\<close>
+text \<open>The properties defined above are intermediate results. The real properties that govern the
+      correctness are the \textit{good variable} laws. The most important ones are:
+      \begin{itemize}
+          \item load after alloc
+          \item load after free
+          \item load after store
+      \end{itemize}
+      The \textit{load after store} case requires particular attention. For disjoint cases within
+      the same block (refer to load\_after\_store\_disjoint\_2 and load\_after\_store\_disjoint\_3),
+      extra attention must be paid to the tagged memory, where the updated tag may occur at a location
+      specified \textit{before} whatever was given by the capability offset. This is why
+      the lemma retrieve\_stored\_tval\_disjoint\_2 requires an additional constraint where
+      capability values are aligned. Of course, this is not a problem for 
+      load\_after\_store\_disjoint\_3 since the capability conditions state that offsets must be aligned.
+      
+      For the compatible case, as stated in the paper, extra care has to be put in the cases where
+      we load capabilities and capability fragments. For this, we have three cases:
+      \begin{itemize}
+          \item load\_after\_store\_prim
+          \item load\_after\_store\_cap
+          \item load\_after\_store\_cap\_frag
+      \end{itemize}
+      The load\_after\_store\_prim case returns the exact value that was stored. 
+      The load\_after\_store\_cap case returns the stored capability with the tag bit dependent on
+      the permissions of the capability provided to load. Finally, the load\_after\_store\_cap\_frag
+      case returns the capability fragment with the tag bit falsifed.
+      
+      Finally, we note that there are slight differences to the CompCert version of the Good Variable
+      Law due to the differences in the type and value system. Thus, there are cases in the
+      CompCert version that are trivial in our case.\<close>
+
+theorem load_after_alloc_1:
+  assumes "alloc h c s = Success (h', cap)"
+    and "|t|\<^sub>\<tau> \<le> s"
+  shows "load h' cap t = Success Undef"
+proof -
+  let ?m = "\<lparr>bounds = (0, s), content = Mapping.empty, tags = Mapping.empty\<rparr>"
+  have "tag cap = True"
+    using assms(1) alloc_def 
+    by fastforce
+  moreover have "perm_load cap = True"
+    using assms(1) alloc_def
+    by fastforce
+  moreover have "offset cap + |t|\<^sub>\<tau> \<le> base cap + len cap"
+    using assms alloc_def 
+    by fastforce
+  moreover have "offset cap \<ge> base cap"
+    using assms alloc_def
+    by fastforce
+  moreover have "offset cap mod |t|\<^sub>\<tau> = 0"
+    using assms alloc_def
+    by fastforce
+  moreover have "Mapping.lookup (heap_map h') (block_id cap) = Some (Map ?m)"
+    using assms alloc_def
+    by fastforce
+  moreover have "offset cap \<ge> fst (bounds ?m)"
+    using assms alloc_def
+    by fastforce
+  moreover have "offset cap + |t|\<^sub>\<tau> \<le> snd (bounds ?m)"
+    using assms alloc_def
+    by fastforce
+  moreover have "\<not> is_contiguous_bytes (content ?m) (nat (offset cap)) |t|\<^sub>\<tau>"
+  proof -
+    have "\<exists> n. |t|\<^sub>\<tau> = Suc n"
+      using not0_implies_Suc sizeof_nonzero 
+      by force
+    thus ?thesis 
+      using assms alloc_def
+      by fastforce
+  qed
+  moreover have "\<not> is_cap (content ?m) (nat (offset cap))"
+    by simp
+  ultimately show ?thesis
+    using load_not_cap_in_mem
+    by presburger
+qed
+
+theorem load_after_alloc_2:
+  assumes "alloc h c s = Success (h', cap)"
+    and "|t|\<^sub>\<tau> \<le> s"
+    and "block_id cap \<noteq> block_id cap'"
+  shows "load h' cap' t = load h cap' t"
+  using assms unfolding alloc_def load_def 
+  by force
+
+theorem load_after_free_1:
+  assumes "free h c = Success (h', cap)"
+  shows "load h cap t = Error (C2Err TagViolation)"
+proof -
+  consider (null) "c = NULL" | (non_null) "c \<noteq> NULL" by blast
+  then show ?thesis
+  proof (cases)
+    case null
+    moreover hence "c = cap"
+      using assms free_null
+      by force
+    ultimately show ?thesis
+      using load_null_error assms
+      by blast
+  next
+    case non_null
+    hence "cap = c \<lparr> tag := False \<rparr>"
+      using assms free_cond(6)[where ?h=h and ?c=c and ?h'=h' and ?cap=cap] 
+      by presburger
+    moreover hence "tag cap = False"
+      using assms
+      by force
+    ultimately show ?thesis using load_false_tag
+      by blast
+  qed
+qed
+
+theorem load_after_free_2:
+  assumes "free h c = Success (h', cap)"
+    and "block_id cap \<noteq> block_id cap'"
+  shows "load h cap' t = load h' cap' t"
+  using assms free_cond[OF assms(1)] 
+  unfolding free_def load_def
+  by fastforce
+
+theorem load_after_store_disjoint_1:
   assumes "store h c val = Success h'"
-    and "val \<noteq> Undef"
+    and "block_id c \<noteq> block_id c'"
+  shows "load h c' t = load h' c' t"
+  using assms store_cond_hard_cap[OF assms(1)] 
+  unfolding store_def load_def
+    (* WARNING: This takes a long time. *)
+  by (clarsimp split: ccval.split_asm option.split_asm t.split_asm if_split_asm)
+
+theorem load_after_store_disjoint_2:
+  assumes "store h c v = Success h'"
+    and "offset c' + |t|\<^sub>\<tau> \<le> offset c"
+  shows "load h' c' t = load h c' t"
+  using assms store_cond[OF assms(1)]
+    store_cond_hard_cap[OF assms(1)]
+  apply (clarsimp simp add: store_def load_def split: if_split_asm option.split t.split option.split_asm t.split_asm)
+  apply (rule conjI, rule impI)
+   apply (smt (z3) lookup_update' option.discI)
+  apply (rule allI, rule conjI, rule impI)
+   apply (simp add: lookup_update')
+  apply (rule allI, rule conjI, rule impI)
+   apply (smt (z3) Mapping.lookup_update Mapping.lookup_update_neq option.distinct(1) option.inject 
+      store_tval_disjoint_bounds t.distinct(1) t.inject)
+  apply (rule conjI, rule impI)
+   apply (smt (z3) Mapping.lookup_update Mapping.lookup_update_neq option.distinct(1) option.sel 
+      store_tval_disjoint_bounds t.distinct(1) t.sel)
+  apply (intro impI conjI)
+   apply (metis (no_types, lifting) Mapping.lookup_update_neq option.distinct(1))
+  apply (rule allI, rule conjI, rule impI)
+   apply (metis (no_types, lifting) lookup_update' option.inject t.discI)
+  apply (rule allI, rule conjI, rule impI)
+   apply (smt (z3) Mapping.lookup_update Mapping.lookup_update_neq option.inject 
+      store_tval_disjoint_bounds t.inject)
+  apply (intro impI conjI)
+  apply (metis (no_types, lifting) lookup_update' option.sel store_tval_disjoint_bounds t.sel)
+  using retrieve_stored_tval_disjoint_1 
+  apply (smt (z3) int_nat_eq lookup_update' of_nat_0_le_iff of_nat_add of_nat_le_iff option.sel t.sel)
+  done
+
+theorem load_after_store_disjoint_3:
+  assumes "store h c v = Success h'"
+    and "offset c + |memval_type v|\<^sub>\<tau> \<le> offset c'"
+  shows "load h' c' t = load h c' t"
+  using assms store_cond[OF assms(1)]
+    store_cond_hard_cap[OF assms(1)]
+  apply (clarsimp simp add: store_def load_def split: if_split_asm option.split t.split option.split_asm t.split_asm)
+  apply (rule conjI, rule impI)
+   apply (smt (z3) lookup_update' option.discI)
+  apply (rule allI, rule conjI, rule impI)
+   apply (simp add: lookup_update')
+  apply (rule allI, rule conjI, rule impI)
+   apply (smt (z3) Mapping.lookup_update Mapping.lookup_update_neq option.distinct(1) option.inject 
+      store_tval_disjoint_bounds t.distinct(1) t.inject)
+  apply (rule conjI, rule impI)
+   apply (smt (z3) Mapping.lookup_update Mapping.lookup_update_neq option.distinct(1) option.sel 
+      store_tval_disjoint_bounds t.distinct(1) t.sel)
+  apply (intro impI conjI)
+   apply (metis (no_types, lifting) Mapping.lookup_update_neq option.distinct(1))
+  apply (rule allI, rule conjI, rule impI)
+   apply (metis (no_types, lifting) lookup_update' option.inject t.discI)
+  apply (rule allI, rule conjI, rule impI)
+   apply (smt (z3) Mapping.lookup_update Mapping.lookup_update_neq option.inject 
+      store_tval_disjoint_bounds t.inject)
+  apply (intro impI conjI)
+   apply (metis (no_types, lifting) lookup_update' option.sel store_tval_disjoint_bounds t.sel)
+  using retrieve_stored_tval_disjoint_2
+  apply (smt (z3) int_nat_eq lookup_update' memval_type.simps nat_int nat_mod_distrib of_nat_add 
+      of_nat_le_0_iff of_nat_le_iff option.sel t.sel)
+  done
+
+theorem load_after_store_prim:
+  assumes "store h c val = Success h'"
     and "\<forall> v. val \<noteq> Cap_v v"
     and "\<forall> v n. val \<noteq> Cap_v_frag v n"
     and "perm_load c = True"
   shows "load h' c (memval_type val) = Success val"
   using assms(1) store_cond_hard_cap[where ?h=h and ?c=c and ?v=val and ?ret=h', OF assms(1)]
-  by (clarsimp, simp split: ccval.split add: assms; safe; clarsimp)
-    (simp add: load_def assms split: option.split t.split; safe, (insert store_cond_bytes(2))[1], blast,
-      metis assms(3) option.sel store_cond_bytes(2) t.distinct(1),
-      (unfold store_def, simp split: option.split_asm t.split_asm, clarsimp)[1],
-      (insert retrieve_stored_tval_prim)[1], fastforce,
-      (insert store_cond_bytes(2))[1], blast,
-      metis assms(3) option.sel store_cond_bytes(2) t.distinct(1),
-      (unfold store_def, simp split: option.split_asm t.split_asm, clarsimp)[1],
-      (insert retrieve_stored_tval_prim)[1], fastforce)+
+    store_cond_bytes[OF assms(1) assms(2)] retrieve_stored_tval_any_perm[OF _ _ assms(3)]
+  by (clarsimp simp add: store_def load_def split: if_split_asm option.split_asm t.split_asm ccval.split)
+    (safe; clarsimp simp add: assms)
 
-
-lemma load_after_store_cap:
+theorem load_after_store_cap:
   assumes "store h c (Cap_v v) = Success h'"
     and "perm_load c = True"
   shows "load h' c (memval_type (Cap_v v)) = Success (Cap_v (v \<lparr> tag := case perm_cap_load c of False => False | True => tag v \<rparr>))"
@@ -2470,53 +3604,66 @@ lemma load_after_store_cap:
     store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v="Cap_v v" and ?ret=h', OF assms(1)]
     store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v="Cap_v v" and ?ret=h', OF assms(1)]
     assms
+    retrieve_stored_tval_cap[where ?val="Cap_v v" and ?v=v, OF refl]
+    retrieve_stored_tval_cap_no_perm_cap_load[where ?val="Cap_v v" and ?v=v, OF refl]
   apply (clarsimp, simp split: ccval.split; safe; clarsimp)
   apply (unfold load_def; clarsimp split: option.split)
-  apply (simp split: t.split, safe)
-      apply (blast dest: store_cond_cap)
-     apply (metis option.sel store_cond_cap t.distinct(1))
-    apply ((unfold store_def)[1], clarsimp)
-    apply (subgoal_tac "\<not>(\<not> perm_cap_store c \<and> tag v) \<and> 
+  apply (simp split: t.split, safe) 
+          apply ((unfold sizeof_def, simp)[1])+
+     apply (blast dest: store_cond_cap)
+    apply (metis option.sel store_cond_cap t.distinct(1))
+   apply (unfold sizeof_def, simp)[1]
+   apply ((unfold store_def)[1], clarsimp)
+   apply (subgoal_tac "\<not>(\<not> perm_cap_store c \<and> tag v) \<and> 
                       \<not>(\<not> perm_cap_store_local c \<and> tag v \<and> \<not> perm_global v)"; presburger?)
-    apply clarsimp
-    apply (simp split: option.split_asm t.split_asm)
-    apply clarsimp
-    apply (cases "perm_cap_load c")
-     apply clarsimp
-     apply (smt (z3) cctype.exhaust cctype.simps(73) cctype.simps(74) cctype.simps(75) cctype.simps(76) 
-     cctype.simps(77) cctype.simps(78) cctype.simps(79) cctype.simps(80) ccval.distinct(105) 
-     ccval.distinct(107) is_cap.elims(2) is_contiguous_bytes.simps(2) memval_size_cap 
-     retrieve_stored_tval_cap retrieve_tval_def stored_tval_is_cap suc_of_32)
-    apply clarsimp 
-    apply (insert retrieve_stored_tval_cap_no_perm_cap_load, force)
-   apply (meson assms(1) store_cond_cap)
-  apply (metis assms(1) option.inject store_cond_cap t.discI)
-  apply (unfold store_def, simp split: option.split_asm t.split_asm)[1]
-  apply (subgoal_tac "\<not>(\<not> perm_cap_store c \<and> tag v) \<and> 
+   apply (clarsimp split: if_split_asm)
+   apply (simp split: option.split_asm t.split_asm if_split_asm)
+   apply clarsimp 
+    apply (smt (verit, best) \<open>offset c + int |memval_type (Cap_v v)|\<^sub>\<tau> \<le> int (base c + len c)\<close> 
+     \<open>offset c mod int |memval_type (Cap_v v)|\<^sub>\<tau> = 0\<close> assms(1) ccval.distinct(107) lookup_update' 
+     option.sel result.inject(1) result.simps(4) store_bound_violated_2 store_cond_cap 
+     store_cond_hard_cap(3) store_success t.sel)
+apply (unfold sizeof_def, simp)[1]
+   apply ((unfold store_def)[1], clarsimp)
+   apply (subgoal_tac "\<not>(\<not> perm_cap_store c \<and> tag v) \<and> 
                       \<not>(\<not> perm_cap_store_local c \<and> tag v \<and> \<not> perm_global v)"; presburger?)
-  apply clarsimp
-  apply (clarsimp split: option.split_asm t.split_asm bool.split)
-  apply (insert retrieve_stored_tval_cap, force)
+   apply (clarsimp split: if_split_asm)
+   apply (simp split: option.split_asm t.split_asm if_split_asm)
+  apply (clarsimp simp add: sizeof_def) 
+  apply (smt (verit, ccfv_SIG) Mapping.lookup_update assms(1) heap.select_convs(2) heap.surjective 
+     heap.update_convs(2) store_bounds_preserved) 
+  apply (simp add: store_def)
+   apply (subgoal_tac "\<not>(\<not> perm_cap_store c \<and> tag v) \<and> 
+                      \<not>(\<not> perm_cap_store_local c \<and> tag v \<and> \<not> perm_global v)"; presburger?)
+  apply (clarsimp split: if_split_asm option.split_asm t.split_asm) 
+  apply (cases "perm_cap_load c"; clarsimp)
   done
 
-lemma load_after_store_cap_frag_1:
+theorem load_after_store_cap_frag:
   assumes "store h c (Cap_v_frag c' n) = Success h'"
     and "perm_load c"
   shows "load h' c (memval_type (Cap_v_frag c' n)) = Success (Cap_v_frag (c' \<lparr> tag := False \<rparr>) n)"
   using assms(1) store_cond_hard_cap[where ?h=h and ?c=c and ?v="Cap_v_frag c' n" and ?ret=h', OF assms(1)]
-  unfolding store_def
-  apply (simp split:option.split_asm t.split_asm add: load_def assms(2), safe; simp)
-  using retrieve_stored_tval_cap_frag[where ?val="Cap_v_frag c' n" and ?c=c' and ?n=n 
+using retrieve_stored_tval_cap_frag[where ?val="Cap_v_frag c' n" and ?c=c' and ?n=n 
       and ?off="nat (offset c)" and ?b="(perm_cap_load c)", OF refl, simplified] 
-  apply fastforce
+  unfolding store_def
+  apply (simp split:option.split_asm t.split_asm option.split t.split add: load_def assms(2), safe; simp)
+  using assms(1) store_cond_cap_frag apply blast
+     apply (metis assms(1) option.sel store_cond_cap_frag t.distinct(1))
+    apply (metis assms(1) result.simps(4) store_bounds_preserved)
+   apply (metis assms(1) result.simps(4) store_bounds_preserved)
+  apply (simp split: if_split_asm)
+  apply (metis Mapping.lookup_update heap.select_convs(2) heap.surjective heap.update_convs(2) 
+      option.sel t.sel)
   done
 
-lemma store_undef_false:
-  assumes "store h c Undef = Success ret"
-  shows "False"
-  using store_cond_hard_cap[where ?h=h and ?c=c and ?v="Undef" and ?ret=ret, OF assms] assms
-  unfolding store_def
-  by simp
+subsubsection \<open>Miscellaneous Laws\<close>
+
+lemma free_after_alloc:
+  assumes "alloc h c s = Success (h', cap)"
+  shows "\<exists>! ret. free h' cap = Success ret"
+  using alloc_def assms free_non_null_correct alloc_no_null_ret
+  by force 
 
 lemma store_after_alloc:
   assumes "alloc h True s = Success (h', cap)"
@@ -2554,166 +3701,18 @@ lemma store_after_alloc:
   moreover have "Mapping.lookup (heap_map h') (block_id cap) = Some (Map ?m)"
     using assms alloc_def
     by fastforce
+  moreover have "offset cap \<ge> fst (bounds ?m)"
+    using assms alloc_def
+    by fastforce
+  moreover have "offset cap + |memval_type v|\<^sub>\<tau> \<le> snd (bounds ?m)"
+    using assms alloc_def
+    by fastforce
   ultimately show ?thesis
     using store_success[where ?c=cap and ?v=v and 
         ?m="\<lparr>bounds = (0, s), content = Mapping.empty, tags = Mapping.empty\<rparr>" and ?h=h'] assms(3)
     by simp (blast) 
 qed
 
-(* Here we define helper recursive actions *)
-definition u8_cast :: "block ccval \<Rightarrow> block ccval"
-  where
-  "u8_cast v \<equiv>
-     case v of Uint8_v  v \<Rightarrow> Uint8_v v
-             | Sint8_v  v \<Rightarrow> Uint8_v (UCAST(8 signed \<rightarrow> 8) v)
-             | Uint16_v v \<Rightarrow> Uint8_v (UCAST(16 \<rightarrow> 8) v)
-             | Sint16_v v \<Rightarrow> Uint8_v (UCAST(16 signed \<rightarrow> 8) v)
-             | Uint32_v v \<Rightarrow> Uint8_v (UCAST(32 \<rightarrow> 8) v)
-             | Sint32_v v \<Rightarrow> Uint8_v (UCAST(32 signed \<rightarrow> 8) v)
-             | Uint64_v v \<Rightarrow> Uint8_v (UCAST(64 \<rightarrow> 8) v)
-             | Sint64_v v \<Rightarrow> Uint8_v (UCAST(64 signed \<rightarrow> 8) v)
-             | Cap_v    v \<Rightarrow> Cap_v_frag v 31
-             | Cap_v_frag v n \<Rightarrow> Cap_v_frag v n
-             | Undef \<Rightarrow> Undef"
-
-lemma u8_cast_size:
-  "v \<noteq> Undef \<Longrightarrow> |memval_type (u8_cast v)|\<^sub>\<tau> = 1"
-  by (simp add: sizeof_def u8_cast_def split: ccval.split)
-
-lemma zero_not_undef:
-  "Uint8_v 0 \<noteq> Undef"
-  by simp
-
-lemma zero_size:
-  "|memval_type (Uint8_v 0)|\<^sub>\<tau> = 1"
-  unfolding sizeof_def 
-  by fastforce
-
-primrec memset_prim :: "heap \<Rightarrow> cap \<Rightarrow> block ccval \<Rightarrow> nat \<Rightarrow> heap result"
-  where
-  "memset_prim h _ _ 0 = Success h"
-| "memset_prim h c v (Suc n) =
-    (let hs = store h c v in
-     if \<not> is_Success hs then 
-       hs 
-     else 
-       memset_prim (res hs) (c \<lparr> offset := offset c + |memval_type v|\<^sub>\<tau> \<rparr>) v n)"
-
-lemma memset_store_success_step:
-  assumes "is_Success (memset_prim h c v (Suc n))"
-  shows "is_Success (store h c v)"
-  using assms
-  by (smt (verit, best) memset_prim.simps(2))
-
-(* Here we define other memory actions. In general, they should be defined in the GIL level,
-   but it is also possible to define them here and prove properties... *)
-definition memset :: "heap \<Rightarrow> cap \<Rightarrow> block ccval \<Rightarrow> nat \<Rightarrow> heap result"
-  where
-  "memset h c v n \<equiv> memset_prim h c (u8_cast v) n"
-
-function memcpy_prim :: "heap \<Rightarrow> cap \<Rightarrow> cap \<Rightarrow> nat \<Rightarrow> heap result"
-  and memcpy_cap :: "heap \<Rightarrow> cap \<Rightarrow> cap \<Rightarrow> nat \<Rightarrow> heap result"
-  where
-  "memcpy_prim h _ _ 0 = Success h"
-| "memcpy_cap h _ _ 0 = Success h"
-| "memcpy_prim h dst src (Suc n) = 
-     (let x = load h src Uint8 in 
-      if \<not> is_Success x then Error (err x) else
-      let xs = res x in
-      if xs = Undef then Error (LogicErr (Unhandled 0)) else
-      let y = store h dst xs in
-      if \<not> is_Success y then Error (err y) else
-      let ys = res y in
-      memcpy_cap ys (dst \<lparr> offset := (offset dst + 1) \<rparr>) (src \<lparr> offset := (offset src) + 1\<rparr>) n)"
-| "memcpy_cap h dst src (Suc n) =
-     (if (Suc n) < |Cap|\<^sub>\<tau> then memcpy_prim h dst src (Suc n)
-      else
-        let x = load h src Cap in
-        if \<not> is_Success x then memcpy_prim h dst src (Suc n) else
-        let xs = res x in
-        if xs = Undef then memcpy_prim h dst src (Suc n) else
-        let y = store h dst xs in
-        if \<not> is_Success y then memcpy_prim h dst src (Suc n) else
-        let ys = res y in
-        memcpy_cap ys (dst \<lparr> offset := (offset dst + |Cap|\<^sub>\<tau>)\<rparr>) (src \<lparr> offset := (offset src + |Cap|\<^sub>\<tau>)\<rparr>) (Suc n - |Cap|\<^sub>\<tau>))"
-            apply (metis old.nat.exhaust prod_cases3 sumE)
-           apply force
-          apply blast
-         apply force
-        apply force
-       apply blast
-      apply blast
-     apply fast
-    apply blast
-   apply blast
-  apply force
-  done
-
-context
-  notes sizeof_def[simp]
-begin
-termination by size_change
-end
-
-definition memcpy :: "heap \<Rightarrow> cap \<Rightarrow> cap \<Rightarrow> nat \<Rightarrow> heap result"
-  where
-  "memcpy h dst src n \<equiv> 
-     if n = 0 then 
-       Success h 
-     else if block_id dst = block_id src \<and> 
-             ((offset src \<ge> offset dst \<and> offset src < offset dst + n) \<or>
-              (offset dst \<ge> offset src \<and> offset dst < offset src + n)) then
-       Error (LogicErr (Unhandled 0))
-     else memcpy_cap h dst src n"
-
-definition memmove :: "heap \<Rightarrow> cap \<Rightarrow> cap \<Rightarrow> nat \<Rightarrow> heap result"
-  where
-  "memmove h dst src n \<equiv>
-     let (h1, tmp) = res (alloc h True n) in
-     let h2 = res (memcpy h1 tmp src n) in
-     let h3 = res (memcpy h2 dst tmp n) in
-     let (h4, _) = res (free h3 tmp) in
-     Success h4"
-
-primrec memcmp :: "heap \<Rightarrow> cap \<Rightarrow> cap \<Rightarrow> nat \<Rightarrow> bool result"
-  where
-  "memcmp h s1 s2 0 = Success True"
-| "memcmp h s1 s2 (Suc n) = (
-     let v1 = load h s1 Uint8 in
-     let v2 = load h s2 Uint8 in
-     if \<not> is_Success v1 then
-       Error (err v1)
-     else if \<not> is_Success v2 then
-       Error (err v2)
-     else if v1 = Success Undef \<or> v2 = Success Undef then
-       Error (LogicErr WrongMemVal)
-     else if v1 \<noteq> v2 then 
-       Success False
-     else memcmp h s1 s2 n)"
-
-definition malloc :: "heap \<Rightarrow> nat \<Rightarrow> (heap \<times> cap) result"
-  where
-  "malloc h n \<equiv> alloc h True n"
-
-definition calloc :: "heap \<Rightarrow> nat \<Rightarrow> (heap \<times> cap) result"
-  where
-  "calloc h n \<equiv> 
-     let hres  = res (alloc h True n) in
-     let h'' = memset (fst hres) (snd hres) (Uint8_v 0) n in
-       Success (res h'', snd hres)"
-
-definition realloc :: "heap \<Rightarrow> cap \<Rightarrow> nat \<Rightarrow> (heap \<times> cap) result"
-  where
-  "realloc h cap n \<equiv>
-     if cap = NULL then 
-       alloc h True n 
-     else
-       let (h1, cap') = res (alloc h True n) in
-       let h2 = res (memcpy h1 cap' cap (min n (len cap))) in
-       let (h3, _) = res (free h2 cap) in
-     Success (h3, cap')"
-
-(* basic properties *)
 lemma store_after_alloc_gen:
   assumes "alloc h True s = Success (h', cap)"
     and "|memval_type v|\<^sub>\<tau> \<le> s"
@@ -2752,24 +3751,440 @@ lemma store_after_alloc_gen:
   moreover have "Mapping.lookup (heap_map h') (block_id (cap \<lparr> offset := offset cap + n \<rparr>)) = Some (Map ?m)"
     using assms alloc_def
     by fastforce
+  moreover have "offset (cap \<lparr> offset := offset cap + n \<rparr>) \<ge> fst (bounds ?m)"
+    using assms alloc_def
+    by fastforce
+  moreover have "offset (cap \<lparr> offset := offset cap + n \<rparr>) + |memval_type v|\<^sub>\<tau> \<le> snd (bounds ?m)"
+    using assms alloc_def
+    by fastforce
   ultimately show ?thesis
     using store_success[where ?c="(cap \<lparr> offset := offset cap + n \<rparr>)" and ?v=v and 
         ?m="\<lparr>bounds = (0, s), content = Mapping.empty, tags = Mapping.empty\<rparr>" and ?h=h'] assms(3)
     by simp (blast) 
 qed
 
-lemma store_is_success:
-  "is_Success (store h c v) = (\<exists> h'. store h c v = Success h')"
-  by (simp add: is_Success_def)
+subsection \<open>Well-formedness of actions\<close>
+lemma alloc_wellformed:
+  assumes "\<W>\<^sub>\<ff>(heap_map h)"
+    and "alloc h True s = Success (h', cap)"
+  shows "\<W>\<^sub>\<ff>(heap_map h')"
+  apply (insert assms)
+  apply (simp add: alloc_def wellformed_def)
+  apply safe
+   apply (erule_tac x=b in allE) 
+   apply (erule_tac x=obj in allE)
+  apply simp
+  apply (smt (verit, best) Mapping.keys_empty Mapping.lookup_update Mapping.lookup_update_neq 
+      Set.filter_def bot_nat_0.not_eq_extremum empty_iff mem_Collect_eq object.select_convs(3) 
+      option.sel t.sel zero_less_diff)
+  done
 
-lemma calloc_never_fails:                                                                                   
-  "is_Success (calloc h n)"
-  by (simp add: is_Success_def calloc_def) (metis)
+lemma free_wellformed:
+  assumes "\<W>\<^sub>\<ff>(heap_map h)"
+    and "free h cap = Success (h', cap')"
+  shows "\<W>\<^sub>\<ff>(heap_map h')"
+proof -
+  consider (null) "cap = NULL" | (non_null) "cap \<noteq> NULL" by blast
+  then show ?thesis
+  proof (cases)
+    case null
+    show ?thesis 
+      using free_null assms null
+      by simp
+  next
+    case non_null
+    show ?thesis
+      apply (insert assms(2) non_null)
+      apply (drule free_cond_non_null, simp)
+      apply (insert assms(1) free_cond_non_null[OF assms(2) non_null])
+      apply (simp add: wellformed_def)
+      apply safe
+      apply (erule_tac x=b in allE)
+      apply (erule_tac x=obj in allE)
+      apply(smt (z3) Mapping.lookup_update_neq Pair_inject Set.member_filter assms(2) 
+          free_non_null_correct gr0I heap.ext_inject heap.surjective heap.update_convs(2) 
+          option.inject result.inject(1) t.discI zero_less_diff)
+      done
+    qed
+qed
 
-(* 
-lemma memset_after_alloc:
-  assumes "alloc h True s = Success (h', cap)"
-  shows "is_Success (memset h' cap (Uint8_v 0) s)"
-  sorry
-*)
+lemma load_wellformed:
+  assumes "\<W>\<^sub>\<ff>(heap_map h)"
+    and "load h c t = Success v"
+  shows "\<W>\<^sub>\<ff>(heap_map h)"
+  by (insert assms(1), assumption)
+
+lemma store_wellformed:
+  assumes "\<W>\<^sub>\<ff>(heap_map h)"
+    and "store h c v = Success h'"
+  shows "\<W>\<^sub>\<ff>(heap_map h')"
+proof (cases v)
+  case (Uint8_v x1)
+  then show ?thesis 
+      using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+      apply (simp add: store_def split: option.split_asm t.split_asm if_split_asm)
+      apply (simp add: wellformed_def) 
+      apply safe
+      apply clarsimp
+      apply (erule_tac x="block_id c" in allE)
+      apply (erule_tac x=x2a in allE) apply clarsimp
+      apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Uint8|\<^sub>\<tau> * q)) (Uint8_v x1)))) = {}")
+       apply (smt (verit, best) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter 
+          assms(1) empty_iff of_nat_less_iff option.sel semiring_1_class.of_nat_0 t.sel wellformed_def)
+      apply (simp add: store_tval_def)
+      apply safe
+      apply fastforce
+      apply fastforce
+      done
+next
+  case (Sint8_v x2)
+  then show ?thesis 
+      using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+      apply (simp add: store_def split: option.split_asm t.split_asm if_split_asm)
+      apply (simp add: wellformed_def) 
+      apply safe
+      apply clarsimp
+      apply (erule_tac x="block_id c" in allE)
+      apply (erule_tac x=x2a in allE) apply clarsimp
+      apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Sint8|\<^sub>\<tau> * q)) (Sint8_v x2)))) = {}")
+       apply (metis (mono_tags, lifting) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter 
+          assms(1) empty_iff less_numeral_extra(3) option.sel t.sel wellformed_def) 
+      apply (simp add: store_tval_def)
+      apply safe
+      apply fastforce
+      apply fastforce
+      done
+next
+  case (Uint16_v x3)
+  then show ?thesis 
+      using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+      apply (simp add: store_def split: option.split_asm t.split_asm if_split_asm)
+      apply (simp add: wellformed_def) 
+      apply safe
+      apply clarsimp
+      apply (erule_tac x="block_id c" in allE)
+      apply (erule_tac x=x2a in allE) apply clarsimp
+      apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Uint16|\<^sub>\<tau> * q)) (Uint16_v x3)))) = {}")
+       apply (metis (mono_tags, lifting) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter 
+          assms(1) empty_iff less_numeral_extra(3) option.sel t.sel wellformed_def) 
+      apply (simp add: store_tval_def)
+      apply safe
+      apply fastforce
+      apply fastforce
+      done
+next
+  case (Sint16_v x4)
+  then show ?thesis
+      using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+      apply (simp add: store_def split: option.split_asm t.split_asm if_split_asm)
+      apply (simp add: wellformed_def) 
+      apply safe
+      apply clarsimp
+      apply (erule_tac x="block_id c" in allE)
+      apply (erule_tac x=x2a in allE) apply clarsimp
+      apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Sint16|\<^sub>\<tau> * q)) (Sint16_v x4)))) = {}")
+       apply (metis (mono_tags, lifting) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter 
+          assms(1) empty_iff less_numeral_extra(3) option.sel t.sel wellformed_def) 
+      apply (simp add: store_tval_def)
+      apply safe
+      apply fastforce
+      apply fastforce
+      done
+next
+  case (Uint32_v x5)
+  then show ?thesis 
+      using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+      apply (simp add: store_def split: option.split_asm t.split_asm if_split_asm)
+      apply (simp add: wellformed_def) 
+      apply safe
+      apply clarsimp
+      apply (erule_tac x="block_id c" in allE)
+      apply (erule_tac x=x2a in allE) apply clarsimp
+      apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Uint32|\<^sub>\<tau> * q)) (Uint32_v x5)))) = {}")
+       apply (metis (mono_tags, lifting) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter 
+          assms(1) empty_iff less_numeral_extra(3) option.sel t.sel wellformed_def) 
+      apply (simp add: store_tval_def)
+      apply safe
+      apply fastforce
+      apply fastforce
+      done
+next
+  case (Sint32_v x6)
+  then show ?thesis 
+      using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+      apply (simp add: store_def split: option.split_asm t.split_asm if_split_asm)
+      apply (simp add: wellformed_def) 
+      apply safe
+      apply clarsimp
+      apply (erule_tac x="block_id c" in allE)
+      apply (erule_tac x=x2a in allE) apply clarsimp
+      apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Sint32|\<^sub>\<tau> * q)) (Sint32_v x6)))) = {}")
+       apply (metis (mono_tags, lifting) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter 
+          assms(1) empty_iff less_numeral_extra(3) option.sel t.sel wellformed_def) 
+      apply (simp add: store_tval_def)
+      apply safe
+      apply fastforce
+      apply fastforce
+      done
+next
+  case (Uint64_v x7)
+  then show ?thesis
+      using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+      apply (simp add: store_def split: option.split_asm t.split_asm if_split_asm)
+      apply (simp add: wellformed_def) 
+      apply safe
+      apply clarsimp
+      apply (erule_tac x="block_id c" in allE)
+      apply (erule_tac x=x2a in allE) apply clarsimp
+      apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Uint64|\<^sub>\<tau> * q)) (Uint64_v x7)))) = {}")
+       apply (metis (mono_tags, lifting) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter 
+          assms(1) empty_iff less_numeral_extra(3) option.sel t.sel wellformed_def) 
+      apply (simp add: store_tval_def)
+      apply safe
+      apply fastforce
+      apply fastforce
+      done
+next
+  case (Sint64_v x8)
+  then show ?thesis 
+      using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+      apply (simp add: store_def split: option.split_asm t.split_asm if_split_asm)
+      apply (simp add: wellformed_def) 
+      apply safe
+      apply clarsimp
+      apply (erule_tac x="block_id c" in allE)
+      apply (erule_tac x=x2a in allE) apply clarsimp
+      apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Sint64|\<^sub>\<tau> * q)) (Sint64_v x8)))) = {}")
+       apply (metis (mono_tags, lifting) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter 
+          assms(1) empty_iff less_numeral_extra(3) option.sel t.sel wellformed_def) 
+      apply (simp add: store_tval_def)
+      apply safe
+      apply fastforce
+      apply fastforce
+      done
+next
+  case (Cap_v x9)
+  then show ?thesis 
+  using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(3)[where ?h=h and ?c=c and ?v=v and ?ret=h' and ?cv=x9, OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+  apply (simp split: ccval.split_asm)
+  apply (unfold store_def)
+  apply clarsimp
+  apply (subgoal_tac "\<not>(\<not> perm_cap_store c \<and> tag x9) \<and> 
+                      \<not>(\<not> perm_cap_store_local c \<and> tag x9 \<and> \<not> perm_global x9)"; blast?)
+  apply (clarsimp simp add: wellformed_def split: option.split_asm t.split_asm if_split_asm)
+  apply (erule_tac x="block_id c" in allE)
+  apply (erule_tac x=x2a in allE) apply clarsimp apply safe
+   apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Cap|\<^sub>\<tau> * q)) (Cap_v x9)))) = {}")
+    apply (smt (verit) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter assms(1) 
+      neq0_conv option.sel t.sel wellformed_def) 
+   apply (simp add: store_tval_def)
+   apply safe
+    apply fastforce
+   apply fastforce 
+  apply clarsimp
+  apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Cap|\<^sub>\<tau> * q)) (Cap_v x9)))) = {}")
+   apply (metis (mono_tags, lifting) Set.member_filter assms(1) empty_iff le_eq_less_or_eq linorder_not_le lookup_update' option.sel t.sel wellformed_def)
+  apply (simp add: store_tval_def)
+  apply safe
+   apply fastforce
+  apply fastforce 
+  done
+next
+  case (Cap_v_frag x101 x102)
+  then show ?thesis 
+      using store_cond_hard_cap(1)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(2)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(4)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(5)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    store_cond_hard_cap(6)[where ?h=h and ?c=c and ?v=v and ?ret=h', OF assms(2)]
+    assms
+      apply (simp add: store_def split: option.split_asm t.split_asm if_split_asm)
+      apply (simp add: wellformed_def) 
+      apply safe
+      apply clarsimp
+      apply (erule_tac x="block_id c" in allE)
+      apply (erule_tac x=x2a in allE) apply clarsimp
+      apply (subgoal_tac "Set.filter (\<lambda>x. 0 < x mod |Cap|\<^sub>\<tau>) (Mapping.keys (tags (store_tval x2a (nat (int |Uint8|\<^sub>\<tau> * q)) (Cap_v_frag x101 x102)))) = {}")
+       apply (smt (verit, best) Mapping.lookup_update Mapping.lookup_update_neq Set.member_filter 
+          assms(1) empty_iff of_nat_less_iff option.sel semiring_1_class.of_nat_0 t.sel wellformed_def)
+      apply (simp add: store_tval_def)
+      apply safe
+      apply fastforce
+      apply fastforce
+      done
+next
+  case Undef
+  then show ?thesis 
+    using assms(2) store_cond_bytes(1)
+    by (metis ccval.distinct(107) result.distinct(1) store_cond_hard_cap(1) store_cond_hard_cap(2) 
+        store_cond_hard_cap(4) store_cond_hard_cap(5) store_cond_hard_cap(6) store_undef_val)
+qed
+
+subsection \<open>Bonus: memcpy formalisation\<close>
+text \<open>We also formalise memcpy in Isabelle/HOL. While other higher level operations are defined
+      in the GIL level, we formalise memcpy here and prove interesting properties. 
+      memcpy works as follows: we define a mutually recursive function memcpy\_prim and memcpy\_cap.
+      memcpy\_prim attempts byte copies, where tags are invalidated, and memcpy\_cap attempts
+      capability copies. memcpy initially calls memcpy\_cap. If either load or store fails, perhaps
+      due to misalignment or other issues, memcpy\_prim will be called instead. If memcpy\_prim
+      also fails from load or store, the operation will fail.\<close>
+function memcpy_prim :: "heap \<Rightarrow> cap \<Rightarrow> cap \<Rightarrow> nat \<Rightarrow> heap result"
+  and memcpy_cap :: "heap \<Rightarrow> cap \<Rightarrow> cap \<Rightarrow> nat \<Rightarrow> heap result"
+  where
+  "memcpy_prim h _ _ 0 = Success h"
+| "memcpy_cap h _ _ 0 = Success h"
+| "memcpy_prim h dst src (Suc n) = 
+     (let x = load h src Uint8 in 
+      if \<not> is_Success x then Error (err x) else
+      let xs = res x in
+      if xs = Undef then Error (LogicErr (Unhandled 0)) else
+      let y = store h dst xs in
+      if \<not> is_Success y then Error (err y) else
+      let ys = res y in
+      memcpy_cap ys (dst \<lparr> offset := (offset dst + 1) \<rparr>) (src \<lparr> offset := (offset src) + 1\<rparr>) n)"
+| "memcpy_cap h dst src (Suc n) =
+     (if (Suc n) < |Cap|\<^sub>\<tau> then memcpy_prim h dst src (Suc n)
+      else
+        let x = load h src Cap in
+        if \<not> is_Success x then memcpy_prim h dst src (Suc n) else
+        let xs = res x in
+        if xs = Undef then memcpy_prim h dst src (Suc n) else
+        let y = store h dst xs in
+        if \<not> is_Success y then memcpy_prim h dst src (Suc n) else
+        let ys = res y in
+        memcpy_cap ys (dst \<lparr> offset := (offset dst + |Cap|\<^sub>\<tau>)\<rparr>) (src \<lparr> offset := (offset src + |Cap|\<^sub>\<tau>)\<rparr>) (Suc n - |Cap|\<^sub>\<tau>))"
+            apply (metis old.nat.exhaust prod_cases3 sumE)
+           apply force
+          apply blast
+         apply force
+        apply force
+       apply blast
+      apply blast
+     apply fast
+    apply blast
+   apply blast
+  apply force
+  done
+
+text \<open>We prove that the mutually recursive function terminates.\<close>
+context
+  notes sizeof_def[simp]
+begin
+termination by size_change
+end
+
+text \<open>This is the definition of memcpy. We also check that src and dst do not overlap. \<close>
+definition memcpy :: "heap \<Rightarrow> cap \<Rightarrow> cap \<Rightarrow> nat \<Rightarrow> heap result"
+  where
+  "memcpy h dst src n \<equiv> 
+     if n = 0 then 
+       Success h 
+     else if block_id dst = block_id src \<and> 
+             ((offset src \<ge> offset dst \<and> offset src < offset dst + n) \<or>
+              (offset dst \<ge> offset src \<and> offset dst < offset src + n)) then
+       Error (LogicErr (Unhandled 0))
+     else memcpy_cap h dst src n"
+
+lemma memcpy_rec_wellformed:
+  assumes "\<W>\<^sub>\<ff>(heap_map h)"
+  shows "memcpy_prim h dst src n = Success h' \<Longrightarrow> \<W>\<^sub>\<ff>(heap_map h')"
+    and "memcpy_cap h dst src n = Success h' \<Longrightarrow> \<W>\<^sub>\<ff>(heap_map h')"
+   using assms 
+     apply (induct h dst src n and h dst src n rule: memcpy_prim_memcpy_cap.induct)
+      apply force
+     apply force
+    apply (smt (verit, ccfv_SIG) memcpy_prim.simps(2) result.collapse(1) result.distinct(1) store_wellformed)
+   apply (smt (z3) memcpy_cap.simps(2) result.collapse(1) store_wellformed)
+   done
+
+text \<open>We also prove that memcpy preserves well-formedness.\<close>
+lemma memcpy_wellformed:
+  assumes "\<W>\<^sub>\<ff>(heap_map h)"
+    and "memcpy h dst src n = Success h'"
+  shows "\<W>\<^sub>\<ff>(heap_map h')"
+  using assms unfolding memcpy_def
+  by (metis memcpy_rec_wellformed(2) result.distinct(1) result.sel(1))
+
+lemma memcpy_cond:
+  assumes "memcpy h dst src n = Success h'"
+  shows "n > 0 \<longrightarrow> \<not> (block_id dst = block_id src \<and> 
+             ((offset src \<ge> offset dst \<and> offset src < offset dst + n) \<or>
+              (offset dst \<ge> offset src \<and> offset dst < offset src + n)))"
+  using assms unfolding memcpy_def
+  by force
+
+section \<open>Miscellaneous Definitions\<close>
+text \<open>The following are used for catching memory leaks.\<close>
+definition get_block_size :: "heap \<Rightarrow> block \<Rightarrow> nat option"
+  where
+  "get_block_size h b \<equiv> 
+     let ex = Mapping.lookup (heap_map h) b in
+     (case ex of None \<Rightarrow> None | Some m \<Rightarrow>
+     (case m of Freed \<Rightarrow> None | _ \<Rightarrow> Some (snd (bounds (the_map m)))))"
+
+primrec get_memory_leak_size :: "heap \<Rightarrow> nat \<Rightarrow> nat"
+  where
+  "get_memory_leak_size _ 0 = 0"
+| "get_memory_leak_size h (Suc n) = get_memory_leak_size h n +
+     (case get_block_size h (integer_of_nat (Suc n)) of 
+       None \<Rightarrow> 0
+     | Some n \<Rightarrow> n)"
+
+primrec get_unfreed_blocks :: "heap \<Rightarrow> nat \<Rightarrow> block list"
+  where
+  "get_unfreed_blocks _ 0 = []"
+| "get_unfreed_blocks h (Suc n) =
+    (let ex = Mapping.lookup (heap_map h) (integer_of_nat (Suc n)) in
+    (case ex of None \<Rightarrow> get_unfreed_blocks h n | Some m \<Rightarrow>
+    (case m of Freed \<Rightarrow> get_unfreed_blocks h n | _ \<Rightarrow> integer_of_nat (Suc n) # get_unfreed_blocks h n)))"
+
+
+
+
 end

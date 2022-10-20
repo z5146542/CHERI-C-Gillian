@@ -17,7 +17,7 @@ let run cmd =
   (* loop "" *)
   first
 
-let includes = "import \"unops_common.gil\", \"binops_common.gil\", \"internals.gil\", \"stdlib_cap256.gil\", \"cheri_purecap_uncompressed.gil\";\n\n"
+let includes = "import \"unops_common.gil\", \"binops_common.gil\", \"internals.gil\", \"stdlib_cap256.gil\", \"cheri_purecap_uncompressed.gil\", \"string_common.gil\";\n\n"
 let esbmc_run = "bin/esbmc "
 let cheri_settings = "--no-library --cheri purecap --cheri-uncompressed "
 let sysroot = "--sysroot ~/Downloads/rootfs-mips64-purecap.cheribsd-headers "
@@ -26,6 +26,7 @@ let remove_misc = "tail -n +8 | grep -v \"^\\s\\s*$\" | grep -v \"^\\ *skip;\" "
 let l_emit_parse_tree = ref false
 let l_emit_symbol_table = ref false
 let l_warnings = ref false
+let l_esbmc_args = ref []
 
 module TargetLangOptions = struct
   open Cmdliner
@@ -34,11 +35,12 @@ module TargetLangOptions = struct
     emit_parse_tree : bool;
     emit_symbol_table : bool;
     warnings : bool;
+    esbmc_args : string list;
   }
 
   let term = 
     let docs = Manpage.s_common_options in
-
+    
     let doc = "Write the parse tree emitted by ESBMC to a file." in
     let eptree = Arg.(value & flag & info [ "emit-ptree" ] ~docs ~doc) in
 
@@ -48,21 +50,29 @@ module TargetLangOptions = struct
     let doc = "Silence ESBMC warnings." in
     let no_warnings = Arg.(value & flag & info [ "no-warnings" ] ~docs ~doc) in
 
+    let doc = "Provide additional arguments to ESBMC." in
+    let esbmc_arg = Arg.(value & opt_all string [] & info [ "esbmc-args" ] ~docs ~doc) in 
+
+    
+
     let opt
         eptree
         estable
-        no_warnings =
+        no_warnings
+        esbmc_arg =
       {
         emit_parse_tree = eptree;
         emit_symbol_table = estable;
         warnings = not no_warnings;
+        esbmc_args = esbmc_arg;
       }
     in
-    Term.(const opt $ eptree $ estable $ no_warnings)
-  let apply { emit_parse_tree; emit_symbol_table; warnings } = 
+    Term.(const opt $ eptree $ estable $ no_warnings $ esbmc_arg)
+  let apply { emit_parse_tree; emit_symbol_table; warnings; esbmc_args; } = 
     l_emit_parse_tree := emit_parse_tree;
     l_emit_symbol_table := emit_symbol_table;
-    l_warnings := warnings
+    l_warnings := warnings;
+    l_esbmc_args := esbmc_args
   (*
       {
         emit_parse_tree;
@@ -104,7 +114,7 @@ let parse_and_compile_file path =
   (* let snd = Filename.chop_extension path ^ ".giltmp" in *)
   let oc = open_out pathgil in
   (* let od = open_out snd in *)
-  let output = includes ^ (run (esbmc_run ^ cheri_settings ^ sysroot ^ "--goto-functions-only " ^ path ^ " | " ^ remove_misc)) in
+  let output = includes ^ (run (esbmc_run ^ cheri_settings ^ sysroot ^ (if !l_esbmc_args = [] then "" else String.concat " " !l_esbmc_args) ^ " --goto-functions-only " ^ path ^ " | " ^ remove_misc)) in
   let () = Printf.fprintf oc "%s" output in
   (* let () = Printf.fprintf od "%s" output in *)
   let () = close_out oc in

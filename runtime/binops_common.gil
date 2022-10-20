@@ -150,3 +150,11 @@ proc i__binops_mul (v1, v2) {
         return;
    tft: fail[comparison]("Type of two values do not match")
 };
+
+proc i__binops_and (v1, v2) {
+        b1 := "i__bool_of_value"(v1);
+        b2 := "i__bool_of_value"(v2);
+        b := b1 and b2;
+        ret := "i__value_of_bool"(b);
+        return
+};

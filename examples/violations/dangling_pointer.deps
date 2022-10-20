@@ -1,0 +1,2 @@
+files: ../CHERI-C-Gillian/examples/violations/dangling_pointer.c \
+ /home/simark/Documents/Gillian/_esy/default/store/i/gillian_platform-b90f49c9/share/include/stdlib.h

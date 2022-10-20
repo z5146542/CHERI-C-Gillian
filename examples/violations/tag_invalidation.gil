@@ -1,0 +1,53 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil", "string_common.gil";
+
+(* signed int (  ) *)
+proc main() {
+        n := undefined; (* signed int * n; *)
+        retval_calloc_1 := undefined; (* void * retval_calloc_1; *)
+        retval_calloc_1 := "calloc"({{ "uint64", 4i }}, {{ "uint64", 1i }});
+        tmp_0 := "i__unops_cast"(4i, retval_calloc_1);
+        n := tmp_0;
+        a := undefined; (* signed int * * a; *)
+        retval_malloc_2 := undefined; (* void * retval_malloc_2; *)
+        tmp_1 := "i__malloc"({{ "uint64", 32i }});
+        retval_malloc_2 := tmp_1;
+        tmp_2 := "i__unops_cast"(32i, retval_malloc_2);
+        a := tmp_2;
+        tmp := "i__store"(a, n);
+        b := undefined; (* signed int * * b; *)
+        retval_malloc_3 := undefined; (* void * retval_malloc_3; *)
+        tmp_4 := "i__binops_mul"({{ "uint64", 32i }}, {{ "uint64", 2i }});
+        tmp_5 := "i__malloc"(tmp_4);
+        retval_malloc_3 := tmp_5;
+        tmp_6 := "i__unops_cast"(32i, retval_malloc_3);
+        b := tmp_6;
+        c := undefined; (* signed int * * c; *)
+        retval_malloc_4 := undefined; (* void * retval_malloc_4; *)
+        tmp_7 := "i__malloc"({{ "uint64", 32i }});
+        retval_malloc_4 := tmp_7;
+        tmp_8 := "i__unops_cast"(32i, retval_malloc_4);
+        c := tmp_8;
+        tmp_9 := "i__unops_cast"(1i, b);
+        tmp_10 := "i__binops_add"(tmp_9, {{ "int32", 1i }});
+        tmp_11 := "i__unops_cast"(1i, tmp_10);
+        tmp_12 := "i__unops_cast"(1i, a);
+        tmp := "i__memcpy"(tmp_11, tmp_12, {{ "uint64", 32i }});
+        tmp_13 := "i__unops_cast"(1i, c);
+        tmp_14 := "i__unops_cast"(1i, b);
+        tmp_15 := "i__binops_add"(tmp_14, {{ "int32", 1i }});
+        tmp_16 := "i__unops_cast"(1i, tmp_15);
+        tmp := "i__memcpy"(tmp_13, tmp_16, {{ "uint64", 32i }});
+        x := undefined; (* signed int x; *)
+        tmp_17 := "i__load"(c, "cap");
+        tmp_18 := "i__load"(tmp_17, "int32");
+        x := tmp_18;
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};

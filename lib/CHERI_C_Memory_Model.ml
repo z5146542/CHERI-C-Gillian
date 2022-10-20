@@ -76,7 +76,6 @@ module Orderings : sig
   type 'a order = {preorder_order : 'a preorder}
   type 'a linorder = {order_linorder : 'a order}
   val max : 'a ord -> 'a -> 'a -> 'a
-  val min : 'a ord -> 'a -> 'a -> 'a
 end = struct
 
 type 'a ord = {less_eq : 'a -> 'a -> bool; less : 'a -> 'a -> bool};;
@@ -90,8 +89,6 @@ type 'a order = {preorder_order : 'a preorder};;
 type 'a linorder = {order_linorder : 'a order};;
 
 let rec max _A a b = (if less_eq _A a b then b else a);;
-
-let rec min _A a b = (if less_eq _A a b then a else b);;
 
 end;; (*struct Orderings*)
 
@@ -198,7 +195,6 @@ module Arith : sig
   val equal_nata : nat -> nat -> bool
   val equal_nat : nat HOL.equal
   val less_nat : nat -> nat -> bool
-  val ord_nat : nat Orderings.ord
   val linorder_nat : nat Orderings.linorder
   val equal_integer : Z.t HOL.equal
   val zero_integer : Z.t zero
@@ -1592,11 +1588,19 @@ let rec len_signed _A =
 end;; (*struct Signed_Words*)
 
 module More_Word_Library : sig
+  type 'a capability_ext = Capability_ext of bool * 'a
+  val equal_capability_ext : 'a HOL.equal -> 'a capability_ext HOL.equal
   type ('a, 'b) mem_capability_ext =
     Mem_capability_ext of
       'a * Arith.int * Arith.nat * Arith.nat * bool * bool * bool * bool *
         bool * bool * 'b
-  type 'a capability_ext = Capability_ext of bool * 'a
+  type 'a comp_countable =
+    {countable_comp_countable : 'a Countable.countable;
+      zero_comp_countable : 'a Arith.zero;
+      ord_comp_countable : 'a Orderings.ord}
+  val equal_mem_capability_exta :
+    'a HOL.equal * 'a comp_countable -> 'b HOL.equal ->
+      ('a, 'b) mem_capability_ext -> ('a, 'b) mem_capability_ext -> bool
   type 'a ccval =
     Uint8_v of
       Numeral_Type.num1 Numeral_Type.bit0 Numeral_Type.bit0 Numeral_Type.bit0
@@ -1641,17 +1645,6 @@ module More_Word_Library : sig
     | Cap_v of ('a, unit capability_ext) mem_capability_ext |
     Cap_v_frag of ('a, unit capability_ext) mem_capability_ext * Arith.nat |
     Undef
-  type 'a comp_countable =
-    {countable_comp_countable : 'a Countable.countable;
-      zero_comp_countable : 'a Arith.zero;
-      ord_comp_countable : 'a Orderings.ord}
-  val equal_mem_capability_exta :
-    'a HOL.equal * 'a comp_countable -> 'b HOL.equal ->
-      ('a, 'b) mem_capability_ext -> ('a, 'b) mem_capability_ext -> bool
-  val equal_capability_ext : 'a HOL.equal -> 'a capability_ext HOL.equal
-  val equal_ccvala :
-    'a HOL.equal * 'a comp_countable -> 'a ccval -> 'a ccval -> bool
-  val equal_ccval : 'a HOL.equal * 'a comp_countable -> 'a ccval HOL.equal
   type cctype = Uint8 | Sint8 | Uint16 | Sint16 | Uint32 | Sint32 | Uint64 |
     Sint64 | Cap
   val sword64_of_integer :
@@ -1776,6 +1769,8 @@ module More_Word_Library : sig
   val truncate :
     'a comp_countable ->
       ('a, 'b) mem_capability_ext -> ('a, unit) mem_capability_ext
+  val equal_ccval :
+    'a HOL.equal * 'a comp_countable -> 'a ccval -> 'a ccval -> bool
   val offset_update :
     'a comp_countable ->
       (Arith.int -> Arith.int) ->
@@ -1786,12 +1781,48 @@ module More_Word_Library : sig
         ('a, 'b) mem_capability_ext -> ('a, 'b) mem_capability_ext
 end = struct
 
+type 'a capability_ext = Capability_ext of bool * 'a;;
+
+let rec equal_capability_exta _A
+  (Capability_ext (taga, morea)) (Capability_ext (tag, more)) =
+    Product_Type.equal_bool taga tag && HOL.eq _A morea more;;
+
+let rec equal_capability_ext _A =
+  ({HOL.equal = equal_capability_exta _A} : 'a capability_ext HOL.equal);;
+
 type ('a, 'b) mem_capability_ext =
   Mem_capability_ext of
     'a * Arith.int * Arith.nat * Arith.nat * bool * bool * bool * bool * bool *
       bool * 'b;;
 
-type 'a capability_ext = Capability_ext of bool * 'a;;
+type 'a comp_countable =
+  {countable_comp_countable : 'a Countable.countable;
+    zero_comp_countable : 'a Arith.zero;
+    ord_comp_countable : 'a Orderings.ord};;
+
+let rec equal_mem_capability_exta (_A1, _A2) _B
+  (Mem_capability_ext
+    (block_ida, offseta, basea, lena, perm_loada, perm_cap_loada, perm_storea,
+      perm_cap_storea, perm_cap_store_locala, perm_globala, morea))
+    (Mem_capability_ext
+      (block_id, offset, base, len, perm_load, perm_cap_load, perm_store,
+        perm_cap_store, perm_cap_store_local, perm_global, more))
+    = HOL.eq _A1 block_ida block_id &&
+        (Arith.equal_inta offseta offset &&
+          (Arith.equal_nata basea base &&
+            (Arith.equal_nata lena len &&
+              (Product_Type.equal_bool perm_loada perm_load &&
+                (Product_Type.equal_bool perm_cap_loada perm_cap_load &&
+                  (Product_Type.equal_bool perm_storea perm_store &&
+                    (Product_Type.equal_bool perm_cap_storea perm_cap_store &&
+                      (Product_Type.equal_bool perm_cap_store_locala
+                         perm_cap_store_local &&
+                        (Product_Type.equal_bool perm_globala perm_global &&
+                          HOL.eq _B morea more)))))))));;
+
+let rec equal_mem_capability_ext (_A1, _A2) _B =
+  ({HOL.equal = equal_mem_capability_exta (_A1, _A2) _B} :
+    ('a, 'b) mem_capability_ext HOL.equal);;
 
 type 'a ccval =
   Uint8_v of
@@ -1837,232 +1868,6 @@ type 'a ccval =
   | Cap_v of ('a, unit capability_ext) mem_capability_ext |
   Cap_v_frag of ('a, unit capability_ext) mem_capability_ext * Arith.nat |
   Undef;;
-
-type 'a comp_countable =
-  {countable_comp_countable : 'a Countable.countable;
-    zero_comp_countable : 'a Arith.zero;
-    ord_comp_countable : 'a Orderings.ord};;
-
-let rec equal_mem_capability_exta (_A1, _A2) _B
-  (Mem_capability_ext
-    (block_ida, offseta, basea, lena, perm_loada, perm_cap_loada, perm_storea,
-      perm_cap_storea, perm_cap_store_locala, perm_globala, morea))
-    (Mem_capability_ext
-      (block_id, offset, base, len, perm_load, perm_cap_load, perm_store,
-        perm_cap_store, perm_cap_store_local, perm_global, more))
-    = HOL.eq _A1 block_ida block_id &&
-        (Arith.equal_inta offseta offset &&
-          (Arith.equal_nata basea base &&
-            (Arith.equal_nata lena len &&
-              (Product_Type.equal_bool perm_loada perm_load &&
-                (Product_Type.equal_bool perm_cap_loada perm_cap_load &&
-                  (Product_Type.equal_bool perm_storea perm_store &&
-                    (Product_Type.equal_bool perm_cap_storea perm_cap_store &&
-                      (Product_Type.equal_bool perm_cap_store_locala
-                         perm_cap_store_local &&
-                        (Product_Type.equal_bool perm_globala perm_global &&
-                          HOL.eq _B morea more)))))))));;
-
-let rec equal_mem_capability_ext (_A1, _A2) _B =
-  ({HOL.equal = equal_mem_capability_exta (_A1, _A2) _B} :
-    ('a, 'b) mem_capability_ext HOL.equal);;
-
-let rec equal_capability_exta _A
-  (Capability_ext (taga, morea)) (Capability_ext (tag, more)) =
-    Product_Type.equal_bool taga tag && HOL.eq _A morea more;;
-
-let rec equal_capability_ext _A =
-  ({HOL.equal = equal_capability_exta _A} : 'a capability_ext HOL.equal);;
-
-let rec equal_ccvala (_A1, _A2)
-  x0 x1 = match x0, x1 with Cap_v_frag (x101, x102), Undef -> false
-    | Undef, Cap_v_frag (x101, x102) -> false
-    | Cap_v x9, Undef -> false
-    | Undef, Cap_v x9 -> false
-    | Cap_v x9, Cap_v_frag (x101, x102) -> false
-    | Cap_v_frag (x101, x102), Cap_v x9 -> false
-    | Sint64_v x8, Undef -> false
-    | Undef, Sint64_v x8 -> false
-    | Sint64_v x8, Cap_v_frag (x101, x102) -> false
-    | Cap_v_frag (x101, x102), Sint64_v x8 -> false
-    | Sint64_v x8, Cap_v x9 -> false
-    | Cap_v x9, Sint64_v x8 -> false
-    | Uint64_v x7, Undef -> false
-    | Undef, Uint64_v x7 -> false
-    | Uint64_v x7, Cap_v_frag (x101, x102) -> false
-    | Cap_v_frag (x101, x102), Uint64_v x7 -> false
-    | Uint64_v x7, Cap_v x9 -> false
-    | Cap_v x9, Uint64_v x7 -> false
-    | Uint64_v x7, Sint64_v x8 -> false
-    | Sint64_v x8, Uint64_v x7 -> false
-    | Sint32_v x6, Undef -> false
-    | Undef, Sint32_v x6 -> false
-    | Sint32_v x6, Cap_v_frag (x101, x102) -> false
-    | Cap_v_frag (x101, x102), Sint32_v x6 -> false
-    | Sint32_v x6, Cap_v x9 -> false
-    | Cap_v x9, Sint32_v x6 -> false
-    | Sint32_v x6, Sint64_v x8 -> false
-    | Sint64_v x8, Sint32_v x6 -> false
-    | Sint32_v x6, Uint64_v x7 -> false
-    | Uint64_v x7, Sint32_v x6 -> false
-    | Uint32_v x5, Undef -> false
-    | Undef, Uint32_v x5 -> false
-    | Uint32_v x5, Cap_v_frag (x101, x102) -> false
-    | Cap_v_frag (x101, x102), Uint32_v x5 -> false
-    | Uint32_v x5, Cap_v x9 -> false
-    | Cap_v x9, Uint32_v x5 -> false
-    | Uint32_v x5, Sint64_v x8 -> false
-    | Sint64_v x8, Uint32_v x5 -> false
-    | Uint32_v x5, Uint64_v x7 -> false
-    | Uint64_v x7, Uint32_v x5 -> false
-    | Uint32_v x5, Sint32_v x6 -> false
-    | Sint32_v x6, Uint32_v x5 -> false
-    | Sint16_v x4, Undef -> false
-    | Undef, Sint16_v x4 -> false
-    | Sint16_v x4, Cap_v_frag (x101, x102) -> false
-    | Cap_v_frag (x101, x102), Sint16_v x4 -> false
-    | Sint16_v x4, Cap_v x9 -> false
-    | Cap_v x9, Sint16_v x4 -> false
-    | Sint16_v x4, Sint64_v x8 -> false
-    | Sint64_v x8, Sint16_v x4 -> false
-    | Sint16_v x4, Uint64_v x7 -> false
-    | Uint64_v x7, Sint16_v x4 -> false
-    | Sint16_v x4, Sint32_v x6 -> false
-    | Sint32_v x6, Sint16_v x4 -> false
-    | Sint16_v x4, Uint32_v x5 -> false
-    | Uint32_v x5, Sint16_v x4 -> false
-    | Uint16_v x3, Undef -> false
-    | Undef, Uint16_v x3 -> false
-    | Uint16_v x3, Cap_v_frag (x101, x102) -> false
-    | Cap_v_frag (x101, x102), Uint16_v x3 -> false
-    | Uint16_v x3, Cap_v x9 -> false
-    | Cap_v x9, Uint16_v x3 -> false
-    | Uint16_v x3, Sint64_v x8 -> false
-    | Sint64_v x8, Uint16_v x3 -> false
-    | Uint16_v x3, Uint64_v x7 -> false
-    | Uint64_v x7, Uint16_v x3 -> false
-    | Uint16_v x3, Sint32_v x6 -> false
-    | Sint32_v x6, Uint16_v x3 -> false
-    | Uint16_v x3, Uint32_v x5 -> false
-    | Uint32_v x5, Uint16_v x3 -> false
-    | Uint16_v x3, Sint16_v x4 -> false
-    | Sint16_v x4, Uint16_v x3 -> false
-    | Sint8_v x2, Undef -> false
-    | Undef, Sint8_v x2 -> false
-    | Sint8_v x2, Cap_v_frag (x101, x102) -> false
-    | Cap_v_frag (x101, x102), Sint8_v x2 -> false
-    | Sint8_v x2, Cap_v x9 -> false
-    | Cap_v x9, Sint8_v x2 -> false
-    | Sint8_v x2, Sint64_v x8 -> false
-    | Sint64_v x8, Sint8_v x2 -> false
-    | Sint8_v x2, Uint64_v x7 -> false
-    | Uint64_v x7, Sint8_v x2 -> false
-    | Sint8_v x2, Sint32_v x6 -> false
-    | Sint32_v x6, Sint8_v x2 -> false
-    | Sint8_v x2, Uint32_v x5 -> false
-    | Uint32_v x5, Sint8_v x2 -> false
-    | Sint8_v x2, Sint16_v x4 -> false
-    | Sint16_v x4, Sint8_v x2 -> false
-    | Sint8_v x2, Uint16_v x3 -> false
-    | Uint16_v x3, Sint8_v x2 -> false
-    | Uint8_v x1, Undef -> false
-    | Undef, Uint8_v x1 -> false
-    | Uint8_v x1, Cap_v_frag (x101, x102) -> false
-    | Cap_v_frag (x101, x102), Uint8_v x1 -> false
-    | Uint8_v x1, Cap_v x9 -> false
-    | Cap_v x9, Uint8_v x1 -> false
-    | Uint8_v x1, Sint64_v x8 -> false
-    | Sint64_v x8, Uint8_v x1 -> false
-    | Uint8_v x1, Uint64_v x7 -> false
-    | Uint64_v x7, Uint8_v x1 -> false
-    | Uint8_v x1, Sint32_v x6 -> false
-    | Sint32_v x6, Uint8_v x1 -> false
-    | Uint8_v x1, Uint32_v x5 -> false
-    | Uint32_v x5, Uint8_v x1 -> false
-    | Uint8_v x1, Sint16_v x4 -> false
-    | Sint16_v x4, Uint8_v x1 -> false
-    | Uint8_v x1, Uint16_v x3 -> false
-    | Uint16_v x3, Uint8_v x1 -> false
-    | Uint8_v x1, Sint8_v x2 -> false
-    | Sint8_v x2, Uint8_v x1 -> false
-    | Cap_v_frag (x101, x102), Cap_v_frag (y101, y102) ->
-        HOL.eq
-          (equal_mem_capability_ext (_A1, _A2)
-            (equal_capability_ext Product_Type.equal_unit))
-          x101 y101 &&
-          Arith.equal_nata x102 y102
-    | Cap_v x9, Cap_v y9 ->
-        HOL.eq
-          (equal_mem_capability_ext (_A1, _A2)
-            (equal_capability_ext Product_Type.equal_unit))
-          x9 y9
-    | Sint64_v x8, Sint64_v y8 ->
-        Word.equal_word
-          (Signed_Words.len_signed
-            (Type_Length.len_bit0
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0
-                      (Type_Length.len_bit0 Type_Length.len_num1)))))))
-          x8 y8
-    | Uint64_v x7, Uint64_v y7 ->
-        Word.equal_word
-          (Type_Length.len_bit0
-            (Type_Length.len_bit0
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0 Type_Length.len_num1))))))
-          x7 y7
-    | Sint32_v x6, Sint32_v y6 ->
-        Word.equal_word
-          (Signed_Words.len_signed
-            (Type_Length.len_bit0
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0 Type_Length.len_num1))))))
-          x6 y6
-    | Uint32_v x5, Uint32_v y5 ->
-        Word.equal_word
-          (Type_Length.len_bit0
-            (Type_Length.len_bit0
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0 Type_Length.len_num1)))))
-          x5 y5
-    | Sint16_v x4, Sint16_v y4 ->
-        Word.equal_word
-          (Signed_Words.len_signed
-            (Type_Length.len_bit0
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0 Type_Length.len_num1)))))
-          x4 y4
-    | Uint16_v x3, Uint16_v y3 ->
-        Word.equal_word
-          (Type_Length.len_bit0
-            (Type_Length.len_bit0
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0 Type_Length.len_num1))))
-          x3 y3
-    | Sint8_v x2, Sint8_v y2 ->
-        Word.equal_word
-          (Signed_Words.len_signed
-            (Type_Length.len_bit0
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0 Type_Length.len_num1))))
-          x2 y2
-    | Uint8_v x1, Uint8_v y1 ->
-        Word.equal_word
-          (Type_Length.len_bit0
-            (Type_Length.len_bit0 (Type_Length.len_bit0 Type_Length.len_num1)))
-          x1 y1
-    | Undef, Undef -> true;;
-
-let rec equal_ccval (_A1, _A2) =
-  ({HOL.equal = equal_ccvala (_A1, _A2)} : 'a ccval HOL.equal);;
 
 type cctype = Uint8 | Sint8 | Uint16 | Sint16 | Uint32 | Sint32 | Uint64 |
   Sint64 | Cap;;
@@ -2321,6 +2126,193 @@ let rec truncate _A
           perm_cap_load _A r, perm_store _A r, perm_cap_store _A r,
           perm_cap_store_local _A r, perm_global _A r, ());;
 
+let rec equal_ccval (_A1, _A2)
+  x0 x1 = match x0, x1 with Cap_v_frag (x101, x102), Undef -> false
+    | Undef, Cap_v_frag (x101, x102) -> false
+    | Cap_v x9, Undef -> false
+    | Undef, Cap_v x9 -> false
+    | Cap_v x9, Cap_v_frag (x101, x102) -> false
+    | Cap_v_frag (x101, x102), Cap_v x9 -> false
+    | Sint64_v x8, Undef -> false
+    | Undef, Sint64_v x8 -> false
+    | Sint64_v x8, Cap_v_frag (x101, x102) -> false
+    | Cap_v_frag (x101, x102), Sint64_v x8 -> false
+    | Sint64_v x8, Cap_v x9 -> false
+    | Cap_v x9, Sint64_v x8 -> false
+    | Uint64_v x7, Undef -> false
+    | Undef, Uint64_v x7 -> false
+    | Uint64_v x7, Cap_v_frag (x101, x102) -> false
+    | Cap_v_frag (x101, x102), Uint64_v x7 -> false
+    | Uint64_v x7, Cap_v x9 -> false
+    | Cap_v x9, Uint64_v x7 -> false
+    | Uint64_v x7, Sint64_v x8 -> false
+    | Sint64_v x8, Uint64_v x7 -> false
+    | Sint32_v x6, Undef -> false
+    | Undef, Sint32_v x6 -> false
+    | Sint32_v x6, Cap_v_frag (x101, x102) -> false
+    | Cap_v_frag (x101, x102), Sint32_v x6 -> false
+    | Sint32_v x6, Cap_v x9 -> false
+    | Cap_v x9, Sint32_v x6 -> false
+    | Sint32_v x6, Sint64_v x8 -> false
+    | Sint64_v x8, Sint32_v x6 -> false
+    | Sint32_v x6, Uint64_v x7 -> false
+    | Uint64_v x7, Sint32_v x6 -> false
+    | Uint32_v x5, Undef -> false
+    | Undef, Uint32_v x5 -> false
+    | Uint32_v x5, Cap_v_frag (x101, x102) -> false
+    | Cap_v_frag (x101, x102), Uint32_v x5 -> false
+    | Uint32_v x5, Cap_v x9 -> false
+    | Cap_v x9, Uint32_v x5 -> false
+    | Uint32_v x5, Sint64_v x8 -> false
+    | Sint64_v x8, Uint32_v x5 -> false
+    | Uint32_v x5, Uint64_v x7 -> false
+    | Uint64_v x7, Uint32_v x5 -> false
+    | Uint32_v x5, Sint32_v x6 -> false
+    | Sint32_v x6, Uint32_v x5 -> false
+    | Sint16_v x4, Undef -> false
+    | Undef, Sint16_v x4 -> false
+    | Sint16_v x4, Cap_v_frag (x101, x102) -> false
+    | Cap_v_frag (x101, x102), Sint16_v x4 -> false
+    | Sint16_v x4, Cap_v x9 -> false
+    | Cap_v x9, Sint16_v x4 -> false
+    | Sint16_v x4, Sint64_v x8 -> false
+    | Sint64_v x8, Sint16_v x4 -> false
+    | Sint16_v x4, Uint64_v x7 -> false
+    | Uint64_v x7, Sint16_v x4 -> false
+    | Sint16_v x4, Sint32_v x6 -> false
+    | Sint32_v x6, Sint16_v x4 -> false
+    | Sint16_v x4, Uint32_v x5 -> false
+    | Uint32_v x5, Sint16_v x4 -> false
+    | Uint16_v x3, Undef -> false
+    | Undef, Uint16_v x3 -> false
+    | Uint16_v x3, Cap_v_frag (x101, x102) -> false
+    | Cap_v_frag (x101, x102), Uint16_v x3 -> false
+    | Uint16_v x3, Cap_v x9 -> false
+    | Cap_v x9, Uint16_v x3 -> false
+    | Uint16_v x3, Sint64_v x8 -> false
+    | Sint64_v x8, Uint16_v x3 -> false
+    | Uint16_v x3, Uint64_v x7 -> false
+    | Uint64_v x7, Uint16_v x3 -> false
+    | Uint16_v x3, Sint32_v x6 -> false
+    | Sint32_v x6, Uint16_v x3 -> false
+    | Uint16_v x3, Uint32_v x5 -> false
+    | Uint32_v x5, Uint16_v x3 -> false
+    | Uint16_v x3, Sint16_v x4 -> false
+    | Sint16_v x4, Uint16_v x3 -> false
+    | Sint8_v x2, Undef -> false
+    | Undef, Sint8_v x2 -> false
+    | Sint8_v x2, Cap_v_frag (x101, x102) -> false
+    | Cap_v_frag (x101, x102), Sint8_v x2 -> false
+    | Sint8_v x2, Cap_v x9 -> false
+    | Cap_v x9, Sint8_v x2 -> false
+    | Sint8_v x2, Sint64_v x8 -> false
+    | Sint64_v x8, Sint8_v x2 -> false
+    | Sint8_v x2, Uint64_v x7 -> false
+    | Uint64_v x7, Sint8_v x2 -> false
+    | Sint8_v x2, Sint32_v x6 -> false
+    | Sint32_v x6, Sint8_v x2 -> false
+    | Sint8_v x2, Uint32_v x5 -> false
+    | Uint32_v x5, Sint8_v x2 -> false
+    | Sint8_v x2, Sint16_v x4 -> false
+    | Sint16_v x4, Sint8_v x2 -> false
+    | Sint8_v x2, Uint16_v x3 -> false
+    | Uint16_v x3, Sint8_v x2 -> false
+    | Uint8_v x1, Undef -> false
+    | Undef, Uint8_v x1 -> false
+    | Uint8_v x1, Cap_v_frag (x101, x102) -> false
+    | Cap_v_frag (x101, x102), Uint8_v x1 -> false
+    | Uint8_v x1, Cap_v x9 -> false
+    | Cap_v x9, Uint8_v x1 -> false
+    | Uint8_v x1, Sint64_v x8 -> false
+    | Sint64_v x8, Uint8_v x1 -> false
+    | Uint8_v x1, Uint64_v x7 -> false
+    | Uint64_v x7, Uint8_v x1 -> false
+    | Uint8_v x1, Sint32_v x6 -> false
+    | Sint32_v x6, Uint8_v x1 -> false
+    | Uint8_v x1, Uint32_v x5 -> false
+    | Uint32_v x5, Uint8_v x1 -> false
+    | Uint8_v x1, Sint16_v x4 -> false
+    | Sint16_v x4, Uint8_v x1 -> false
+    | Uint8_v x1, Uint16_v x3 -> false
+    | Uint16_v x3, Uint8_v x1 -> false
+    | Uint8_v x1, Sint8_v x2 -> false
+    | Sint8_v x2, Uint8_v x1 -> false
+    | Cap_v_frag (x101, x102), Cap_v_frag (y101, y102) ->
+        HOL.eq
+          (equal_mem_capability_ext (_A1, _A2)
+            (equal_capability_ext Product_Type.equal_unit))
+          x101 y101 &&
+          Arith.equal_nata x102 y102
+    | Cap_v x9, Cap_v y9 ->
+        HOL.eq
+          (equal_mem_capability_ext (_A1, _A2)
+            (equal_capability_ext Product_Type.equal_unit))
+          x9 y9
+    | Sint64_v x8, Sint64_v y8 ->
+        Word.equal_word
+          (Signed_Words.len_signed
+            (Type_Length.len_bit0
+              (Type_Length.len_bit0
+                (Type_Length.len_bit0
+                  (Type_Length.len_bit0
+                    (Type_Length.len_bit0
+                      (Type_Length.len_bit0 Type_Length.len_num1)))))))
+          x8 y8
+    | Uint64_v x7, Uint64_v y7 ->
+        Word.equal_word
+          (Type_Length.len_bit0
+            (Type_Length.len_bit0
+              (Type_Length.len_bit0
+                (Type_Length.len_bit0
+                  (Type_Length.len_bit0
+                    (Type_Length.len_bit0 Type_Length.len_num1))))))
+          x7 y7
+    | Sint32_v x6, Sint32_v y6 ->
+        Word.equal_word
+          (Signed_Words.len_signed
+            (Type_Length.len_bit0
+              (Type_Length.len_bit0
+                (Type_Length.len_bit0
+                  (Type_Length.len_bit0
+                    (Type_Length.len_bit0 Type_Length.len_num1))))))
+          x6 y6
+    | Uint32_v x5, Uint32_v y5 ->
+        Word.equal_word
+          (Type_Length.len_bit0
+            (Type_Length.len_bit0
+              (Type_Length.len_bit0
+                (Type_Length.len_bit0
+                  (Type_Length.len_bit0 Type_Length.len_num1)))))
+          x5 y5
+    | Sint16_v x4, Sint16_v y4 ->
+        Word.equal_word
+          (Signed_Words.len_signed
+            (Type_Length.len_bit0
+              (Type_Length.len_bit0
+                (Type_Length.len_bit0
+                  (Type_Length.len_bit0 Type_Length.len_num1)))))
+          x4 y4
+    | Uint16_v x3, Uint16_v y3 ->
+        Word.equal_word
+          (Type_Length.len_bit0
+            (Type_Length.len_bit0
+              (Type_Length.len_bit0
+                (Type_Length.len_bit0 Type_Length.len_num1))))
+          x3 y3
+    | Sint8_v x2, Sint8_v y2 ->
+        Word.equal_word
+          (Signed_Words.len_signed
+            (Type_Length.len_bit0
+              (Type_Length.len_bit0
+                (Type_Length.len_bit0 Type_Length.len_num1))))
+          x2 y2
+    | Uint8_v x1, Uint8_v y1 ->
+        Word.equal_word
+          (Type_Length.len_bit0
+            (Type_Length.len_bit0 (Type_Length.len_bit0 Type_Length.len_num1)))
+          x1 y1
+    | Undef, Undef -> true;;
+
 let rec offset_update _A
   offseta
     (Mem_capability_ext
@@ -2408,32 +2400,6 @@ module CHERI_C_Concrete_Memory_Model : sig
         More_Word_Library.mem_capability_ext ->
         Z.t More_Word_Library.ccval -> unit heap_ext result
   val res : 'a result -> 'a
-  val memset :
-    unit heap_ext ->
-      (Z.t, unit More_Word_Library.capability_ext)
-        More_Word_Library.mem_capability_ext ->
-        Z.t More_Word_Library.ccval -> Arith.nat -> unit heap_ext result
-  val calloc :
-    unit heap_ext ->
-      Arith.nat ->
-        (unit heap_ext *
-          (Z.t, unit More_Word_Library.capability_ext)
-            More_Word_Library.mem_capability_ext)
-          result
-  val malloc :
-    unit heap_ext ->
-      Arith.nat ->
-        (unit heap_ext *
-          (Z.t, unit More_Word_Library.capability_ext)
-            More_Word_Library.mem_capability_ext)
-          result
-  val memcmp :
-    unit heap_ext ->
-      (Z.t, unit More_Word_Library.capability_ext)
-        More_Word_Library.mem_capability_ext ->
-        (Z.t, unit More_Word_Library.capability_ext)
-          More_Word_Library.mem_capability_ext ->
-          Arith.nat -> bool result
   val memcpy :
     unit heap_ext ->
       (Z.t, unit More_Word_Library.capability_ext)
@@ -2441,23 +2407,9 @@ module CHERI_C_Concrete_Memory_Model : sig
         (Z.t, unit More_Word_Library.capability_ext)
           More_Word_Library.mem_capability_ext ->
           Arith.nat -> unit heap_ext result
-  val memmove :
-    unit heap_ext ->
-      (Z.t, unit More_Word_Library.capability_ext)
-        More_Word_Library.mem_capability_ext ->
-        (Z.t, unit More_Word_Library.capability_ext)
-          More_Word_Library.mem_capability_ext ->
-          Arith.nat -> unit heap_ext result
-  val realloc :
-    unit heap_ext ->
-      (Z.t, unit More_Word_Library.capability_ext)
-        More_Word_Library.mem_capability_ext ->
-        Arith.nat ->
-          (unit heap_ext *
-            (Z.t, unit More_Word_Library.capability_ext)
-              More_Word_Library.mem_capability_ext)
-            result
   val init_heap : unit heap_ext
+  val get_unfreed_blocks : unit heap_ext -> Arith.nat -> Z.t list
+  val get_memory_leak_size : unit heap_ext -> Arith.nat -> Arith.nat
 end = struct
 
 let rec plus_unita u1 u2 = ();;
@@ -2588,28 +2540,35 @@ let rec free
                                  (if not (Arith.equal_inta
    (More_Word_Library.offset comp_countable_integer c) Arith.zero_inta)
                                    then Error (LogicErr (Unhandled ""))
-                                   else (let cap_bound =
-   (More_Word_Library.base comp_countable_integer c,
-     Arith.plus_nat (More_Word_Library.base comp_countable_integer c)
-       (More_Word_Library.len comp_countable_integer c))
-   in
-  (if not (Product_Type.equal_prod Arith.equal_nat Arith.equal_nat cap_bound
-            (bounds m))
-    then Error (LogicErr (Unhandled ""))
-    else (let ha =
-            heap_map_update
-              (fun _ ->
-                Mapping.update
-                  (Collection_Order.ccompare_integer, Arith.equal_integer)
-                  (More_Word_Library.block_id comp_countable_integer c) Freed
-                  (heap_map h))
-              h
-            in
-          let cap =
-            More_Word_Library.tag_update comp_countable_integer (fun _ -> false)
-              c
-            in
-           Success (ha, cap)))))))));;
+                                   else (if Arith.less_int
+      (Arith.int_of_nat
+        (Arith.plus_nat (More_Word_Library.base comp_countable_integer c)
+          (More_Word_Library.len comp_countable_integer c)))
+      (More_Word_Library.offset comp_countable_integer c)
+  then Error (LogicErr (Unhandled ""))
+  else (let cap_bound =
+          (More_Word_Library.base comp_countable_integer c,
+            Arith.plus_nat (More_Word_Library.base comp_countable_integer c)
+              (More_Word_Library.len comp_countable_integer c))
+          in
+         (if not (Product_Type.equal_prod Arith.equal_nat Arith.equal_nat
+                   cap_bound (bounds m))
+           then Error (LogicErr (Unhandled ""))
+           else (let ha =
+                   heap_map_update
+                     (fun _ ->
+                       Mapping.update
+                         (Collection_Order.ccompare_integer,
+                           Arith.equal_integer)
+                         (More_Word_Library.block_id comp_countable_integer c)
+                         Freed (heap_map h))
+                     h
+                   in
+                 let cap =
+                   More_Word_Library.tag_update comp_countable_integer
+                     (fun _ -> false) c
+                   in
+                  Success (ha, cap))))))))));;
 
 let rec is_contiguous_zeros_prim
   uu uv siz =
@@ -2848,9 +2807,15 @@ let rec retrieve_tval
                      in
                     (match typ
                       with More_Word_Library.Uint8 ->
-                        More_Word_Library.Cap_v_frag (cv, nth_frag)
+                        More_Word_Library.Cap_v_frag
+                          (More_Word_Library.extend comp_countable_integer cap
+                             (More_Word_Library.Capability_ext (false, ())),
+                            nth_frag)
                       | More_Word_Library.Sint8 ->
-                        More_Word_Library.Cap_v_frag (cv, nth_frag)
+                        More_Word_Library.Cap_v_frag
+                          (More_Word_Library.extend comp_countable_integer cap
+                             (More_Word_Library.Capability_ext (false, ())),
+                            nth_frag)
                       | More_Word_Library.Uint16 -> More_Word_Library.Undef
                       | More_Word_Library.Sint16 -> More_Word_Library.Undef
                       | More_Word_Library.Uint32 -> More_Word_Library.Undef
@@ -2898,10 +2863,17 @@ let rec load
  with None -> Error (LogicErr MissingResource)
  | Some Freed -> Error (LogicErr UseAfterFree)
  | Some (Map m) ->
-   Success
-     (retrieve_tval m
-       (Arith.nat (More_Word_Library.offset comp_countable_integer c)) t
-       (More_Word_Library.perm_cap_load comp_countable_integer c))))))));;
+   (if Arith.less_int (More_Word_Library.offset comp_countable_integer c)
+         (Arith.int_of_nat (Product_Type.fst (bounds m))) ||
+         Arith.less_int (Arith.int_of_nat (Product_Type.snd (bounds m)))
+           (Arith.plus_inta (More_Word_Library.offset comp_countable_integer c)
+             (Arith.int_of_nat (sizeof t)))
+     then Error (LogicErr BufferOverrun)
+     else Success
+            (retrieve_tval m
+              (Arith.nat (More_Word_Library.offset comp_countable_integer c)) t
+              (More_Word_Library.perm_cap_load comp_countable_integer
+                c)))))))));;
 
 let rec next_block_update
   next_blocka (Heap_ext (next_block, heap_map, more)) =
@@ -3245,7 +3217,7 @@ let rec store
                   (Arith.int_of_nat (sizeof (More_Word_Library.memval_type v))))
                 Arith.zero_inta)
         then Error (C2Err BadAddressViolation)
-        else (if More_Word_Library.equal_ccvala
+        else (if More_Word_Library.equal_ccval
                    (Arith.equal_integer, comp_countable_integer) v
                    More_Word_Library.Undef
                then Error (LogicErr (Unhandled ""))
@@ -3257,279 +3229,39 @@ let rec store
                       with None -> Error (LogicErr MissingResource)
                       | Some Freed -> Error (LogicErr UseAfterFree)
                       | Some (Map m) ->
-                        Success
-                          (heap_map_update
-                            (fun _ ->
-                              Mapping.update
-                                (Collection_Order.ccompare_integer,
-                                  Arith.equal_integer)
-                                (More_Word_Library.block_id
-                                  comp_countable_integer c)
-                                (Map (store_tval m
-                                       (Arith.nat
- (More_Word_Library.offset comp_countable_integer c))
-                                       v))
-                                (heap_map h))
-                            h))))))))));;
-
-let rec res (Success x1) = x1;;
+                        (if Arith.less_int
+                              (More_Word_Library.offset comp_countable_integer
+                                c)
+                              (Arith.int_of_nat
+                                (Product_Type.fst (bounds m))) ||
+                              Arith.less_int
+                                (Arith.int_of_nat (Product_Type.snd (bounds m)))
+                                (Arith.plus_inta
+                                  (More_Word_Library.offset
+                                    comp_countable_integer c)
+                                  (Arith.int_of_nat
+                                    (sizeof (More_Word_Library.memval_type v))))
+                          then Error (LogicErr BufferOverrun)
+                          else Success
+                                 (heap_map_update
+                                   (fun _ ->
+                                     Mapping.update
+                                       (Collection_Order.ccompare_integer,
+ Arith.equal_integer)
+                                       (More_Word_Library.block_id
+ comp_countable_integer c)
+                                       (Map
+ (store_tval m (Arith.nat (More_Word_Library.offset comp_countable_integer c))
+   v))
+                                       (heap_map h))
+                                   h)))))))))));;
 
 let rec is_Success = function Success x1 -> true
                      | Error x2 -> false;;
 
-let rec memset_prim
-  h uu uv n =
-    (if Arith.equal_nata n Arith.zero_nat then Success h
-      else (let hs = store h uu uv in
-             (if not (is_Success hs) then hs
-               else memset_prim (res hs)
-                      (More_Word_Library.offset_update comp_countable_integer
-                        (fun _ ->
-                          Arith.plus_inta
-                            (More_Word_Library.offset comp_countable_integer uu)
-                            (Arith.int_of_nat
-                              (sizeof (More_Word_Library.memval_type uv))))
-                        uu)
-                      uv (Arith.minus_nat n Arith.one_nat))));;
-
-let rec u8_cast
-  v = (match v with More_Word_Library.Uint8_v a -> More_Word_Library.Uint8_v a
-        | More_Word_Library.Sint8_v va ->
-          More_Word_Library.Uint8_v
-            (Word.cast
-              (Signed_Words.len_signed
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0 Type_Length.len_num1))))
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0 Type_Length.len_num1)))
-              va)
-        | More_Word_Library.Uint16_v va ->
-          More_Word_Library.Uint8_v
-            (Word.cast
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0 Type_Length.len_num1))))
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0 Type_Length.len_num1)))
-              va)
-        | More_Word_Library.Sint16_v va ->
-          More_Word_Library.Uint8_v
-            (Word.cast
-              (Signed_Words.len_signed
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0
-                      (Type_Length.len_bit0 Type_Length.len_num1)))))
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0 Type_Length.len_num1)))
-              va)
-        | More_Word_Library.Uint32_v va ->
-          More_Word_Library.Uint8_v
-            (Word.cast
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0
-                      (Type_Length.len_bit0 Type_Length.len_num1)))))
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0 Type_Length.len_num1)))
-              va)
-        | More_Word_Library.Sint32_v va ->
-          More_Word_Library.Uint8_v
-            (Word.cast
-              (Signed_Words.len_signed
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0
-                      (Type_Length.len_bit0
-                        (Type_Length.len_bit0 Type_Length.len_num1))))))
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0 Type_Length.len_num1)))
-              va)
-        | More_Word_Library.Uint64_v va ->
-          More_Word_Library.Uint8_v
-            (Word.cast
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0
-                      (Type_Length.len_bit0
-                        (Type_Length.len_bit0 Type_Length.len_num1))))))
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0 Type_Length.len_num1)))
-              va)
-        | More_Word_Library.Sint64_v va ->
-          More_Word_Library.Uint8_v
-            (Word.cast
-              (Signed_Words.len_signed
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0
-                    (Type_Length.len_bit0
-                      (Type_Length.len_bit0
-                        (Type_Length.len_bit0
-                          (Type_Length.len_bit0 Type_Length.len_num1)))))))
-              (Type_Length.len_bit0
-                (Type_Length.len_bit0
-                  (Type_Length.len_bit0 Type_Length.len_num1)))
-              va)
-        | More_Word_Library.Cap_v va ->
-          More_Word_Library.Cap_v_frag (va, Arith.nat_of_integer (Z.of_int 31))
-        | More_Word_Library.Cap_v_frag (a, b) ->
-          More_Word_Library.Cap_v_frag (a, b)
-        | More_Word_Library.Undef -> More_Word_Library.Undef);;
-
-let rec memset h c v n = memset_prim h c (u8_cast v) n;;
-
-let rec calloc
-  h n = (let hres = res (alloc h true n) in
-         let ha =
-           memset (Product_Type.fst hres) (Product_Type.snd hres)
-             (More_Word_Library.Uint8_v
-               (Word.zero_word
-                 (Type_Length.len_bit0
-                   (Type_Length.len_bit0
-                     (Type_Length.len_bit0 Type_Length.len_num1)))))
-             n
-           in
-          Success (res ha, Product_Type.snd hres));;
-
-let rec malloc h n = alloc h true n;;
-
-let rec equal_logicerrtype
-  x0 x1 = match x0, x1 with MemoryNotFreed, Unhandled x6 -> false
-    | Unhandled x6, MemoryNotFreed -> false
-    | WrongMemVal, Unhandled x6 -> false
-    | Unhandled x6, WrongMemVal -> false
-    | WrongMemVal, MemoryNotFreed -> false
-    | MemoryNotFreed, WrongMemVal -> false
-    | MissingResource, Unhandled x6 -> false
-    | Unhandled x6, MissingResource -> false
-    | MissingResource, MemoryNotFreed -> false
-    | MemoryNotFreed, MissingResource -> false
-    | MissingResource, WrongMemVal -> false
-    | WrongMemVal, MissingResource -> false
-    | BufferOverrun, Unhandled x6 -> false
-    | Unhandled x6, BufferOverrun -> false
-    | BufferOverrun, MemoryNotFreed -> false
-    | MemoryNotFreed, BufferOverrun -> false
-    | BufferOverrun, WrongMemVal -> false
-    | WrongMemVal, BufferOverrun -> false
-    | BufferOverrun, MissingResource -> false
-    | MissingResource, BufferOverrun -> false
-    | UseAfterFree, Unhandled x6 -> false
-    | Unhandled x6, UseAfterFree -> false
-    | UseAfterFree, MemoryNotFreed -> false
-    | MemoryNotFreed, UseAfterFree -> false
-    | UseAfterFree, WrongMemVal -> false
-    | WrongMemVal, UseAfterFree -> false
-    | UseAfterFree, MissingResource -> false
-    | MissingResource, UseAfterFree -> false
-    | UseAfterFree, BufferOverrun -> false
-    | BufferOverrun, UseAfterFree -> false
-    | Unhandled x6, Unhandled y6 -> ((x6 : string) = y6)
-    | MemoryNotFreed, MemoryNotFreed -> true
-    | WrongMemVal, WrongMemVal -> true
-    | MissingResource, MissingResource -> true
-    | BufferOverrun, BufferOverrun -> true
-    | UseAfterFree, UseAfterFree -> true;;
-
-let rec equal_c2errtype
-  x0 x1 = match x0, x1 with LengthViolation, BadAddressViolation -> false
-    | BadAddressViolation, LengthViolation -> false
-    | PermitStoreLocalCapViolation, BadAddressViolation -> false
-    | BadAddressViolation, PermitStoreLocalCapViolation -> false
-    | PermitStoreLocalCapViolation, LengthViolation -> false
-    | LengthViolation, PermitStoreLocalCapViolation -> false
-    | PermitStoreCapViolation, BadAddressViolation -> false
-    | BadAddressViolation, PermitStoreCapViolation -> false
-    | PermitStoreCapViolation, LengthViolation -> false
-    | LengthViolation, PermitStoreCapViolation -> false
-    | PermitStoreCapViolation, PermitStoreLocalCapViolation -> false
-    | PermitStoreLocalCapViolation, PermitStoreCapViolation -> false
-    | PermitStoreViolation, BadAddressViolation -> false
-    | BadAddressViolation, PermitStoreViolation -> false
-    | PermitStoreViolation, LengthViolation -> false
-    | LengthViolation, PermitStoreViolation -> false
-    | PermitStoreViolation, PermitStoreLocalCapViolation -> false
-    | PermitStoreLocalCapViolation, PermitStoreViolation -> false
-    | PermitStoreViolation, PermitStoreCapViolation -> false
-    | PermitStoreCapViolation, PermitStoreViolation -> false
-    | PermitLoadViolation, BadAddressViolation -> false
-    | BadAddressViolation, PermitLoadViolation -> false
-    | PermitLoadViolation, LengthViolation -> false
-    | LengthViolation, PermitLoadViolation -> false
-    | PermitLoadViolation, PermitStoreLocalCapViolation -> false
-    | PermitStoreLocalCapViolation, PermitLoadViolation -> false
-    | PermitLoadViolation, PermitStoreCapViolation -> false
-    | PermitStoreCapViolation, PermitLoadViolation -> false
-    | PermitLoadViolation, PermitStoreViolation -> false
-    | PermitStoreViolation, PermitLoadViolation -> false
-    | TagViolation, BadAddressViolation -> false
-    | BadAddressViolation, TagViolation -> false
-    | TagViolation, LengthViolation -> false
-    | LengthViolation, TagViolation -> false
-    | TagViolation, PermitStoreLocalCapViolation -> false
-    | PermitStoreLocalCapViolation, TagViolation -> false
-    | TagViolation, PermitStoreCapViolation -> false
-    | PermitStoreCapViolation, TagViolation -> false
-    | TagViolation, PermitStoreViolation -> false
-    | PermitStoreViolation, TagViolation -> false
-    | TagViolation, PermitLoadViolation -> false
-    | PermitLoadViolation, TagViolation -> false
-    | BadAddressViolation, BadAddressViolation -> true
-    | LengthViolation, LengthViolation -> true
-    | PermitStoreLocalCapViolation, PermitStoreLocalCapViolation -> true
-    | PermitStoreCapViolation, PermitStoreCapViolation -> true
-    | PermitStoreViolation, PermitStoreViolation -> true
-    | PermitLoadViolation, PermitLoadViolation -> true
-    | TagViolation, TagViolation -> true;;
-
-let rec equal_errtype x0 x1 = match x0, x1 with C2Err x1, LogicErr x2 -> false
-                        | LogicErr x2, C2Err x1 -> false
-                        | LogicErr x2, LogicErr y2 -> equal_logicerrtype x2 y2
-                        | C2Err x1, C2Err y1 -> equal_c2errtype x1 y1;;
-
-let rec equal_result _A
-  x0 x1 = match x0, x1 with Success x1, Error x2 -> false
-    | Error x2, Success x1 -> false
-    | Error x2, Error y2 -> equal_errtype x2 y2
-    | Success x1, Success y1 -> HOL.eq _A x1 y1;;
+let rec res (Success x1) = x1;;
 
 let rec err (Error x2) = x2;;
-
-let rec memcmp
-  h s1 s2 n =
-    (if Arith.equal_nata n Arith.zero_nat then Success true
-      else (let v1 = load h s1 More_Word_Library.Uint8 in
-            let v2 = load h s2 More_Word_Library.Uint8 in
-             (if not (is_Success v1) then Error (err v1)
-               else (if not (is_Success v2) then Error (err v2)
-                      else (if equal_result
-                                 (More_Word_Library.equal_ccval
-                                   (Arith.equal_integer,
-                                     comp_countable_integer))
-                                 v1 (Success More_Word_Library.Undef) ||
-                                 equal_result
-                                   (More_Word_Library.equal_ccval
-                                     (Arith.equal_integer,
-                                       comp_countable_integer))
-                                   v2 (Success More_Word_Library.Undef)
-                             then Error (LogicErr WrongMemVal)
-                             else (if not
-(equal_result
-  (More_Word_Library.equal_ccval (Arith.equal_integer, comp_countable_integer))
-  v1 v2)
-                                    then Success false
-                                    else memcmp h s1 s2
-   (Arith.minus_nat n Arith.one_nat)))))));;
 
 let rec memcpy_cap
   h uw ux n =
@@ -3543,7 +3275,7 @@ let rec memcpy_cap
                       then memcpy_prim h uw ux
                              (Arith.suc (Arith.minus_nat n Arith.one_nat))
                       else (let xs = res x in
-                             (if More_Word_Library.equal_ccvala
+                             (if More_Word_Library.equal_ccval
                                    (Arith.equal_integer, comp_countable_integer)
                                    xs More_Word_Library.Undef
                                then memcpy_prim h uw ux
@@ -3574,7 +3306,7 @@ and memcpy_prim
       else (let x = load h uv More_Word_Library.Uint8 in
              (if not (is_Success x) then Error (err x)
                else (let xs = res x in
-                      (if More_Word_Library.equal_ccvala
+                      (if More_Word_Library.equal_ccval
                             (Arith.equal_integer, comp_countable_integer) xs
                             More_Word_Library.Undef
                         then Error (LogicErr (Unhandled ""))
@@ -3618,29 +3350,6 @@ let rec memcpy
              then Error (LogicErr (Unhandled ""))
              else memcpy_cap h dst src n));;
 
-let rec memmove
-  h dst src n = (let (h1, tmp) = res (alloc h true n) in
-                 let h2 = res (memcpy h1 tmp src n) in
-                 let h3 = res (memcpy h2 dst tmp n) in
-                 let (h4, _) = res (free h3 tmp) in
-                  Success h4);;
-
-let rec realloc
-  h cap n =
-    (if More_Word_Library.equal_mem_capability_exta
-          (Arith.equal_integer, comp_countable_integer)
-          (More_Word_Library.equal_capability_ext Product_Type.equal_unit) cap
-          null_capability
-      then alloc h true n
-      else (let (h1, capa) = res (alloc h true n) in
-            let h2 =
-              res (memcpy h1 capa cap
-                    (Orderings.min Arith.ord_nat n
-                      (More_Word_Library.len comp_countable_integer cap)))
-              in
-            let (h3, _) = res (free h2 cap) in
-             Success (h3, capa)));;
-
 let rec zero_heap_ext _A
   = Heap_ext
       (Z.zero,
@@ -3652,6 +3361,47 @@ let rec zero_heap_ext _A
 let init_heap : unit heap_ext
   = next_block_update (fun _ -> (Z.of_int 1))
       (zero_heap_ext cancellative_sep_algebra_unit);;
+
+let rec the_map (Map x2) = x2;;
+
+let rec get_block_size
+  h b = (match
+          Mapping.lookup
+            (Collection_Order.ccompare_integer, Arith.equal_integer)
+            (heap_map h) b
+          with None -> None
+          | Some m ->
+            (match m with Freed -> None
+              | Map _ -> Some (Product_Type.snd (bounds (the_map m)))));;
+
+let rec get_unfreed_blocks
+  uu n =
+    (if Arith.equal_nata n Arith.zero_nat then []
+      else (match
+             Mapping.lookup
+               (Collection_Order.ccompare_integer, Arith.equal_integer)
+               (heap_map uu)
+               (Arith.integer_of_nat
+                 (Arith.suc (Arith.minus_nat n Arith.one_nat)))
+             with None ->
+               get_unfreed_blocks uu (Arith.minus_nat n Arith.one_nat)
+             | Some Freed ->
+               get_unfreed_blocks uu (Arith.minus_nat n Arith.one_nat)
+             | Some (Map _) ->
+               Arith.integer_of_nat
+                 (Arith.suc (Arith.minus_nat n Arith.one_nat)) ::
+                 get_unfreed_blocks uu (Arith.minus_nat n Arith.one_nat)));;
+
+let rec get_memory_leak_size
+  uu n =
+    (if Arith.equal_nata n Arith.zero_nat then Arith.zero_nat
+      else Arith.plus_nat
+             (get_memory_leak_size uu (Arith.minus_nat n Arith.one_nat))
+             (match
+               get_block_size uu
+                 (Arith.integer_of_nat
+                   (Arith.suc (Arith.minus_nat n Arith.one_nat)))
+               with None -> Arith.zero_nat | Some na -> na));;
 
 end;; (*struct CHERI_C_Concrete_Memory_Model*)
 
@@ -3694,4 +3444,3 @@ let rec set_glob_var
       CHERI_C_Concrete_Memory_Model.Success (ha, (cap, ga)));;
 
 end;; (*struct CHERI_C_Global_Environment*)
-

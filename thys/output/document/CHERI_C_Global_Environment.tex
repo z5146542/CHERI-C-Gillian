@@ -1,0 +1,295 @@
+%
+\begin{isabellebody}%
+\setisabellecontext{CHERI{\isacharunderscore}{\kern0pt}C{\isacharunderscore}{\kern0pt}Global{\isacharunderscore}{\kern0pt}Environment}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isacommand{theory}\isamarkupfalse%
+\ CHERI{\isacharunderscore}{\kern0pt}C{\isacharunderscore}{\kern0pt}Global{\isacharunderscore}{\kern0pt}Environment\isanewline
+\ \ \isakeyword{imports}\ CHERI{\isacharunderscore}{\kern0pt}C{\isacharunderscore}{\kern0pt}Concrete{\isacharunderscore}{\kern0pt}Memory{\isacharunderscore}{\kern0pt}Model\isanewline
+\isakeyword{begin}%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+\isanewline
+\isanewline
+\isanewline
+\isacommand{type{\isacharunderscore}{\kern0pt}synonym}\isamarkupfalse%
+\ genv\ {\isacharequal}{\kern0pt}\ {\isachardoublequoteopen}{\isacharparenleft}{\kern0pt}String{\isachardot}{\kern0pt}literal{\isacharcomma}{\kern0pt}\ cap{\isacharparenright}{\kern0pt}\ mapping{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\ alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}heap\ {\isasymRightarrow}\ bool\ {\isasymRightarrow}\ nat\ {\isasymRightarrow}\ {\isacharparenleft}{\kern0pt}heap\ {\isasymtimes}\ cap{\isacharparenright}{\kern0pt}\ result{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ h\ c\ s\ {\isasymequiv}\ \isanewline
+\ \ \ \ \ let\ h{\isacharprime}{\kern0pt}\ {\isacharequal}{\kern0pt}\ alloc\ h\ c\ s\ in\isanewline
+\ \ \ \ \ Success\ {\isacharparenleft}{\kern0pt}fst\ {\isacharparenleft}{\kern0pt}res\ h{\isacharprime}{\kern0pt}{\isacharparenright}{\kern0pt}{\isacharcomma}{\kern0pt}\ snd\ {\isacharparenleft}{\kern0pt}res\ h{\isacharprime}{\kern0pt}{\isacharparenright}{\kern0pt}\ {\isasymlparr}\ perm{\isacharunderscore}{\kern0pt}global\ {\isacharcolon}{\kern0pt}{\isacharequal}{\kern0pt}\ True\ {\isasymrparr}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\ set{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ {\isacharcolon}{\kern0pt}{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}heap\ {\isasymRightarrow}\ bool\ {\isasymRightarrow}\ nat\ {\isasymRightarrow}\ String{\isachardot}{\kern0pt}literal\ {\isasymRightarrow}\ genv\ {\isasymRightarrow}\ {\isacharparenleft}{\kern0pt}heap\ {\isasymtimes}\ cap\ {\isasymtimes}\ genv{\isacharparenright}{\kern0pt}\ result{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}set{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ h\ c\ s\ v\ g\ {\isasymequiv}\isanewline
+\ \ \ \ \ let\ {\isacharparenleft}{\kern0pt}h{\isacharprime}{\kern0pt}{\isacharcomma}{\kern0pt}\ cap{\isacharparenright}{\kern0pt}\ {\isacharequal}{\kern0pt}\ res\ {\isacharparenleft}{\kern0pt}alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ h\ c\ s{\isacharparenright}{\kern0pt}\ in\isanewline
+\ \ \ \ \ let\ g{\isacharprime}{\kern0pt}\ {\isacharequal}{\kern0pt}\ Mapping{\isachardot}{\kern0pt}update\ v\ cap\ g\ in\isanewline
+\ \ \ \ \ Success\ {\isacharparenleft}{\kern0pt}h{\isacharprime}{\kern0pt}{\isacharcomma}{\kern0pt}\ cap{\isacharcomma}{\kern0pt}\ g{\isacharprime}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{lemma}\isamarkupfalse%
+\ set{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}bit{\isacharcolon}{\kern0pt}\isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ h\ c\ s\ {\isacharequal}{\kern0pt}\ Success\ {\isacharparenleft}{\kern0pt}h{\isacharprime}{\kern0pt}{\isacharcomma}{\kern0pt}\ cap{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}perm{\isacharunderscore}{\kern0pt}global\ cap{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+\ \ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{using}\isamarkupfalse%
+\ assms\isanewline
+\ \ \isacommand{unfolding}\isamarkupfalse%
+\ alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharunderscore}{\kern0pt}def\ alloc{\isacharunderscore}{\kern0pt}def\isanewline
+\ \ \isacommand{by}\isamarkupfalse%
+\ fastforce%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isacommand{lemma}\isamarkupfalse%
+\ set{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}bit{\isacharunderscore}{\kern0pt}lift{\isacharcolon}{\kern0pt}\isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}set{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ h\ c\ s\ v\ g\ {\isacharequal}{\kern0pt}\ Success\ {\isacharparenleft}{\kern0pt}h{\isacharprime}{\kern0pt}{\isacharcomma}{\kern0pt}\ cap{\isacharcomma}{\kern0pt}\ g{\isacharprime}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}perm{\isacharunderscore}{\kern0pt}global\ cap{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+\ \ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{using}\isamarkupfalse%
+\ assms\isanewline
+\ \ \isacommand{unfolding}\isamarkupfalse%
+\ alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharunderscore}{\kern0pt}def\ set{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharunderscore}{\kern0pt}def\ alloc{\isacharunderscore}{\kern0pt}def\isanewline
+\ \ \isacommand{by}\isamarkupfalse%
+\ fastforce%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isanewline
+\isacommand{lemma}\isamarkupfalse%
+\ free{\isacharunderscore}{\kern0pt}fails{\isacharunderscore}{\kern0pt}on{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharcolon}{\kern0pt}\isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ h\ c\ s\ {\isacharequal}{\kern0pt}\ Success\ {\isacharparenleft}{\kern0pt}h{\isacharprime}{\kern0pt}{\isacharcomma}{\kern0pt}\ cap{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}free\ h{\isacharprime}{\kern0pt}\ cap\ {\isacharequal}{\kern0pt}\ Error\ {\isacharparenleft}{\kern0pt}LogicErr\ {\isacharparenleft}{\kern0pt}Unhandled\ {\isadigit{0}}{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+\ \ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{by}\isamarkupfalse%
+\ {\isacharparenleft}{\kern0pt}metis\ alloc{\isacharunderscore}{\kern0pt}updated{\isacharunderscore}{\kern0pt}heap{\isacharunderscore}{\kern0pt}and{\isacharunderscore}{\kern0pt}cap\ assms\ capability{\isachardot}{\kern0pt}select{\isacharunderscore}{\kern0pt}convs{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ free{\isacharunderscore}{\kern0pt}global{\isacharunderscore}{\kern0pt}cap\ \isanewline
+\ \ \ \ \ \ mem{\isacharunderscore}{\kern0pt}capability{\isachardot}{\kern0pt}select{\isacharunderscore}{\kern0pt}convs{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isadigit{0}}{\isacharparenright}{\kern0pt}\ mem{\isacharunderscore}{\kern0pt}capability{\isachardot}{\kern0pt}simps{\isacharparenleft}{\kern0pt}{\isadigit{2}}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ null{\isacharunderscore}{\kern0pt}capability{\isacharunderscore}{\kern0pt}def\ result{\isachardot}{\kern0pt}sel{\isacharparenleft}{\kern0pt}{\isadigit{1}}{\isacharparenright}{\kern0pt}\ \isanewline
+\ \ \ \ \ \ alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharunderscore}{\kern0pt}def\ snd{\isacharunderscore}{\kern0pt}conv\ zero{\isacharunderscore}{\kern0pt}mem{\isacharunderscore}{\kern0pt}capability{\isacharunderscore}{\kern0pt}ext{\isacharunderscore}{\kern0pt}def{\isacharparenright}{\kern0pt}%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isacommand{lemma}\isamarkupfalse%
+\ free{\isacharunderscore}{\kern0pt}fails{\isacharunderscore}{\kern0pt}on{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}lift{\isacharcolon}{\kern0pt}\isanewline
+\ \ \isakeyword{assumes}\ {\isachardoublequoteopen}set{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ h\ c\ s\ v\ g\ {\isacharequal}{\kern0pt}\ Success\ {\isacharparenleft}{\kern0pt}h{\isacharprime}{\kern0pt}{\isacharcomma}{\kern0pt}\ cap{\isacharcomma}{\kern0pt}\ g{\isacharprime}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{shows}\ {\isachardoublequoteopen}free\ h{\isacharprime}{\kern0pt}\ cap\ {\isacharequal}{\kern0pt}\ Error\ {\isacharparenleft}{\kern0pt}LogicErr\ {\isacharparenleft}{\kern0pt}Unhandled\ {\isadigit{0}}{\isacharparenright}{\kern0pt}{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+%
+\endisadelimproof
+%
+\isatagproof
+\isacommand{proof}\isamarkupfalse%
+\ {\isacharminus}{\kern0pt}\isanewline
+\ \ \isacommand{have}\isamarkupfalse%
+\ res{\isacharcolon}{\kern0pt}\ {\isachardoublequoteopen}alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\ h\ c\ s\ {\isacharequal}{\kern0pt}\ Success\ {\isacharparenleft}{\kern0pt}h{\isacharprime}{\kern0pt}{\isacharcomma}{\kern0pt}\ cap{\isacharparenright}{\kern0pt}{\isachardoublequoteclose}\isanewline
+\ \ \ \ \isacommand{using}\isamarkupfalse%
+\ assms\ \isanewline
+\ \ \ \ \isacommand{unfolding}\isamarkupfalse%
+\ set{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharunderscore}{\kern0pt}def\ alloc{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharunderscore}{\kern0pt}def\ alloc{\isacharunderscore}{\kern0pt}def\isanewline
+\ \ \ \ \isacommand{by}\isamarkupfalse%
+\ fastforce\isanewline
+\ \ \isacommand{show}\isamarkupfalse%
+\ {\isacharquery}{\kern0pt}thesis\ \isacommand{using}\isamarkupfalse%
+\ free{\isacharunderscore}{\kern0pt}fails{\isacharunderscore}{\kern0pt}on{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var{\isacharbrackleft}{\kern0pt}OF\ res{\isacharbrackright}{\kern0pt}\isanewline
+\ \ \ \ \isacommand{by}\isamarkupfalse%
+\ blast\isanewline
+\isacommand{qed}\isamarkupfalse%
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
+\isanewline
+\isacommand{export{\isacharunderscore}{\kern0pt}code}\isamarkupfalse%
+\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ null{\isacharunderscore}{\kern0pt}capability\ init{\isacharunderscore}{\kern0pt}heap\ next{\isacharunderscore}{\kern0pt}block\ get{\isacharunderscore}{\kern0pt}memory{\isacharunderscore}{\kern0pt}leak{\isacharunderscore}{\kern0pt}size\ get{\isacharunderscore}{\kern0pt}unfreed{\isacharunderscore}{\kern0pt}blocks\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ alloc\ free\ load\ store\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ memset\ memcpy\ memmove\ memcmp\ malloc\ calloc\ realloc\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ set{\isacharunderscore}{\kern0pt}glob{\isacharunderscore}{\kern0pt}var\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ word{\isadigit{8}}{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}integer\ \ \ word{\isadigit{1}}{\isadigit{6}}{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}integer\ \ word{\isadigit{3}}{\isadigit{2}}{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}integer\ \ word{\isadigit{6}}{\isadigit{4}}{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}integer\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ integer{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}word{\isadigit{8}}\ \ \ integer{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}word{\isadigit{1}}{\isadigit{6}}\ \ integer{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}word{\isadigit{3}}{\isadigit{2}}\ \ integer{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}word{\isadigit{6}}{\isadigit{4}}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ sword{\isadigit{8}}{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}integer\ \ sword{\isadigit{1}}{\isadigit{6}}{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}integer\ sword{\isadigit{3}}{\isadigit{2}}{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}integer\ sword{\isadigit{6}}{\isadigit{4}}{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}integer\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ integer{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}sword{\isadigit{8}}\ \ integer{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}sword{\isadigit{1}}{\isadigit{6}}\ integer{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}sword{\isadigit{3}}{\isadigit{2}}\ integer{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}sword{\isadigit{6}}{\isadigit{4}}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ integer{\isacharunderscore}{\kern0pt}of{\isacharunderscore}{\kern0pt}nat\ cast{\isacharunderscore}{\kern0pt}val\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ C{\isadigit{2}}Err\ LogicErr\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ TagViolation\ PermitLoadViolation\ PermitStoreViolation\ PermitStoreCapViolation\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ PermitStoreLocalCapViolation\ LengthViolation\ BadAddressViolation\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ UseAfterFree\ BufferOverrun\ MissingResource\ WrongMemVal\ MemoryNotFreed\ Unhandled\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \isakeyword{in}\ OCaml\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \isakeyword{file{\isacharunderscore}{\kern0pt}prefix}\ CHERI{\isacharunderscore}{\kern0pt}C{\isacharunderscore}{\kern0pt}Memory{\isacharunderscore}{\kern0pt}Model\isanewline
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isacommand{end}\isamarkupfalse%
+%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\end{isabellebody}%
+\endinput
+%:%file=CHERI_C_Global_Environment.tex%:%
+%:%10=1%:%
+%:%11=1%:%
+%:%12=2%:%
+%:%13=3%:%
+%:%18=3%:%
+%:%21=4%:%
+%:%22=7%:%
+%:%23=8%:%
+%:%24=9%:%
+%:%25=9%:%
+%:%26=10%:%
+%:%27=11%:%
+%:%28=11%:%
+%:%29=12%:%
+%:%30=13%:%
+%:%32=15%:%
+%:%33=16%:%
+%:%34=17%:%
+%:%35=17%:%
+%:%36=18%:%
+%:%37=19%:%
+%:%40=22%:%
+%:%41=23%:%
+%:%42=24%:%
+%:%43=24%:%
+%:%44=25%:%
+%:%45=26%:%
+%:%48=27%:%
+%:%52=27%:%
+%:%53=27%:%
+%:%54=28%:%
+%:%55=28%:%
+%:%56=29%:%
+%:%57=29%:%
+%:%62=29%:%
+%:%65=30%:%
+%:%66=31%:%
+%:%67=31%:%
+%:%68=32%:%
+%:%69=33%:%
+%:%72=34%:%
+%:%76=34%:%
+%:%77=34%:%
+%:%78=35%:%
+%:%79=35%:%
+%:%80=36%:%
+%:%81=36%:%
+%:%86=36%:%
+%:%89=37%:%
+%:%90=38%:%
+%:%91=39%:%
+%:%92=40%:%
+%:%93=40%:%
+%:%94=41%:%
+%:%95=42%:%
+%:%98=43%:%
+%:%102=43%:%
+%:%103=43%:%
+%:%104=44%:%
+%:%105=45%:%
+%:%110=45%:%
+%:%113=46%:%
+%:%114=47%:%
+%:%115=47%:%
+%:%116=48%:%
+%:%117=49%:%
+%:%124=50%:%
+%:%125=50%:%
+%:%126=51%:%
+%:%127=51%:%
+%:%128=52%:%
+%:%129=52%:%
+%:%130=53%:%
+%:%131=53%:%
+%:%132=54%:%
+%:%133=54%:%
+%:%134=55%:%
+%:%135=55%:%
+%:%136=55%:%
+%:%137=56%:%
+%:%138=56%:%
+%:%139=57%:%
+%:%145=57%:%
+%:%148=58%:%
+%:%149=59%:%
+%:%150=59%:%
+%:%151=60%:%
+%:%152=61%:%
+%:%153=62%:%
+%:%154=63%:%
+%:%155=64%:%
+%:%156=65%:%
+%:%157=66%:%
+%:%158=67%:%
+%:%159=68%:%
+%:%160=69%:%
+%:%161=70%:%
+%:%162=71%:%
+%:%163=72%:%
+%:%164=73%:%
+%:%165=74%:%
+%:%166=75%:%
+%:%167=76%:%
+%:%168=77%:%
+%:%169=78%:%
+%:%172=79%:%
+%:%177=80%:%

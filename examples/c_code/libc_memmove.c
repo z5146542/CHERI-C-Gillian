@@ -2,8 +2,8 @@
 #include <string.h>
 #include <cheriintrin.h>
 #include "cheri_c_test.h"
-
-int main() {
+/*
+int foo() {
     char *pointees = malloc(sizeof(char) * 10);
     pointees[0] = '0';
     pointees[1] = '1';
@@ -43,8 +43,9 @@ int main() {
     }
     return 0;
 }
+*/
 
-int foo() {
+int main() {
     char *pointees = malloc(sizeof(char) * 10);
     pointees[0] = '0';
     pointees[1] = '1';

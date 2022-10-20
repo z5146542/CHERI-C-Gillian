@@ -1,0 +1,84 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil";
+
+(* void ( void * ) *)
+proc is_null(p) {
+        retval_i__cheri_tag_get_1 := undefined; (* _Bool retval_i__cheri_tag_get_1; *)
+        retval_i__cheri_tag_get_1 := "i__cheri_tag_get"(p);
+        tmp_0 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_1);
+        tmp_1 := "i__binops_cmp_eq"(tmp_0, {{ "int64", 0i }});
+        assert (tmp_1 == {{ "int32", 1i }});
+        tmp_2 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_1);
+        tmp_3 := "i__binops_cmp_eq"(tmp_2, {{ "int64", 0i }});
+        tmp_4 := "i__unops_negb"(tmp_3);
+        vtb := "i__bool_of_value"(tmp_4);
+        goto [vtb] t1 s1;
+    s1: skip;
+    t1: retval_i__cheri_base_get_2 := undefined; (* unsigned long int retval_i__cheri_base_get_2; *)
+        retval_i__cheri_base_get_2 := "i__cheri_base_get"(p);
+        tmp_5 := "i__unops_cast"("signed long int", retval_i__cheri_base_get_2);
+        tmp_6 := "i__binops_cmp_eq"(tmp_5, {{ "int64", 0i }});
+        assert (tmp_6 == {{ "int32", 1i }});
+        tmp_7 := "i__unops_cast"("signed long int", retval_i__cheri_base_get_2);
+        tmp_8 := "i__binops_cmp_eq"(tmp_7, {{ "int64", 0i }});
+        tmp_9 := "i__unops_negb"(tmp_8);
+        vtb := "i__bool_of_value"(tmp_9);
+        goto [vtb] t2 s2;
+    s2: skip;
+    t2: retval_i__cheri_offset_get_3 := undefined; (* unsigned long int retval_i__cheri_offset_get_3; *)
+        retval_i__cheri_offset_get_3 := "i__cheri_offset_get"(p);
+        tmp_10 := "i__unops_cast"("signed long int", retval_i__cheri_offset_get_3);
+        tmp_11 := "i__binops_cmp_eq"(tmp_10, {{ "int64", 0i }});
+        assert (tmp_11 == {{ "int32", 1i }});
+        tmp_12 := "i__unops_cast"("signed long int", retval_i__cheri_offset_get_3);
+        tmp_13 := "i__binops_cmp_eq"(tmp_12, {{ "int64", 0i }});
+        tmp_14 := "i__unops_negb"(tmp_13);
+        vtb := "i__bool_of_value"(tmp_14);
+        goto [vtb] t3 s3;
+    s3: skip;
+    t3: retval_i__cheri_length_get_4 := undefined; (* unsigned long int retval_i__cheri_length_get_4; *)
+        retval_i__cheri_length_get_4 := "i__cheri_length_get"(p);
+        tmp_15 := "i__unops_cast"("signed long int", retval_i__cheri_length_get_4);
+        tmp_16 := "i__undefined_-"({{ "int32", 1i }});
+        tmp_17 := "i__unops_cast"("unsigned long int", tmp_16);
+        tmp_18 := "i__unops_cast"("signed long int", tmp_17);
+        tmp_19 := "i__binops_cmp_eq"(tmp_15, tmp_18);
+        assert (tmp_19 == {{ "int32", 1i }});
+        tmp_20 := "i__unops_cast"("signed long int", retval_i__cheri_length_get_4);
+        tmp_21 := "i__undefined_-"({{ "int32", 1i }});
+        tmp_22 := "i__unops_cast"("unsigned long int", tmp_21);
+        tmp_23 := "i__unops_cast"("signed long int", tmp_22);
+        tmp_24 := "i__binops_cmp_eq"(tmp_20, tmp_23);
+        tmp_25 := "i__unops_negb"(tmp_24);
+        vtb := "i__bool_of_value"(tmp_25);
+        goto [vtb] t4 s4;
+    s4: skip;
+    t4: skip;
+        ret := undefined;
+        return
+};
+
+(* signed int (  ) *)
+proc main() {
+        p := undefined; (* void * p; *)
+        tmp_26 := [NULL]();
+        p := tmp_26;
+        tmp := "is_null"(p);
+        zero := undefined; (* void * zero; *)
+        tmp_27 := [NULL]();
+        zero := tmp_27;
+        tmp_28 := "i__binops_add"(zero, {{ "int32", 42i }});
+        zero := tmp_28;
+        tmp_29 := "i__binops_sub"(zero, {{ "int32", 42i }});
+        zero := tmp_29;
+        p := zero;
+        tmp := "is_null"(p);
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};

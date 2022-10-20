@@ -1,0 +1,1348 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2022.8.15)  14 OCT 2022 00:19
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**root.tex
+(./root.tex
+LaTeX2e <2020-02-02> patch level 5
+L3 programming layer <2020-04-06>
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2019/12/20 v1.4l Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size11.clo
+File: size11.clo 2019/12/20 v1.4l Standard LaTeX file (size option)
+)
+\c@part=\count167
+\c@section=\count168
+\c@subsection=\count169
+\c@subsubsection=\count170
+\c@paragraph=\count171
+\c@subparagraph=\count172
+\c@figure=\count173
+\c@table=\count174
+\abovecaptionskip=\skip47
+\belowcaptionskip=\skip48
+\bibindent=\dimen134
+)
+(/usr/share/texlive/texmf-dist/tex/latex/base/fontenc.sty
+Package: fontenc 2020/02/11 v2.0o Standard LaTeX package
+) (./isabelle.sty
+\symbbbfont=\mathgroup4
+LaTeX Font Info:    Overwriting symbol font `bbbfont' in version `bold'
+(Font)                  U/txmia/m/it --> U/txmia/bx/it on input line 44.
+\isa@parindent=\dimen135
+\isa@parskip=\dimen136
+
+(/usr/share/texlive/texmf-dist/tex/generic/ulem/ulem.sty
+\UL@box=\box45
+\UL@hyphenbox=\box46
+\UL@skip=\skip49
+\UL@hook=\toks15
+\UL@height=\dimen137
+\UL@pe=\count175
+\UL@pixel=\dimen138
+\ULC@box=\box47
+Package: ulem 2019/11/18
+\ULdepth=\dimen139
+)) (./isabelletags.sty
+(./comment.sty
+\CommentStream=\write3
+ Excluding comment 'comment') Including comment 'isadelimML'
+Including comment 'isatagML' Including comment 'isadelimdocument'
+Including comment 'isatagdocument' Including comment 'isadelimimportant'
+Including comment 'isatagimportant' Excluding comment 'isadeliminvisible'
+Excluding comment 'isataginvisible' Including comment 'isadelimproof'
+Including comment 'isatagproof' Including comment 'isadelimtheory'
+Including comment 'isatagtheory' Including comment 'isadelimunimportant'
+Including comment 'isatagunimportant' Including comment 'isadelimvisible'
+Including comment 'isatagvisible') (./isabellesym.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\@emptytoks=\toks16
+\symAMSa=\mathgroup5
+\symAMSb=\mathgroup6
+LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+))
+(./pdfsetup.sty (/usr/share/texlive/texmf-dist/tex/latex/graphics/color.sty
+Package: color 2019/11/23 v1.2a Standard LaTeX Color (DPC)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package color Info: Driver file: pdftex.def on input line 147.
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-def/pdftex.def
+File: pdftex.def 2018/01/08 v1.0l Graphics/color driver for pdftex
+)))
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hyperref.sty
+Package: hyperref 2020/01/14 v7.00d Hypertext links for LaTeX
+
+(/usr/share/texlive/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
+Package: ltxcmds 2019/12/15 v1.24 LaTeX kernel commands for general use (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty
+Package: iftex 2020/03/06 v1.0d TeX engine tests
+)
+(/usr/share/texlive/texmf-dist/tex/latex/pdftexcmds/pdftexcmds.sty
+Package: pdftexcmds 2019/11/24 v0.31 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(/usr/share/texlive/texmf-dist/tex/generic/infwarerr/infwarerr.sty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks17
+)
+(/usr/share/texlive/texmf-dist/tex/generic/kvsetkeys/kvsetkeys.sty
+Package: kvsetkeys 2019/12/15 v1.18 Key value parser (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty
+Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/hycolor/hycolor.sty
+Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/letltxmacro/letltxmacro.sty
+Package: letltxmacro 2019/12/03 v1.6 Let assignment for LaTeX macros (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/auxhook/auxhook.sty
+Package: auxhook 2019-12-17 v1.6 Hooks for auxiliary files (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/kvoptions/kvoptions.sty
+Package: kvoptions 2019/11/29 v3.13 Key value format for package options (HO)
+)
+\@linkdim=\dimen140
+\Hy@linkcounter=\count176
+\Hy@pagecounter=\count177
+
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/pd1enc.def
+File: pd1enc.def 2020/01/14 v7.00d Hyperref: PDFDocEncoding definition (HO)
+Now handling font encoding PD1 ...
+... no UTF-8 mapping file for font encoding PD1
+)
+(/usr/share/texlive/texmf-dist/tex/generic/intcalc/intcalc.sty
+Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/etexcmds/etexcmds.sty
+Package: etexcmds 2019/12/15 v1.7 Avoid name clashes with e-TeX commands (HO)
+)
+\Hy@SavedSpaceFactor=\count178
+Package hyperref Info: Option `colorlinks' set `true' on input line 4421.
+Package hyperref Info: Option `pdfpagelabels' set `true' on input line 4421.
+Package hyperref Info: Hyper figures OFF on input line 4547.
+Package hyperref Info: Link nesting OFF on input line 4552.
+Package hyperref Info: Hyper index ON on input line 4555.
+Package hyperref Info: Plain pages OFF on input line 4562.
+Package hyperref Info: Backreferencing OFF on input line 4567.
+Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
+Package hyperref Info: Bookmarks ON on input line 4800.
+\c@Hy@tempcnt=\count179
+
+(/usr/share/texlive/texmf-dist/tex/latex/url/url.sty
+\Urlmuskip=\muskip16
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 5159.
+\XeTeXLinkMargin=\dimen141
+
+(/usr/share/texlive/texmf-dist/tex/generic/bitset/bitset.sty
+Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
+
+(/usr/share/texlive/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty
+Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
+)
+))
+\Fld@menulength=\count180
+\Field@Width=\dimen142
+\Fld@charsize=\dimen143
+Package hyperref Info: Hyper figures OFF on input line 6430.
+Package hyperref Info: Link nesting OFF on input line 6435.
+Package hyperref Info: Hyper index ON on input line 6438.
+Package hyperref Info: backreferencing OFF on input line 6445.
+Package hyperref Info: Link coloring ON on input line 6448.
+Package hyperref Info: Link coloring with OCG OFF on input line 6455.
+Package hyperref Info: PDF/A mode OFF on input line 6460.
+LaTeX Info: Redefining \ref on input line 6500.
+LaTeX Info: Redefining \pageref on input line 6504.
+
+(/usr/share/texlive/texmf-dist/tex/generic/atbegshi/atbegshi.sty
+Package: atbegshi 2019/12/05 v1.19 At begin shipout hook (HO)
+)
+\Hy@abspage=\count181
+\c@Item=\count182
+\c@Hfootnote=\count183
+)
+Package hyperref Info: Driver (autodetected): hpdftex.
+
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hpdftex.def
+File: hpdftex.def 2020/01/14 v7.00d Hyperref driver for pdfTeX
+
+(/usr/share/texlive/texmf-dist/tex/latex/atveryend/atveryend.sty
+Package: atveryend 2019-12-11 v1.11 Hooks at the very end of document (HO)
+Package atveryend Info: \enddocument detected (standard20110627).
+)
+\Fld@listcount=\count184
+\c@bookmark@seq@number=\count185
+
+(/usr/share/texlive/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+Package: rerunfilecheck 2019/12/05 v1.9 Rerun checks for auxiliary files (HO)
+
+(/usr/share/texlive/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty
+Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
+)
+Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
+86.
+)
+\Hy@SectionHShift=\skip50
+)
+(/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdfmode.def
+File: l3backend-pdfmode.def 2020-03-12 L3 backend support: PDF mode
+\l__kernel_color_stack_int=\count186
+\l__pdf_internal_box=\box48
+)
+(./root.aux)
+\openout1 = `root.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 37.
+LaTeX Font Info:    ... okay on input line 37.
+ (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count187
+\scratchdimen=\dimen144
+\scratchbox=\box49
+\nofMPsegments=\count188
+\nofMParguments=\count189
+\everyMPshowfont=\toks18
+\MPscratchCnt=\count190
+\MPscratchDim=\dimen145
+\MPnumerator=\count191
+\makeMPintoPDFobject=\count192
+\everyMPtoPDFconversion=\toks19
+)
+\AtBeginShipoutBox=\box50
+Package hyperref Info: Link coloring ON on input line 37.
+ (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
+Package: nameref 2019/09/16 v2.46 Cross-referencing by name of section
+
+(/usr/share/texlive/texmf-dist/tex/latex/refcount/refcount.sty
+Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
+Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
+)
+\c@section@level=\count193
+)
+LaTeX Info: Redefining \ref on input line 37.
+LaTeX Info: Redefining \pageref on input line 37.
+LaTeX Info: Redefining \nameref on input line 37.
+
+(./root.out) (./root.out)
+\@outlinefile=\write4
+\openout4 = `root.out'.
+
+LaTeX Font Info:    Trying to load font information for U+txmia on input line 4
+2.
+
+(/usr/share/texlive/texmf-dist/tex/latex/txfonts/utxmia.fd
+File: utxmia.fd 2000/12/15 v3.1
+)
+LaTeX Font Info:    Trying to load font information for U+msa on input line 42.
+
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 42.
+
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+) (./root.toc)
+\tf@toc=\write5
+\openout5 = `root.toc'.
+
+
+(./session.tex (./More_Word_Library.tex
+Overfull \hbox (25.46489pt too wide) in paragraph at lines 13--14
+[][]  \T1/cmr/bx/n/10 im-ports \T1/cmr/m/it/10 Main HOL$\OMS/cmsy/m/n/10 ^^@$\T
+1/cmr/m/it/10 Library$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 Word Word[]Lib$\OML/cm
+m/m/it/10 :$\T1/cmr/m/it/10 Word[]Lib[]Sumo HOL$\OMS/cmsy/m/n/10 ^^@$\T1/cmr/m/
+it/10 Library$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 Countable[] 
+ []
+
+[1
+
+{/usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map}] [2]
+[3] [4] [5] [6] [7] [8] [9]
+Overfull \hbox (12.10742pt too wide) in paragraph at lines 1111--1113
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis integer[]less
+[]eq[]iff integer[]of[]int[]eq[]of[]int minus[]integer$\OML/cmm/m/it/10 :$\T1/c
+mr/m/it/10 rep[]eq of[]int[]0[]le[]iff
+ []
+
+
+Overfull \hbox (17.23517pt too wide) in paragraph at lines 1113--1114
+[][]      \T1/cmr/m/it/10 of[]int[]eq[]1[]iff of[]int[]eq[]numeral[]power[]canc
+el[]iff of[]int[]integer[]of word[]of[]int[]inverse
+ []
+
+
+Overfull \hbox (37.185pt too wide) in paragraph at lines 1140--1141
+[][]      \T1/cmr/m/it/10 integer[]of[]int[]eq[]of[]int len[]signed minus[]inte
+ger$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 rep[]eq numeral[]power[]eq[]of[]int[]can
+cel[]iff
+ []
+
+
+Overfull \hbox (6.39816pt too wide) in paragraph at lines 1141--1142
+[][]      \T1/cmr/m/it/10 of[]int[]integer[]of of[]int[]power[]less[]of[]int[]c
+ancel[]iff one[]integer$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 rep[]eq sint[]of[]in
+t[]eq
+ []
+
+[10] [11] [12] [13]) (./CHERI_C_Concrete_Memory_Model.tex [14] [15] [16]
+Overfull \hbox (18.76028pt too wide) in paragraph at lines 482--484
+[][]\T1/cmr/bx/n/10 lemma \T1/cmr/m/it/10 integer[]encode[]eq$\OT1/cmr/m/n/10 :
+$ $($\T1/cmr/m/it/10 int[]encode $\OMS/cmsy/m/n/10 ^^N$ \T1/cmr/m/it/10 int[]of
+[]integer$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 x $\OT1/cmr/m/n/10 =$ $($\T1/cmr/m
+/it/10 int[]encode $\OMS/cmsy/m/n/10 ^^N$ \T1/cmr/m/it/10 int[]of[]integer$\OT1
+/cmr/m/n/10 )$
+ []
+
+[17]
+Overfull \hbox (18.65158pt too wide) in paragraph at lines 504--517
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 rule countable[]cla
+ssI$\OT1/cmr/m/n/10 [$\T1/cmr/m/it/10 of int[]encode $\OMS/cmsy/m/n/10 ^^N$ \T1
+/cmr/m/it/10 int[]of[]integer$\OT1/cmr/m/n/10 ]$$)$ $($\T1/cmr/m/it/10 simp onl
+y$\OT1/cmr/m/n/10 :$ \T1/cmr/m/it/10 integer[]encode[]eq$\OT1/cmr/m/n/10 )$[] 
+ []
+
+[18]
+Overfull \hbox (39.52692pt too wide) in paragraph at lines 720--722
+[][]\T1/cmr/bx/n/10 definition \T1/cmr/m/it/10 plus[]map[]def$\OT1/cmr/m/n/10 :
+$ \T1/cmr/m/it/10 m1 $\OT1/cmr/m/n/10 +$ \T1/cmr/m/it/10 m2 $\OMS/cmsy/m/n/10 ^
+^Q$ \T1/cmr/m/it/10 Map-ping $\OT1/cmr/m/n/10 ($$($\T1/cmr/m/it/10 Mapping$\OML
+/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup m1$\OT1/cmr/m/n/10 )$ $+$$+$ $($\T1/cmr/m
+/it/10 Mapping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup
+ []
+
+
+Overfull \hbox (8.5033pt too wide) in paragraph at lines 743--745
+[][]       \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp add$\
+OT1/cmr/m/n/10 :$ \T1/cmr/m/it/10 sep[]disj[]map[]def Map-ping$\OML/cmm/m/it/10
+ :$\T1/cmr/m/it/10 keys[]def zero[]map[]def plus[]map[]def$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (2.71861pt too wide) in paragraph at lines 757--759
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT1/c
+mr/m/n/10 ($\T1/cmr/m/it/10 no[]types$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 opaqu
+e[]lifting$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/c
+mr/m/it/10 keys$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 abs[]eq Map-ping$\OML/cmm/m/
+it/10 :$\T1/cmr/m/it/10 keys$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 rep[]eq
+ []
+
+[19]
+Overfull \hbox (15.94246pt too wide) in paragraph at lines 765--767
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT1/cmr
+/m/n/10 ($\T1/cmr/m/it/10 mono[]tags$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 opaque
+[]lifting$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cm
+r/m/it/10 keys$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 abs[]eq Map-ping$\OML/cmm/m/i
+t/10 :$\T1/cmr/m/it/10 lookup$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 abs[]eq
+ []
+
+
+Overfull \hbox (8.96136pt too wide) in paragraph at lines 815--817
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis heap$\O
+ML/cmm/m/it/10 :$\T1/cmr/m/it/10 select[]convs$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/1
+0 2$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 heap$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 
+select[]convs$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/
+it/10 plus[]map[]def sep[]disj[]addD
+ []
+
+
+Overfull \hbox (14.36427pt too wide) in paragraph at lines 817--819
+[][]   \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp add$\OT1/
+cmr/m/n/10 :$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 looku
+p$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 abs[]eq disjoint[]iff keys[]dom[]lookup se
+p[]disj[]addI1$\OT1/cmr/m/n/10 )$[] 
+ []
+
+
+Overfull \hbox (20.50745pt too wide) in paragraph at lines 819--821
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis add[]righ
+t[]cancel heap$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 equality heap$\OML/cmm/m/it/1
+0 :$\T1/cmr/m/it/10 ext[]inject plus[]map[]def sep[]add[]cancel
+ []
+
+[20] [21]
+LaTeX Font Info:    Trying to load font information for U+euf on input line 113
+2.
+ (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/ueuf.fd
+File: ueuf.fd 2013/01/14 v3.01 Euler Fraktur
+)
+Overfull \hbox (26.9128pt too wide) in paragraph at lines 1182--1190
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis Map-ping$\OML
+/cmm/m/it/10 :$\T1/cmr/m/it/10 keys$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 rep[]eq 
+Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup$\OML/cmm/m/it/10 :$\T1/cmr/m
+/it/10 abs[]eq Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup$\OML/cmm/m/it
+/10 :$\T1/cmr/m/it/10 rep[]eq disjoint[]iff
+ []
+
+[22]
+Overfull \hbox (26.9128pt too wide) in paragraph at lines 1202--1210
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis Map-ping$\OML
+/cmm/m/it/10 :$\T1/cmr/m/it/10 keys$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 rep[]eq 
+Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup$\OML/cmm/m/it/10 :$\T1/cmr/m
+/it/10 abs[]eq Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup$\OML/cmm/m/it
+/10 :$\T1/cmr/m/it/10 rep[]eq disjoint[]iff
+ []
+
+[23]
+Overfull \hbox (64.42085pt too wide) in paragraph at lines 1298--1300
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 smt $\OT1/cmr/m
+/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 best$\OT1/cmr
+/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 keys[]em
+pty Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]update Map-ping$\OML/cm
+m/m/it/10 :$\T1/cmr/m/it/10 lookup[]update[]neq
+ []
+
+
+Overfull \hbox (34.34174pt too wide) in paragraph at lines 1300--1301
+[][]      \T1/cmr/m/it/10 Set$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 filter[]def bo
+t[]nat[]0$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 not[]eq[]extremum empty[]iff mem[]
+Collect[]eq ob-ject$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 select[]convs$\OT1/cmr/m
+/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$
+ []
+
+[24] [25] [26]
+Overfull \hbox (5.8699pt too wide) in paragraph at lines 1741--1742
+[][]        \T1/cmr/m/it/10 prod$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 inject re-s
+ult$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/
+10 1$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 re-sult$\OML/cmm/m/it/10 :$\T1/cmr/m/it
+/10 exhaust re-sult$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 inject$\OT1/cmr/m/n/10 (
+$\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 t$\OML/cmm/m/it/10 :$\T1/
+cmr/m/it/10 exhaust t$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 
+($\T1/cmr/m/it/10 4$\OT1/cmr/m/n/10 )$
+ []
+
+[27]
+Overfull \hbox (10.5764pt too wide) in paragraph at lines 1755--1757
+[][]    \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 smt $\OT1/cmr/m/n
+/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 ccfv[]SIG$\OT1/
+cmr/m/n/10 )$ \T1/cmr/m/it/10 not[]Some[]eq op-tion$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 4$\OT1/cmr/m/n/10 )$ \T1/cmr/m/
+it/10 op-tion$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cm
+r/m/it/10 5$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 prod$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 inject
+ []
+
+[28]
+Overfull \hbox (1.45183pt too wide) in paragraph at lines 1920--1921
+[][]          \T1/cmr/m/it/10 free[]non[]null[]correct gr0I heap$\OML/cmm/m/it/
+10 :$\T1/cmr/m/it/10 ext[]inject heap$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 surjec
+tive heap$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 update[]convs$\OT1/cmr/m/n/10 ($\T
+1/cmr/m/it/10 2$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (0.60957pt too wide) in paragraph at lines 1962--1963
+[][]$\OMS/cmsy/m/n/10 j$ \T1/cmr/m/it/10 is[]memval[]defined m off $\OT1/cmr/m/
+n/10 ($\T1/cmr/m/it/10 Suc siz$\OT1/cmr/m/n/10 )$ $=$ $($$($\T1/cmr/m/it/10 off
+ $\OMS/cmsy/m/n/10 2$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/
+10 keys m$\OT1/cmr/m/n/10 )$ $\OMS/cmsy/m/n/10 ^$ \T1/cmr/m/it/10 is[]memval[]d
+efined
+ []
+
+[29] [30]
+Overfull \hbox (14.28587pt too wide) in paragraph at lines 2089--2090
+[][]$\OMS/cmsy/m/n/10 j$ \T1/cmr/m/it/10 retrieve[]bytes m off $\OT1/cmr/m/n/10
+ ($\T1/cmr/m/it/10 Suc siz$\OT1/cmr/m/n/10 )$ $=$ \T1/cmr/m/it/10 of[]byte $\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 the $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 Mapping$\
+OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup m off$\OT1/cmr/m/n/10 )$$)$ $#$ \T1/cm
+r/m/it/10 retrieve[]bytes
+ []
+
+[31] [32] [33] [34] [35] [36] [37] [38] [39] [40]
+Overfull \hbox (69.01236pt too wide) in paragraph at lines 2998--3004
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 smt $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/
+10 verit$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 assms$\OT1/cmr/m/n/10 ($\T1/cmr/m/i
+t/10 5$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 nat[]int nat[]less[]le nat[]mod[]dist
+rib of[]nat[]0[]le[]iff semiring[]1[]class$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 o
+f[]nat[]0$\OT1/cmr/m/n/10 )$[] 
+ []
+
+[41] [42] [43]
+Overfull \hbox (31.88896pt too wide) in paragraph at lines 3421--3422
+[][]    \T1/cmr/m/it/10 cc-type$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/c
+mr/m/n/10 ($\T1/cmr/m/it/10 75$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-type$\OML/
+cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 76$\OT1/c
+mr/m/n/10 )$ \T1/cmr/m/it/10 cc-type$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\
+OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 77$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-type$
+\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 78$\
+OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-type$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 si
+mps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 79$\OT1/cmr/m/n/10 )$
+ []
+
+[44] [45]
+Overfull \hbox (51.71846pt too wide) in paragraph at lines 3559--3560
+[][]$\OMS/cmsy/m/n/10 j$ \T1/cmr/m/it/10 store[]cap obj off cap $\OT1/cmr/m/n/1
+0 ($\T1/cmr/m/it/10 Suc n$\OT1/cmr/m/n/10 )$ $=$ \T1/cmr/m/it/10 store[]cap $\O
+T1/cmr/m/n/10 ($\T1/cmr/m/it/10 Mapping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 upda
+te off $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 ACap $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/
+10 mem[]capability$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 truncate
+ []
+
+
+Overfull \hbox (2.83609pt too wide) in paragraph at lines 3561--3563
+[][]\T1/cmr/bx/n/10 abbreviation \T1/cmr/m/it/10 store[]tag $\OT1/cmr/m/n/10 :$
+$:$ $($\T1/cmr/m/it/10 nat$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 bool$\OT1/cmr/m/
+n/10 )$ \T1/cmr/m/it/10 map-ping $\OMS/cmsy/m/n/10 )$ \T1/cmr/m/it/10 nat $\OMS
+/cmsy/m/n/10 )$ \T1/cmr/m/it/10 bool $\OMS/cmsy/m/n/10 )$ $\OT1/cmr/m/n/10 ($\T
+1/cmr/m/it/10 nat$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 bool$\OT1/cmr/m/n/10 )$ \
+T1/cmr/m/it/10 mapping[] 
+ []
+
+[46]
+Overfull \hbox (46.25024pt too wide) in paragraph at lines 3672--3673
+[][]  \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup $\OT1/
+cmr/m/n/10 ($\T1/cmr/m/it/10 store[]cap obj off cap $\OT1/cmr/m/n/10 ($\T1/cmr/
+m/it/10 Suc siz$\OT1/cmr/m/n/10 )$$)$ \T1/cmr/m/it/10 off $\OT1/cmr/m/n/10 =$ \
+T1/cmr/m/it/10 Some $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 ACap $\OT1/cmr/m/n/10 ($
+\T1/cmr/m/it/10 mem[]capability$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 truncate
+ []
+
+
+Overfull \hbox (12.91162pt too wide) in paragraph at lines 3690--3693
+[][]  \T1/cmr/bx/n/10 thus \T1/cmr/m/it/10 ?case \T1/cmr/bx/n/10 us-ing \T1/cmr
+/m/it/10 stored[]cap[]prev Suc[]eq[]plus1 lessI store[]cap$\OML/cmm/m/it/10 :$\
+T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/10 )$ \T1
+/cmr/m/it/10 lookup[]update[] 
+ []
+
+[47]
+Overfull \hbox (18.52267pt too wide) in paragraph at lines 3798--3806
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis One[]nat[]def
+ Suc[]length[]conv add[]diff[]cancel[]right$ [] $ len[]gt[]0 len[]of[]finite[]2
+[]def
+ []
+
+
+Overfull \hbox (5.13756pt too wide) in paragraph at lines 3818--3831
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis list[]exhaust
+[]size[]eq0 list[]exhaust[]size[]gt0 numeral[]4[]eq[]4 size[]Cons[]lem[]eq
+ []
+
+[48] [49] [50] [51] [52]
+Overfull \hbox (14.13676pt too wide) in paragraph at lines 4294--4296
+[][]  \T1/cmr/bx/n/10 show \T1/cmr/m/it/10 Suc $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/
+10 Suc $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 Suc $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/1
+0 Suc $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 Suc off$\OT1/cmr/m/n/10 )$$)$$)$$)$ $\
+OMS/cmsy/m/n/10 2$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 
+keys $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 store[]bytes m off $\OT1/cmr/m/n/10 ($\
+T1/cmr/m/it/10 flatten[]u64
+ []
+
+[53] [54]
+Overfull \hbox (12.8593pt too wide) in paragraph at lines 4432--4434
+[][]  \T1/cmr/bx/n/10 show \T1/cmr/m/it/10 Suc $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/
+10 Suc $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 Suc $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/1
+0 Suc $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 Suc off$\OT1/cmr/m/n/10 )$$)$$)$$)$ $\
+OMS/cmsy/m/n/10 2$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 
+keys $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 store[]bytes m off $\OT1/cmr/m/n/10 ($\
+T1/cmr/m/it/10 flatten[]s64
+ []
+
+[55]
+Overfull \hbox (22.83853pt too wide) in paragraph at lines 4512--4520
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis One[]nat[]def
+ Suc[]1 is[]contiguous[]bytes$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr
+/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 is[]contiguous[]
+bytes$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/1
+0 2$\OT1/cmr/m/n/10 )$
+ []
+
+[56]
+Overfull \hbox (22.83853pt too wide) in paragraph at lines 4532--4540
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis One[]nat[]def
+ Suc[]1 is[]contiguous[]bytes$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr
+/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 is[]contiguous[]
+bytes$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/1
+0 2$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (32.22115pt too wide) in paragraph at lines 4560--4566
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp add$\OT1/cmr/m/n/10 :$ \T1/cmr/
+m/it/10 store[]bytes[]u32$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 metis memval[]mem
+cap[]not[]byte op-tion$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel store[]bytes[]u32
+$\OT1/cmr/m/n/10 )$$+$
+ []
+
+
+Overfull \hbox (29.66621pt too wide) in paragraph at lines 4580--4586
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp add$\OT1/cmr/m/n/10 :$ \T1/cmr/
+m/it/10 store[]bytes[]s32$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 metis memval[]mem
+cap[]not[]byte op-tion$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel store[]bytes[]s32
+$\OT1/cmr/m/n/10 )$$+$[] 
+ []
+
+
+Overfull \hbox (32.22115pt too wide) in paragraph at lines 4600--4606
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp add$\OT1/cmr/m/n/10 :$ \T1/cmr/
+m/it/10 store[]bytes[]u64$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 metis memval[]mem
+cap[]not[]byte op-tion$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel store[]bytes[]u64
+$\OT1/cmr/m/n/10 )$$+$
+ []
+
+
+Overfull \hbox (29.66621pt too wide) in paragraph at lines 4620--4626
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp add$\OT1/cmr/m/n/10 :$ \T1/cmr/
+m/it/10 store[]bytes[]s64$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 metis memval[]mem
+cap[]not[]byte op-tion$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel store[]bytes[]s64
+$\OT1/cmr/m/n/10 )$$+$
+ []
+
+
+Overfull \hbox (2.52281pt too wide) in paragraph at lines 4643--4645
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp add$\OT1/cmr/m
+/n/10 :$ \T1/cmr/m/it/10 assms store[]tval[]def memval[]is[]byte[]def split$\OT
+1/cmr/m/n/10 :$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 split
+$\OT1/cmr/m/n/10 )$ $($\T1/cmr/m/it/10 presburger
+ []
+
+
+Overfull \hbox (2.65482pt too wide) in paragraph at lines 4647--4653
+[][]      \T1/cmr/m/it/10 u32[]store[]bytes[]imp[]is[]contiguous[]bytes u64[]st
+ore[]bytes[]imp[]is[]contiguous[]bytes$\OT1/cmr/m/n/10 )$[] 
+ []
+
+[57] [58] [59]
+Overfull \hbox (10.6034pt too wide) in paragraph at lines 4792--4806
+[][]\T1/cmr/bx/n/10 proof $\OMS/cmsy/m/n/10 ^^@$ \T1/cmr/bx/n/10 qed $\OT1/cmr/
+m/n/10 ($\T1/cmr/m/it/10 simp add$\OT1/cmr/m/n/10 :$ \T1/cmr/m/it/10 stored[]ca
+p[]instant[]correctness suc[]of[]32 eval[]nat[]numeral$\OT1/cmr/m/n/10 ($\T1/cm
+r/m/it/10 3$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (5.00082pt too wide) in paragraph at lines 4812--4825
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp add$\OT1/cmr/m
+/n/10 :$ \T1/cmr/m/it/10 eval[]nat[]numeral$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3
+$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 numeral[]Bit0$\OML/cmm/m/it/10 ;$ \T1/cmr/m
+/it/10 in-sert memval[]byte[]not[]memcap$\OML/cmm/m/it/10 ;$
+ []
+
+
+Overfull \hbox (3.18803pt too wide) in paragraph at lines 4842--4844
+[][]   \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis domIff k
+eys[]dom[]lookup less[]imp[]Suc[]add op-tion$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10
+ discI sizeof[]nonzero
+ []
+
+
+Overfull \hbox (0.73418pt too wide) in paragraph at lines 4865--4866
+[][]  \T1/cmr/bx/n/10 shows \T1/cmr/m/it/10 is[]contiguous[]cap $\OT1/cmr/m/n/1
+0 ($\T1/cmr/m/it/10 content $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 store[]tval obj 
+off val$\OT1/cmr/m/n/10 )$$)$ $($\T1/cmr/m/it/10 mem[]capability$\OML/cmm/m/it/
+10 :$\T1/cmr/m/it/10 truncate
+ []
+
+[60]
+Overfull \hbox (33.11934pt too wide) in paragraph at lines 4976--4978
+[][]   \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 smt $\OT1/cmr/
+m/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 del[]insts$\
+OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 One[]nat[]def Suc[]1 eval[]nat[]numeral$\OT1/
+cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 length[]nth[]
+simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (48.02443pt too wide) in paragraph at lines 4981--4983
+[][]     \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis length
+[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/i
+t/10 mem-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel$\OT1/cmr/m/n/10 ($\T1/cmr/m
+/it/10 1$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 op-tion$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 sel stored[]bytes[]instant[]correctness
+ []
+
+
+Overfull \hbox (6.52866pt too wide) in paragraph at lines 4984--4986
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis One[]na
+t[]def length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )
+$ \T1/cmr/m/it/10 length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 4$\OT1/c
+mr/m/n/10 )$ \T1/cmr/m/it/10 mem-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel$\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$
+ []
+
+[61]
+Overfull \hbox (1.67427pt too wide) in paragraph at lines 4990--4992
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis Some[]to[
+]the length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$ 
+\T1/cmr/m/it/10 length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 4$\OT1/cmr
+/m/n/10 )$ \T1/cmr/m/it/10 mem-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel$\OT1/
+cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (33.11934pt too wide) in paragraph at lines 5021--5023
+[][]   \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 smt $\OT1/cmr/
+m/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 del[]insts$\
+OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 One[]nat[]def Suc[]1 eval[]nat[]numeral$\OT1/
+cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 length[]nth[]
+simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (48.02443pt too wide) in paragraph at lines 5026--5028
+[][]     \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis length
+[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/i
+t/10 mem-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel$\OT1/cmr/m/n/10 ($\T1/cmr/m
+/it/10 1$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 op-tion$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 sel stored[]bytes[]instant[]correctness
+ []
+
+
+Overfull \hbox (6.52866pt too wide) in paragraph at lines 5029--5031
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis One[]na
+t[]def length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )
+$ \T1/cmr/m/it/10 length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 4$\OT1/c
+mr/m/n/10 )$ \T1/cmr/m/it/10 mem-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel$\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (1.67427pt too wide) in paragraph at lines 5035--5037
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis Some[]to[
+]the length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$ 
+\T1/cmr/m/it/10 length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 4$\OT1/cmr
+/m/n/10 )$ \T1/cmr/m/it/10 mem-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 sel$\OT1/
+cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (43.07254pt too wide) in paragraph at lines 5064--5066
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 smt $\OT1/cmr/m
+/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 best$\OT1/cmr
+/m/n/10 )$ \T1/cmr/m/it/10 One[]nat[]def Suc[]1 add$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 commute add[]Suc[]right eval[]nat[]numeral$\OT1/cmr/m/n/10 ($\T1/cmr/m/
+it/10 3$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (31.89893pt too wide) in paragraph at lines 5066--5067
+[][]      \T1/cmr/m/it/10 length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 
+3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/c
+mr/m/it/10 4$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 numeral[]4[]eq[]4 numeral[]Bit0
+ word[]rcat[]rsplit$\OT1/cmr/m/n/10 )$[] 
+ []
+
+[62]
+Overfull \hbox (43.07254pt too wide) in paragraph at lines 5093--5095
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 smt $\OT1/cmr/m
+/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 best$\OT1/cmr
+/m/n/10 )$ \T1/cmr/m/it/10 One[]nat[]def Suc[]1 add$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 commute add[]Suc[]right eval[]nat[]numeral$\OT1/cmr/m/n/10 ($\T1/cmr/m/
+it/10 3$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (31.89893pt too wide) in paragraph at lines 5095--5096
+[][]      \T1/cmr/m/it/10 length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 
+3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 length[]nth[]simps$\OT1/cmr/m/n/10 ($\T1/c
+mr/m/it/10 4$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 numeral[]4[]eq[]4 numeral[]Bit0
+ word[]rcat[]rsplit$\OT1/cmr/m/n/10 )$[] 
+ []
+
+[63] [64] [65]
+Overfull \hbox (26.82712pt too wide) in paragraph at lines 5302--5304
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type
+$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 81$
+\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 get[]cap[]def is[]contiguous[]cap$\OML/cmm/m
+/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n
+/10 )$ \T1/cmr/m/it/10 memval[]size[]cap
+ []
+
+
+Overfull \hbox (24.4949pt too wide) in paragraph at lines 5333--5335
+[][]           \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis 
+is[]contiguous[]bytes$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 
+($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 less[]numeral[]extra$\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 not0[]impli
+es[]Suc
+ []
+
+
+Overfull \hbox (9.16531pt too wide) in paragraph at lines 5363--5365
+[][]     \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis is[]co
+ntiguous[]bytes$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/
+cmr/m/it/10 2$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 less[]numeral[]extra$\OT1/cmr/
+m/n/10 ($\T1/cmr/m/it/10 3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 not0[]implies[]Su
+c
+ []
+
+[66]
+Overfull \hbox (26.82712pt too wide) in paragraph at lines 5382--5384
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type
+$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 81$
+\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 get[]cap[]def is[]contiguous[]cap$\OML/cmm/m
+/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n
+/10 )$ \T1/cmr/m/it/10 memval[]size[]cap
+ []
+
+
+Overfull \hbox (6.65625pt too wide) in paragraph at lines 5415--5417
+[][]      \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis One[]
+nat[]def cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\
+T1/cmr/m/it/10 15$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$
+\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 17$\OT1/cmr/m/n/10 )
+$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m
+/n/10 ($\T1/cmr/m/it/10 19$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (23.97122pt too wide) in paragraph at lines 5420--5422
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type
+$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 73$
+\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 di
+stinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 15$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 
+cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/
+it/10 17$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m
+/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 19$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (18.86136pt too wide) in paragraph at lines 5425--5427
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type$\
+OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 73$\O
+T1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 dist
+inct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 15$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc
+-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it
+/10 17$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/i
+t/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 19$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (6.65625pt too wide) in paragraph at lines 5454--5456
+[][]      \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis One[]
+nat[]def cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\
+T1/cmr/m/it/10 33$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$
+\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 35$\OT1/cmr/m/n/10 )
+$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m
+/n/10 ($\T1/cmr/m/it/10 37$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (23.97122pt too wide) in paragraph at lines 5459--5461
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type
+$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 74$
+\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 di
+stinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 33$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 
+cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/
+it/10 35$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m
+/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 37$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (18.86136pt too wide) in paragraph at lines 5464--5466
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type$\
+OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 74$\O
+T1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 dist
+inct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 33$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc
+-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it
+/10 35$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/i
+t/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 37$\OT1/cmr/m/n/10 )$
+ []
+
+[67]
+Overfull \hbox (47.88802pt too wide) in paragraph at lines 5495--5496
+[][]      \T1/cmr/m/it/10 is[]contiguous[]bytes$\OML/cmm/m/it/10 :$\T1/cmr/m/it
+/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/1
+0 memval[]size[]u16 numeral[]2[]eq[]2 stored[]tval[]contiguous[]bytes$\OT1/cmr/
+m/n/10 )$[] 
+ []
+
+
+Overfull \hbox (18.86136pt too wide) in paragraph at lines 5503--5505
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type$\
+OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 75$\O
+T1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 dist
+inct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 49$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc
+-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it
+/10 51$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/i
+t/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 53$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (79.48257pt too wide) in paragraph at lines 5532--5534
+[][]      \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-va
+l$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10
+ 63$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/1
+0 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 65$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it
+/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cm
+r/m/it/10 67$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 is[]contiguous[]bytes$\OML/cmm/
+m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/
+n/10 )$
+ []
+
+
+Overfull \hbox (18.86136pt too wide) in paragraph at lines 5542--5544
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type$\
+OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 76$\O
+T1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 dist
+inct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 63$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc
+-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it
+/10 65$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/i
+t/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 67$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (79.48257pt too wide) in paragraph at lines 5571--5573
+[][]      \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-va
+l$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10
+ 75$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/1
+0 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 77$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it
+/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cm
+r/m/it/10 79$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 is[]contiguous[]bytes$\OML/cmm/
+m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/
+n/10 )$
+ []
+
+[68]
+Overfull \hbox (63.1123pt too wide) in paragraph at lines 5576--5578
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-val$
+\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 7
+7$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 
+distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 79$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/1
+0 is[]cap$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 elims$\OT1/cmr/m/n/10 ($\T1/cmr/m/
+it/10 2$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 is[]contiguous[]bytes$\OML/cmm/m/it/
+10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/10 
+)$
+ []
+
+
+Overfull \hbox (18.86136pt too wide) in paragraph at lines 5581--5583
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type$\
+OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 77$\O
+T1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 dist
+inct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 75$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc
+-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it
+/10 77$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/i
+t/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 79$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (29.08109pt too wide) in paragraph at lines 5610--5612
+[][]      \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-ty
+pe$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 7
+8$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 
+distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 85$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/1
+0 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/
+m/it/10 87$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr
+/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 89$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (46.5996pt too wide) in paragraph at lines 5612--5613
+[][]      \T1/cmr/m/it/10 flatten[]s32[]length memval[]size[]s32[]eq[]word[]spl
+it[]len sizeof[]def stored[]tval[]contiguous[]bytes$\OT1/cmr/m/n/10 )$[] 
+ []
+
+
+Overfull \hbox (74.37271pt too wide) in paragraph at lines 5615--5617
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-val$
+\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 8
+5$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 
+distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 87$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/1
+0 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/
+m/it/10 89$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 is[]contiguous[]bytes$\OML/cmm/m/
+it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/
+10 )$
+ []
+
+
+Overfull \hbox (14.12665pt too wide) in paragraph at lines 5617--5618
+[][]      \T1/cmr/m/it/10 less[]numeral[]extra$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/1
+0 3$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 not0[]implies[]Suc sizeof[]nonzero store
+d[]tval[]contiguous[]bytes$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (16.17871pt too wide) in paragraph at lines 5620--5622
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type$\
+OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 78$\O
+T1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 dist
+inct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 85$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc
+-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it
+/10 87$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/i
+t/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 100$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (46.5996pt too wide) in paragraph at lines 5622--5623
+[][]      \T1/cmr/m/it/10 flatten[]s32[]length memval[]size[]s32[]eq[]word[]spl
+it[]len sizeof[]def stored[]tval[]contiguous[]bytes$\OT1/cmr/m/n/10 )$[] 
+ []
+
+
+Overfull \hbox (29.08109pt too wide) in paragraph at lines 5649--5651
+[][]      \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-ty
+pe$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 7
+9$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 
+distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 93$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/1
+0 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/
+m/it/10 95$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr
+/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 97$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (12.71082pt too wide) in paragraph at lines 5654--5656
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type
+$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 79$
+\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 di
+stinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 95$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 
+cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/
+it/10 97$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 is[]cap$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 elims$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (18.86136pt too wide) in paragraph at lines 5659--5661
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type$\
+OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 79$\O
+T1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 dist
+inct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 93$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc
+-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it
+/10 95$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/i
+t/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 97$\OT1/cmr/m/n/10 )$
+ []
+
+[69]
+Overfull \hbox (41.96364pt too wide) in paragraph at lines 5695--5696
+[][]      \T1/cmr/m/it/10 is[]contiguous[]bytes$\OML/cmm/m/it/10 :$\T1/cmr/m/it
+/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/1
+0 list[]decode$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 cases sizeof[]nonzero stored[
+]tval[]contiguous[]bytes$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (29.08109pt too wide) in paragraph at lines 5698--5700
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-type$\
+OML/cmm/m/it/10 :$\T1/cmr/m/it/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 80$\O
+T1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 dist
+inct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 101$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 c
+c-val$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/i
+t/10 103$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 cc-val$\OML/cmm/m/it/10 :$\T1/cmr/m
+/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 99$\OT1/cmr/m/n/10 )$
+ []
+
+[70] [71] [72] [73] [74] [75]
+Overfull \hbox (0.77864pt too wide) in paragraph at lines 6331--6333
+[][]    \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT1/cmr/m
+/n/10 ($\T1/cmr/m/it/10 no[]types$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 lift-ing$
+\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 assms re-sult$\OML/cmm/m/it/10 :$\T1/cmr/m/i
+t/10 simps$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 4$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/
+10 store[]cap[]false[]perm[]cap[]store
+ []
+
+[76] [77]
+Overfull \hbox (33.49045pt too wide) in paragraph at lines 6638--6644
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp$\OML/cmm/m/it/10 ;$ \T1/cmr/m/i
+t/10 smt $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/m
+/it/10 best$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Collect[]cong Set$\OML/cmm/m/it/
+10 :$\T1/cmr/m/it/10 filter[]def keys[]is[]none[]rep store[]bytes[]domain[]1$\O
+T1/cmr/m/n/10 )$[] 
+ []
+
+[78]
+Overfull \hbox (33.49045pt too wide) in paragraph at lines 6659--6665
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 simp$\OML/cmm/m/it/10 ;$ \T1/cmr/m/i
+t/10 smt $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/m
+/it/10 best$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Collect[]cong Set$\OML/cmm/m/it/
+10 :$\T1/cmr/m/it/10 filter[]def keys[]is[]none[]rep store[]bytes[]domain[]2$\O
+T1/cmr/m/n/10 )$[] 
+ []
+
+
+Overfull \hbox (26.5845pt too wide) in paragraph at lines 6724--6730
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 force$\OML/cmm/m/it/10 ;$ \T1/cmr/m/
+it/10 smt $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/
+m/it/10 best$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Collect[]cong Set$\OML/cmm/m/it
+/10 :$\T1/cmr/m/it/10 filter[]def keys[]is[]none[]rep store[]cap[]domain[]1$\OT
+1/cmr/m/n/10 )$[] 
+ []
+
+
+Overfull \hbox (26.5845pt too wide) in paragraph at lines 6745--6751
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 force$\OML/cmm/m/it/10 ;$ \T1/cmr/m/
+it/10 smt $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/
+m/it/10 best$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Collect[]cong Set$\OML/cmm/m/it
+/10 :$\T1/cmr/m/it/10 filter[]def keys[]is[]none[]rep store[]cap[]domain[]2$\OT
+1/cmr/m/n/10 )$[] 
+ []
+
+[79] [80]
+Overfull \hbox (27.07524pt too wide) in paragraph at lines 6963--6965
+[][]       \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 mono[]tags$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 l
+ift-ing$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 lookup[]update Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]upda
+te[]neq
+ []
+
+[81]
+Overfull \hbox (27.07524pt too wide) in paragraph at lines 7005--7007
+[][]       \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 mono[]tags$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 l
+ift-ing$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 lookup[]update Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]upda
+te[]neq
+ []
+
+
+Overfull \hbox (27.07524pt too wide) in paragraph at lines 7047--7049
+[][]       \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 mono[]tags$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 l
+ift-ing$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 lookup[]update Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]upda
+te[]neq
+ []
+
+[82]
+Overfull \hbox (27.07524pt too wide) in paragraph at lines 7089--7091
+[][]       \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 mono[]tags$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 l
+ift-ing$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 lookup[]update Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]upda
+te[]neq
+ []
+
+
+Overfull \hbox (27.07524pt too wide) in paragraph at lines 7131--7133
+[][]       \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 mono[]tags$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 l
+ift-ing$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 lookup[]update Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]upda
+te[]neq
+ []
+
+[83]
+Overfull \hbox (27.07524pt too wide) in paragraph at lines 7173--7175
+[][]       \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 mono[]tags$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 l
+ift-ing$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 lookup[]update Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]upda
+te[]neq
+ []
+
+[84]
+Overfull \hbox (27.07524pt too wide) in paragraph at lines 7215--7217
+[][]       \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT
+1/cmr/m/n/10 ($\T1/cmr/m/it/10 mono[]tags$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 l
+ift-ing$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 lookup[]update Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]upda
+te[]neq
+ []
+
+
+Overfull \hbox (28.13266pt too wide) in paragraph at lines 7252--7254
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 clarsimp simp a
+dd$\OT1/cmr/m/n/10 :$ \T1/cmr/m/it/10 wellformed[]def split$\OT1/cmr/m/n/10 :$ 
+\T1/cmr/m/it/10 op-tion$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 split[]asm t$\OML/cm
+m/m/it/10 :$\T1/cmr/m/it/10 split[]asm if[]split[]asm$\OT1/cmr/m/n/10 )$[] 
+ []
+
+
+Overfull \hbox (33.14314pt too wide) in paragraph at lines 7262--7264
+[][]    \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 smt $\OT1/cmr
+/m/n/10 ($\T1/cmr/m/it/10 verit$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OM
+L/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]update Map-ping$\OML/cmm/m/it/10 :$\T1/
+cmr/m/it/10 lookup[]update[]neq Set$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 member[]
+filter
+ []
+
+
+Overfull \hbox (8.93193pt too wide) in paragraph at lines 7275--7277
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 subgoal[]tac Se
+t$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 filter $\OT1/cmr/m/n/10 ($$\OML/cmm/m/it/1
+0 ^^U$\T1/cmr/m/it/10 x$\OML/cmm/m/it/10 :$ \T1/cmr/m/it/10 0 $\OML/cmm/m/it/10
+ <$ \T1/cmr/m/it/10 x mod $\OMS/cmsy/m/n/10 j$\T1/cmr/m/it/10 Cap$\OMS/cmsy/m/n
+/10 j$$[][]$$\OT1/cmr/m/n/10 )$ $($\T1/cmr/m/it/10 Mapping$\OML/cmm/m/it/10 :$\
+T1/cmr/m/it/10 keys $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 tags $\OT1/cmr/m/n/10 ($
+\T1/cmr/m/it/10 store[]tval
+ []
+
+
+Overfull \hbox (21.50558pt too wide) in paragraph at lines 7277--7279
+[][]   \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis $\OT1/cm
+r/m/n/10 ($\T1/cmr/m/it/10 mono[]tags$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 lift-
+ing$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Set$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 m
+ember[]filter assms$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$ \T1/
+cmr/m/it/10 empty[]iff le[]eq[]less[]or[]eq
+ []
+
+[85]
+Overfull \hbox (58.9307pt too wide) in paragraph at lines 7340--7342
+[][]    \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis cc-val$\OML
+/cmm/m/it/10 :$\T1/cmr/m/it/10 distinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 107$\
+OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 re-sult$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 di
+stinct$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 s
+tore[]cond[]hard[]cap$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$ \T
+1/cmr/m/it/10 store[]cond[]hard[]cap$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/c
+mr/m/n/10 )$
+ []
+
+
+Overfull \hbox (36.11981pt too wide) in paragraph at lines 7342--7343
+[][]        \T1/cmr/m/it/10 store[]cond[]hard[]cap$\OT1/cmr/m/n/10 ($\T1/cmr/m/
+it/10 4$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 store[]cond[]hard[]cap$\OT1/cmr/m/n/
+10 ($\T1/cmr/m/it/10 5$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 store[]cond[]hard[]ca
+p$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 6$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 store[
+]undef[]val$\OT1/cmr/m/n/10 )$[] 
+ []
+
+[86]
+Overfull \hbox (32.96988pt too wide) in paragraph at lines 7370--7371
+[][]    $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis Map-ping$\OML/cmm/m/it/10 :$\T
+1/cmr/m/it/10 lookup[]update heap$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 select[]co
+nvs$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 heap
+$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 surjective heap$\OML/cmm/m/it/10 :$\T1/cmr/
+m/it/10 update[]convs$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (18.46275pt too wide) in paragraph at lines 7422--7424
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 clarsimp simp add$\
+OT1/cmr/m/n/10 :$ \T1/cmr/m/it/10 store[]def load[]def split$\OT1/cmr/m/n/10 :$
+ \T1/cmr/m/it/10 if[]split[]asm op-tion$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 spli
+t[]asm t$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 split[]asm
+ []
+
+[87]
+Overfull \hbox (7.05682pt too wide) in paragraph at lines 7497--7499
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 smt $\OT1/cmr/m
+/n/10 ($\T1/cmr/m/it/10 verit$\OML/cmm/m/it/10 ;$ \T1/cmr/m/it/10 ccfv[]SIG$\OT
+1/cmr/m/n/10 )$ \T1/cmr/m/it/10 Map-ping$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 loo
+kup[]update assms$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$ \T1/cm
+r/m/it/10 heap$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 select[]convs$\OT1/cmr/m/n/10
+ ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/10 )$
+ []
+
+[88]
+Overfull \hbox (58.19983pt too wide) in paragraph at lines 7550--7552
+[][]  \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis Map-ping$
+\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 lookup[]update heap$\OML/cmm/m/it/10 :$\T1/c
+mr/m/it/10 select[]convs$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$\OT1/cmr/m/n/10 )$
+ \T1/cmr/m/it/10 heap$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 surjective heap$\OML/c
+mm/m/it/10 :$\T1/cmr/m/it/10 update[]convs$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 2$
+\OT1/cmr/m/n/10 )$
+ []
+
+
+Overfull \hbox (0.26675pt too wide) in paragraph at lines 7567--7575
+[][]  \T1/cmr/bx/n/10 us-ing \T1/cmr/m/it/10 store[]cond[]hard[]cap$\OT1/cmr/m/
+n/10 [$\T1/cmr/bx/n/10 where \T1/cmr/m/it/10 ?h$\OT1/cmr/m/n/10 =$\T1/cmr/m/it/
+10 h \T1/cmr/bx/n/10 and \T1/cmr/m/it/10 ?c$\OT1/cmr/m/n/10 =$\T1/cmr/m/it/10 c
+ \T1/cmr/bx/n/10 and \T1/cmr/m/it/10 ?v$\OT1/cmr/m/n/10 =$\T1/cmr/m/it/10 Undef
+ \T1/cmr/bx/n/10 and \T1/cmr/m/it/10 ?ret$\OT1/cmr/m/n/10 =$\T1/cmr/m/it/10 ret
+$\OML/cmm/m/it/10 ;$
+ []
+
+
+Overfull \hbox (43.87111pt too wide) in paragraph at lines 7616--7619
+[][]  \T1/cmr/bx/n/10 more-over have $[]$\T1/cmr/m/it/10 cv$\OML/cmm/m/it/10 :$
+ $[]$\T1/cmr/m/it/10 v $\OT1/cmr/m/n/10 =$ \T1/cmr/m/it/10 Cap[]v cv$\OT1/cmr/m
+/n/10 ;$ \T1/cmr/m/it/10 tag cv$[]$ $[][]\OMS/cmsy/m/n/10 )$ \T1/cmr/m/it/10 pe
+rm[]cap[]store cap $\OMS/cmsy/m/n/10 ^$ $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 perm
+[]cap[]store[]local
+ []
+
+[89] [90] [91]
+Overfull \hbox (4.82745pt too wide) in paragraph at lines 7931--7933
+[][]     \T1/cmr/bx/n/10 ap-ply $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 induct h dst
+ src n \T1/cmr/bx/n/10 and \T1/cmr/m/it/10 h dst src n rule$\OT1/cmr/m/n/10 :$ 
+\T1/cmr/m/it/10 memcpy[]prim[]memcpy[]cap$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 in
+duct$\OT1/cmr/m/n/10 )$[] 
+ []
+
+[92] [93] [94] [95]) (./CHERI_C_Global_Environment.tex [96]
+Overfull \hbox (9.73347pt too wide) in paragraph at lines 95--103
+[][]  \T1/cmr/bx/n/10 by $\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 metis alloc[]update
+d[]heap[]and[]cap assms ca-pa-bil-ity$\OML/cmm/m/it/10 :$\T1/cmr/m/it/10 select
+[]convs$\OT1/cmr/m/n/10 ($\T1/cmr/m/it/10 1$\OT1/cmr/m/n/10 )$ \T1/cmr/m/it/10 
+free[]global[]cap
+ []
+
+
+Overfull \hbox (29.12122pt too wide) in paragraph at lines 164--165
+[][]            \T1/cmr/m/it/10 TagVi-o-la-tion Per-mit-Load-Vi-o-la-tion Per-m
+it-Store-Vi-o-la-tion PermitStoreCapViolation[] 
+ []
+
+))
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 55.
+ [97]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 55.
+ (./root.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 55.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 55.
+Package rerunfilecheck Info: File `root.out' has not changed.
+(rerunfilecheck)             Checksum: 7C80F712D50165D732447ED6929A2A88;86.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 55.
+ ) 
+Here is how much of TeX's memory you used:
+ 6655 strings out of 481718
+ 95448 string characters out of 5926910
+ 354871 words of memory out of 6000000
+ 22151 multiletter control sequences out of 15000+600000
+ 548963 words of font info for 71 fonts, out of 8000000 for 9000
+ 430 hyphenation exceptions out of 8191
+ 39i,6n,32p,1380b,404s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/share/texlive/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr
+/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texli
+ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
+ublic/amsfonts/euler/eufm7.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
+c/cm-super/sfbx1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-su
+per/sfbx1095.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfb
+x1440.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1000.p
+fb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></us
+r/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb>
+Output written on root.pdf (97 pages, 369809 bytes).
+PDF statistics:
+ 508 PDF objects out of 1000 (max. 8388607)
+ 390 compressed objects within 4 object streams
+ 100 named destinations out of 1000 (max. 500000)
+ 9 words of extra memory for PDF output out of 10000 (max. 10000000)
+

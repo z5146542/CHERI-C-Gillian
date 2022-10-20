@@ -1,0 +1,9 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil";
+
+proc foo() {
+    return
+};
+
+proc bar() {
+    return
+};

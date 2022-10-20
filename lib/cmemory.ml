@@ -158,7 +158,7 @@ let execute_copy heap params =
     let res = CHERI.memcpy heap.mem mm_cap_dst mm_cap_src (Arith.nat_of_integer n) in
     (match res with
     | Error e -> AFail [e]
-    | Success memout -> ASucc ({ mem = memout }, []))
+    | Success memout -> ASucc ({ mem = memout }, [gil_cap_1]))
   | _ -> failwith "Fail : store params do not match." 
 
 let execute_cast heap params =
@@ -190,7 +190,12 @@ let execute_action name heap params =
 
 let pp_mem fmt mem =
   let open CHERI in
-  Format.fprintf fmt "{@[<v 2>@\nnext curr: %i@]@\n}" (Z.to_int (next_block mem))
+  Format.fprintf fmt "{@[<v 2>@\nnext curr: %i\
+                              @\nunfreed memory: %i Bytes\
+                              @\nunfreed blocks: [%s]@\n@]@\n}"
+    (Z.to_int (next_block mem)) 
+    (Z.to_int (Arith.integer_of_nat (get_memory_leak_size mem (Arith.nat_of_integer (next_block mem)))))
+    (String.concat ", " (List.map Z.to_string (List.rev (get_unfreed_blocks mem (Arith.nat_of_integer (next_block mem))))))
 
 let pp fmt h =
   Format.fprintf fmt "Mem: @[%a@]" pp_mem h.mem

@@ -57,7 +57,7 @@ proof -
 qed
 
 export_code (* Utility Functions *)
-            null_capability init_heap next_block
+            null_capability init_heap next_block get_memory_leak_size 
             (* Memory Actions *)
             alloc free load store
             memset memcpy memmove memcmp malloc calloc realloc

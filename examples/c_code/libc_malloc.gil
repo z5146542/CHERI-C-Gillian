@@ -1,4 +1,4 @@
-import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil";
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil", "string_common.gil";
 
 (* void ( void *, unsigned long int ) *)
 proc check_allocation(a, size) {
@@ -163,7 +163,7 @@ proc check_size(size) {
 (* signed int (  ) *)
 proc main() {
         max := undefined; (* signed int max; *)
-        max := {{ "int32", 12i }};
+        max := {{ "int32", 9i }};
         i := undefined; (* signed int i; *)
         i := {{ "int32", 1i }};
     t1: tmp_65 := "i__binops_cmp_leq"(i, max);

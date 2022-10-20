@@ -1,8 +1,13 @@
 session thys = HOL + 
+  options [document=pdf, document_output=output, document_build=pdflatex]
   sessions
     "HOL-Library"
     "Word_Lib"
     "Separation_Algebra"
     "Containers"
-  theories [document = false]
+  theories
+    More_Word_Library
+    CHERI_C_Concrete_Memory_Model
     CHERI_C_Global_Environment
+  document_files
+    "root.tex"

@@ -1,0 +1,89 @@
+#internal
+(* unsigned int ( const signed char * ) *)
+proc strlen(s) {
+        count := undefined; (* unsigned int count; *)
+        count := {{ "uint32", 0i }};
+    t1: tmp_0 := "i__load"(s, "int8");
+        tmp_1 := "i__unops_cast"("signed int", tmp_0);
+        tmp_2 := "i__binops_cmp_neq"(tmp_1, {{ "int32", 0i }});
+        tmp_3 := "i__unops_negb"(tmp_2);
+        vtb := "i__bool_of_value"(tmp_3);
+        goto [vtb] t2 s2;
+    s2: skip;
+        tmp_4 := "i__binops_add"(count, {{ "uint32", 1i }});
+        count := tmp_4;
+        tmp_5 := "i__binops_add"(s, {{ "int64", 1i }});
+        s := tmp_5;
+        goto t1;
+    t2: ret := count;
+        return;
+        return
+};
+
+(* signed int ( const signed char *, const signed char * ) *)
+proc strcmp(X, Y) {
+    t1: tmp_6 := "i__load"(X, "int8");
+        tmp_7 := "i__unops_cast"("_Bool", tmp_6);
+        tmp_8 := "i__unops_negb"(tmp_7);
+        vtb := "i__bool_of_value"(tmp_8);
+        goto [vtb] t2 s2;
+    s2: skip;
+        tmp_9 := "i__load"(X, "int8");
+        tmp_10 := "i__unops_cast"("signed int", tmp_9);
+        tmp_11 := "i__load"(Y, "int8");
+        tmp_12 := "i__unops_cast"("signed int", tmp_11);
+        tmp_13 := "i__binops_cmp_neq"(tmp_10, tmp_12);
+        vtb := "i__bool_of_value"(tmp_13);
+        goto [vtb] t2 s2;
+    s2: skip;
+        tmp_14 := "i__binops_add"(X, {{ "int64", 1i }});
+        X := tmp_14;
+        tmp_15 := "i__binops_add"(Y, {{ "int64", 1i }});
+        Y := tmp_15;
+        goto t1;
+    t2: tmp_16 := "i__unops_cast"(1i, X);
+        tmp_17 := "i__load"(tmp_16, "uint8");
+        tmp_18 := "i__unops_cast"("signed int", tmp_17);
+        tmp_19 := "i__unops_cast"(1i, Y);
+        tmp_20 := "i__load"(tmp_19, "uint8");
+        tmp_21 := "i__unops_cast"("signed int", tmp_20);
+        tmp_22 := "i__binops_sub"(tmp_18, tmp_21);
+        ret := tmp_22;
+        return;
+        return
+};
+
+(* signed char * ( signed char *, const signed char * ) *)
+proc strcpy(destination, source) {
+        tmp_23 := [NULL]();
+        tmp_24 := "i__unops_cast"(1i, tmp_23);
+        tmp_25 := "i__binops_cmp_eq"(destination, tmp_24);
+        tmp_26 := "i__unops_negb"(tmp_25);
+        vtb := "i__bool_of_value"(tmp_26);
+        goto [vtb] t1 s1;
+    s1: skip;
+        tmp_27 := [NULL]();
+        ret := tmp_27;
+        return;
+    t1: ptr := undefined; (* signed char * ptr; *)
+        ptr := destination;
+    t2: tmp_28 := "i__load"(source, "int8");
+        tmp_29 := "i__unops_cast"("signed int", tmp_28);
+        tmp_30 := "i__binops_cmp_neq"(tmp_29, {{ "int32", 0i }});
+        tmp_31 := "i__unops_negb"(tmp_30);
+        vtb := "i__bool_of_value"(tmp_31);
+        goto [vtb] t3 s3;
+    s3: skip;
+        tmp_33 := "i__load"(source, "int8");
+        tmp := "i__store"(destination, tmp_33);
+        tmp_34 := "i__binops_add"(destination, {{ "int64", 1i }});
+        destination := tmp_34;
+        tmp_35 := "i__binops_add"(source, {{ "int64", 1i }});
+        source := tmp_35;
+        goto t2;
+    t3: 
+        tmp := "i__store"(destination, {{ "int8", 0i }});
+        ret := ptr;
+        return;
+        return
+};

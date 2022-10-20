@@ -1,0 +1,256 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil";
+
+(* signed int ( const void *, const void * ) *)
+proc compare(a, b) {
+        retval_strcmp_1 := undefined; (* signed int retval_strcmp_1; *)
+        tmp_0 := "i__unops_cast"(32i, a);
+        tmp_1 := "i__load"(tmp_0, "cap");
+        tmp_2 := "i__unops_cast"(32i, b);
+        tmp_3 := "i__load"(tmp_2, "cap");
+        retval_strcmp_1 := "strcmp"(tmp_1, tmp_3);
+        ret := retval_strcmp_1;
+        return;
+        ret := undefined;
+        return
+};
+
+(* signed int ( const void *, const void * ) *)
+proc compare1(a, b) {
+        k1 := undefined; (*  struct dict_entry * k1; *)
+        tmp_4 := "i__unops_cast"(64i, a);
+        k1 := tmp_4;
+        k2 := undefined; (*  struct dict_entry * k2; *)
+        tmp_5 := "i__unops_cast"(64i, b);
+        k2 := tmp_5;
+        retval_strcmp_1 := undefined; (* signed int retval_strcmp_1; *)
+        retval_strcmp_1 := "strcmp"(k1->value, k2->value);
+        ret := retval_strcmp_1;
+        return;
+        ret := undefined;
+        return
+};
+
+(* signed int (  ) *)
+proc main() {
+        i := undefined; (* unsigned int i; *)
+        i := {{ "uint32", 0i }};
+    t1: tmp_6 := "i__unops_cast"("unsigned long int", i);
+        tmp_7 := "i__undefined_/"({{ "uint32", 224i }}, {{ "uint32", 32i }});
+        tmp_8 := "i__unops_cast"("unsigned long int", tmp_7);
+        tmp_9 := "i__binops_cmp_lt"(tmp_6, tmp_8);
+        tmp_10 := "i__unops_negb"(tmp_9);
+        vtb := "i__bool_of_value"(tmp_10);
+        goto [vtb] t4 s4;
+    s4: skip;
+        retval_i__cheri_tag_get_1 := undefined; (* _Bool retval_i__cheri_tag_get_1; *)
+        tmp_11 := "i__unops_cast"("signed long int", i);
+        tmp_12 := "i__binops_cmp_geq"(tmp_11, {{ "int64", 0i }});
+        assert (tmp_12 == {{ "int32", 1i }});
+        tmp_13 := "i__unops_cast"("signed long int", i);
+        tmp_14 := "i__binops_cmp_lt"(tmp_13, {{ "int64", 7i }});
+        assert (tmp_14 == {{ "int32", 1i }});
+        array[tmp_15 := "i__unops_cast"("signed long int", i);]
+        tmp_16 := "i__unops_cast"(1i, array[tmp_15);
+        retval_i__cheri_tag_get_1 := "i__cheri_tag_get"(tmp_16);
+        tmp_17 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_1);
+        tmp_18 := "i__binops_cmp_eq"(tmp_17, {{ "int64", 1i }});
+        assert (tmp_18 == {{ "int32", 1i }});
+        tmp_19 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_1);
+        tmp_20 := "i__binops_cmp_eq"(tmp_19, {{ "int64", 1i }});
+        tmp_21 := "i__unops_negb"(tmp_20);
+        vtb := "i__bool_of_value"(tmp_21);
+        goto [vtb] t2 s2;
+    s2: skip;
+    t2: retval_i__cheri_tag_get_2 := undefined; (* _Bool retval_i__cheri_tag_get_2; *)
+        tmp_22 := "i__unops_cast"("signed long int", i);
+        tmp_23 := "i__binops_cmp_geq"(tmp_22, {{ "int64", 0i }});
+        assert (tmp_23 == {{ "int32", 1i }});
+        tmp_24 := "i__unops_cast"("signed long int", i);
+        tmp_25 := "i__binops_cmp_lt"(tmp_24, {{ "int64", 7i }});
+        assert (tmp_25 == {{ "int32", 1i }});
+        array1[tmp_26 := "i__unops_cast"("signed long int", i);].value
+        tmp_27 := "i__unops_cast"(1i, array1[tmp_26);
+        retval_i__cheri_tag_get_2 := "i__cheri_tag_get"(tmp_27);
+        tmp_28 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_2);
+        tmp_29 := "i__binops_cmp_eq"(tmp_28, {{ "int64", 1i }});
+        assert (tmp_29 == {{ "int32", 1i }});
+        tmp_30 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_2);
+        tmp_31 := "i__binops_cmp_eq"(tmp_30, {{ "int64", 1i }});
+        tmp_32 := "i__unops_negb"(tmp_31);
+        vtb := "i__bool_of_value"(tmp_32);
+        goto [vtb] t3 s3;
+    s3: skip;
+    t3: skip;
+        tmp_33 := "i__binops_add"(i, {{ "uint32", 1i }});
+        i := tmp_33;
+        goto t1;
+    t4: skip;
+        tmp_34 := "i__undefined_&"(array[{{ "int64", 0i }}]);
+        tmp_35 := "i__unops_cast"(1i, tmp_34);
+        tmp_36 := "i__undefined_&"(compare);
+        tmp_37 := "i__unops_cast"(0i, tmp_36);
+        tmp := "qsort"(tmp_35, {{ "uint64", 7i }}, {{ "uint64", 32i }}, tmp_37);
+        tmp_38 := "i__undefined_&"(array1[{{ "int64", 0i }}]);
+        tmp_39 := "i__unops_cast"(1i, tmp_38);
+        tmp_40 := "i__undefined_&"(compare1);
+        tmp_41 := "i__unops_cast"(0i, tmp_40);
+        tmp := "qsort"(tmp_39, {{ "uint64", 7i }}, {{ "uint64", 64i }}, tmp_41);
+        i := undefined; (* unsigned int i; *)
+        i := {{ "uint32", 0i }};
+    t5: tmp_42 := "i__unops_cast"("unsigned long int", i);
+        tmp_43 := "i__undefined_/"({{ "uint32", 224i }}, {{ "uint32", 32i }});
+        tmp_44 := "i__unops_cast"("unsigned long int", tmp_43);
+        tmp_45 := "i__binops_cmp_lt"(tmp_42, tmp_44);
+        tmp_46 := "i__unops_negb"(tmp_45);
+        vtb := "i__bool_of_value"(tmp_46);
+        goto [vtb] t10 s10;
+    s10: skip;
+        retval_i__cheri_tag_get_3 := undefined; (* _Bool retval_i__cheri_tag_get_3; *)
+        tmp_47 := "i__unops_cast"("signed long int", i);
+        tmp_48 := "i__binops_cmp_geq"(tmp_47, {{ "int64", 0i }});
+        assert (tmp_48 == {{ "int32", 1i }});
+        tmp_49 := "i__unops_cast"("signed long int", i);
+        tmp_50 := "i__binops_cmp_lt"(tmp_49, {{ "int64", 7i }});
+        assert (tmp_50 == {{ "int32", 1i }});
+        array[tmp_51 := "i__unops_cast"("signed long int", i);]
+        tmp_52 := "i__unops_cast"(1i, array[tmp_51);
+        retval_i__cheri_tag_get_3 := "i__cheri_tag_get"(tmp_52);
+        tmp_53 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_3);
+        tmp_54 := "i__binops_cmp_eq"(tmp_53, {{ "int64", 1i }});
+        assert (tmp_54 == {{ "int32", 1i }});
+        tmp_55 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_3);
+        tmp_56 := "i__binops_cmp_eq"(tmp_55, {{ "int64", 1i }});
+        tmp_57 := "i__unops_negb"(tmp_56);
+        vtb := "i__bool_of_value"(tmp_57);
+        goto [vtb] t6 s6;
+    s6: skip;
+    t6: retval_i__cheri_tag_get_4 := undefined; (* _Bool retval_i__cheri_tag_get_4; *)
+        tmp_58 := "i__unops_cast"("signed long int", i);
+        tmp_59 := "i__binops_cmp_geq"(tmp_58, {{ "int64", 0i }});
+        assert (tmp_59 == {{ "int32", 1i }});
+        tmp_60 := "i__unops_cast"("signed long int", i);
+        tmp_61 := "i__binops_cmp_lt"(tmp_60, {{ "int64", 7i }});
+        assert (tmp_61 == {{ "int32", 1i }});
+        array1[tmp_62 := "i__unops_cast"("signed long int", i);].value
+        tmp_63 := "i__unops_cast"(1i, array1[tmp_62);
+        retval_i__cheri_tag_get_4 := "i__cheri_tag_get"(tmp_63);
+        tmp_64 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_4);
+        tmp_65 := "i__binops_cmp_eq"(tmp_64, {{ "int64", 1i }});
+        assert (tmp_65 == {{ "int32", 1i }});
+        tmp_66 := "i__unops_cast"("signed long int", retval_i__cheri_tag_get_4);
+        tmp_67 := "i__binops_cmp_eq"(tmp_66, {{ "int64", 1i }});
+        tmp_68 := "i__unops_negb"(tmp_67);
+        vtb := "i__bool_of_value"(tmp_68);
+        goto [vtb] t7 s7;
+    s7: skip;
+    t7: tmp_69 := "i__unops_cast"("signed long int", i);
+        tmp_70 := "i__binops_cmp_geq"(tmp_69, {{ "int64", 0i }});
+        assert (tmp_70 == {{ "int32", 1i }});
+        tmp_71 := "i__unops_cast"("signed long int", i);
+        tmp_72 := "i__binops_cmp_lt"(tmp_71, {{ "int64", 7i }});
+        assert (tmp_72 == {{ "int32", 1i }});
+        array[tmp_73 := "i__unops_cast"("signed long int", i);]
+        tmp_74 := "i__binops_add"(array[tmp_73, {{ "int64", 0i }});
+        tmp_75 := "i__load"(tmp_74, "int8");
+        tmp_76 := "i__unops_cast"("signed long int", tmp_75);
+        tmp_77 := "i__binops_add"({{ "uint32", 97i }}, i);
+        tmp_78 := "i__unops_cast"("unsigned long int", tmp_77);
+        tmp_79 := "i__unops_cast"("signed long int", tmp_78);
+        tmp_80 := "i__binops_cmp_eq"(tmp_76, tmp_79);
+        assert (tmp_80 == {{ "int32", 1i }});
+        tmp_81 := "i__unops_cast"("signed long int", i);
+        tmp_82 := "i__binops_cmp_geq"(tmp_81, {{ "int64", 0i }});
+        assert (tmp_82 == {{ "int32", 1i }});
+        tmp_83 := "i__unops_cast"("signed long int", i);
+        tmp_84 := "i__binops_cmp_lt"(tmp_83, {{ "int64", 7i }});
+        assert (tmp_84 == {{ "int32", 1i }});
+        array[tmp_85 := "i__unops_cast"("signed long int", i);]
+        tmp_86 := "i__binops_add"(array[tmp_85, {{ "int64", 0i }});
+        tmp_87 := "i__load"(tmp_86, "int8");
+        tmp_88 := "i__unops_cast"("signed long int", tmp_87);
+        tmp_89 := "i__binops_add"({{ "uint32", 97i }}, i);
+        tmp_90 := "i__unops_cast"("unsigned long int", tmp_89);
+        tmp_91 := "i__unops_cast"("signed long int", tmp_90);
+        tmp_92 := "i__binops_cmp_eq"(tmp_88, tmp_91);
+        tmp_93 := "i__unops_negb"(tmp_92);
+        vtb := "i__bool_of_value"(tmp_93);
+        goto [vtb] t8 s8;
+    s8: skip;
+    t8: tmp_94 := "i__unops_cast"("signed long int", i);
+        tmp_95 := "i__binops_cmp_geq"(tmp_94, {{ "int64", 0i }});
+        assert (tmp_95 == {{ "int32", 1i }});
+        tmp_96 := "i__unops_cast"("signed long int", i);
+        tmp_97 := "i__binops_cmp_lt"(tmp_96, {{ "int64", 7i }});
+        assert (tmp_97 == {{ "int32", 1i }});
+        array1[tmp_98 := "i__unops_cast"("signed long int", i);].value
+        tmp_99 := "i__binops_add"(array1[tmp_98, {{ "int64", 0i }});
+        tmp_100 := "i__load"(tmp_99, "int8");
+        tmp_101 := "i__unops_cast"("signed long int", tmp_100);
+        tmp_102 := "i__binops_add"({{ "uint32", 97i }}, i);
+        tmp_103 := "i__unops_cast"("unsigned long int", tmp_102);
+        tmp_104 := "i__unops_cast"("signed long int", tmp_103);
+        tmp_105 := "i__binops_cmp_eq"(tmp_101, tmp_104);
+        assert (tmp_105 == {{ "int32", 1i }});
+        tmp_106 := "i__unops_cast"("signed long int", i);
+        tmp_107 := "i__binops_cmp_geq"(tmp_106, {{ "int64", 0i }});
+        assert (tmp_107 == {{ "int32", 1i }});
+        tmp_108 := "i__unops_cast"("signed long int", i);
+        tmp_109 := "i__binops_cmp_lt"(tmp_108, {{ "int64", 7i }});
+        assert (tmp_109 == {{ "int32", 1i }});
+        array1[tmp_110 := "i__unops_cast"("signed long int", i);].value
+        tmp_111 := "i__binops_add"(array1[tmp_110, {{ "int64", 0i }});
+        tmp_112 := "i__load"(tmp_111, "int8");
+        tmp_113 := "i__unops_cast"("signed long int", tmp_112);
+        tmp_114 := "i__binops_add"({{ "uint32", 97i }}, i);
+        tmp_115 := "i__unops_cast"("unsigned long int", tmp_114);
+        tmp_116 := "i__unops_cast"("signed long int", tmp_115);
+        tmp_117 := "i__binops_cmp_eq"(tmp_113, tmp_116);
+        tmp_118 := "i__unops_negb"(tmp_117);
+        vtb := "i__bool_of_value"(tmp_118);
+        goto [vtb] t9 s9;
+    s9: skip;
+    t9: skip;
+        tmp_119 := "i__binops_add"(i, {{ "uint32", 1i }});
+        i := tmp_119;
+        goto t5;
+    t10: skip;
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        {{ tmp_120 := "i__undefined_&"("c"[{{ "int64", 0i }}]);
+        tmp_121 := "i__unops_cast"(1i, tmp_120);, 
+    tmp_122 := "i__undefined_&"("d"[{{ "int64", 0i }}]);
+        tmp_123 := "i__unops_cast"(1i, tmp_122);, 
+    tmp_124 := "i__undefined_&"("b"[{{ "int64", 0i }}]);
+        tmp_125 := "i__unops_cast"(1i, tmp_124);, 
+    tmp_126 := "i__undefined_&"("a"[{{ "int64", 0i }}]);
+        tmp_127 := "i__unops_cast"(1i, tmp_126);, 
+    tmp_128 := "i__undefined_&"("f"[{{ "int64", 0i }}]);
+        tmp_129 := "i__unops_cast"(1i, tmp_128);, 
+    tmp_130 := "i__undefined_&"("e"[{{ "int64", 0i }}]);
+        tmp_131 := "i__unops_cast"(1i, tmp_130);, 
+    tmp_132 := "i__undefined_&"("g"[{{ "int64", 0i }}]);
+        tmp_133 := "i__unops_cast"(1i, tmp_132); }}
+        array := tmp_133;
+        {{ { .key={{ "int32", 2i }}, .anon_pad$1={{ "uint224", 0i }}, .value=tmp_134 := "i__undefined_&"("c"[{{ "int64", 0i }}]);
+        tmp_135 := "i__unops_cast"(1i, tmp_134); }, 
+    { .key={{ "int32", 3i }}, .anon_pad$1={{ "uint224", 0i }}, .value=tmp_136 := "i__undefined_&"("d"[{{ "int64", 0i }}]);
+        tmp_137 := "i__unops_cast"(1i, tmp_136); }, 
+    { .key={{ "int32", 1i }}, .anon_pad$1={{ "uint224", 0i }}, .value=tmp_138 := "i__undefined_&"("b"[{{ "int64", 0i }}]);
+        tmp_139 := "i__unops_cast"(1i, tmp_138); }, 
+    { .key={{ "int32", 0i }}, .anon_pad$1={{ "uint224", 0i }}, .value=tmp_140 := "i__undefined_&"("a"[{{ "int64", 0i }}]);
+        tmp_141 := "i__unops_cast"(1i, tmp_140); }, 
+    { .key={{ "int32", 5i }}, .anon_pad$1={{ "uint224", 0i }}, .value=tmp_142 := "i__undefined_&"("f"[{{ "int64", 0i }}]);
+        tmp_143 := "i__unops_cast"(1i, tmp_142); }, 
+    { .key={{ "int32", 4i }}, .anon_pad$1={{ "uint224", 0i }}, .value=tmp_144 := "i__undefined_&"("e"[{{ "int64", 0i }}]);
+        tmp_145 := "i__unops_cast"(1i, tmp_144); }, 
+    { .key={{ "int32", 6i }}, .anon_pad$1={{ "uint224", 0i }}, .value=tmp_146 := "i__undefined_&"("g"[{{ "int64", 0i }}]);
+        tmp_147 := "i__unops_cast"(1i, tmp_146); } }}
+        array1 := tmp_147;
+        ret := undefined;
+        return
+};

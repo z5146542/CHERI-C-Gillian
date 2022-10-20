@@ -72,14 +72,14 @@ void check_size(long size)
 }
 
 BEGIN_TEST(libc_malloc)
-#ifndef SLOW_TESTS
+#ifdef SLOW_TESTS
 	// Malloc and free are fast, but faulting in and checking that every page
 	// really is zero is *very* slow.
 	// const int max = 27;
 	const int max = 12;
 #else
 	// const int max = 20;
-	const int max = 8;
+	const int max = 9;
 #endif
 	for (int i=1; i <= max ; i++)
 	{
