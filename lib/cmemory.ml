@@ -46,6 +46,7 @@ type vt = Values.t
 
 type st = Subst.t
 type err_t = CHERI.errtype
+type init_data = unit
 
 type t = { mem : unit CHERI.heap_ext }
 

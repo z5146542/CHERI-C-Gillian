@@ -1,3 +1,5 @@
+type init_data = unit
+
 (* Because the compiler is a foreign program, we need to run externally *)
 let run cmd =
   let inp = Unix.open_process_in cmd in
@@ -119,7 +121,7 @@ let parse_and_compile_file path =
   (* let () = Printf.fprintf od "%s" output in *)
   let () = close_out oc in
   (* let () = close_out od in *)
-  let trans_procs = Gil_parsing.parse_eprog_from_string output in
+  let trans_procs = (Gil_parsing.parse_eprog_from_string output).labeled_prog in
   (pathgil, trans_procs)
   
 
@@ -132,7 +134,7 @@ let parse_and_compile_files files =
     | f :: fs -> SourceFiles.add_source_file source_files f; (parse_and_compile_file f) :: g fs
     | []      -> [] in
   let progs = g files in
-  Ok ({ gil_progs = progs ; source_files; tl_ast = () })
+  Ok ({ gil_progs = progs ; source_files; tl_ast = (); init_data = () })
 
 
 let other_imports = []

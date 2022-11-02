@@ -34,7 +34,7 @@
     "@opam/ppxlib": ">=0.18.0",
     "@opam/printbox": "0.5",
     "@opam/yojson": "^1.7.0",
-    "gillian": "*",
+    "gillian": "GillianPlatform/gillian:gillian.json#ecc96d8feabbe6d18ba756f8e3b930054df74eb4",
     "ocaml": "^4.14.x"
   },
   "devDependencies": {
@@ -45,7 +45,6 @@
     "@opam/utop": "*"
   },
   "resolutions": {
-    "@opam/conf-sqlite3": "ManasJayanth/esy-sqlite:esy.json#28dfc73a8eda790213a8359ad708231069ed7079",
-    "gillian" : "link:../Gillian/gillian.json"
+    "@opam/conf-sqlite3": "ManasJayanth/esy-sqlite:esy.json#28dfc73a8eda790213a8359ad708231069ed7079"
   }
 }
