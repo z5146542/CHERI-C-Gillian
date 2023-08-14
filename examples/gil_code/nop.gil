@@ -7,3 +7,8 @@ proc foo() {
 proc bar() {
     return
 };
+
+proc main() {
+    ret := 0i;
+    return
+};

@@ -13,6 +13,9 @@ module VTypes = struct
   let cap_type = "cap"
 end ;;
 
+let chunk_to_string = Chunk.to_string
+let string_to_chunk = Chunk.of_string
+
 let c_to_vtypes s = 
   let open VTypes in
   match s with

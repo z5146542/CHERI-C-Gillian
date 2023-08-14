@@ -4,10 +4,10 @@ module Expr = Gillian.Gil_syntax.Expr
 open CHERI_C_Memory_Model
 module CHERI = CHERI_C_Concrete_Memory_Model
 open ValueTranslation
-
+open LActions
 (* ************** *)
 (* First, we require memory action types *)
-
+(*
 type mem_ac =
   | Alloc
   | Free
@@ -35,7 +35,7 @@ let str_to_mem_ac = function
   | "cast_val" -> Cast
   | "NULL"  -> Null
   | err     -> failwith ("Unknown memory action : " ^ err)
-
+*)
 
 (* Next, we need a way to convert GIL values and MSpec values *)
 

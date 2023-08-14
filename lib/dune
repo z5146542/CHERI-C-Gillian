@@ -1,3 +1,10 @@
 (library
  (name instantiation)
- (libraries gillian))
+ (libraries gillian
+  batteries
+  printbox
+  gillian.alcotest-runner
+  gillian.ppx_sat.runtime
+  ppx_deriving_yojson.runtime)
+ (preprocess
+  (pps ppx_deriving.std ppx_deriving_yojson gillian.ppx_sat)))
