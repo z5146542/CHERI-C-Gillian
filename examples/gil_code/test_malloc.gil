@@ -1,10 +1,36 @@
-import "stdlib_cap256.gil", "internals.gil", "unops_common.gil"; 
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil", "string_common.gil";
 
+(* signed int (  ) *)
 proc main() {
-    x  := "i__malloc"({{ "uint64", 4i }});
-    y  := "i__malloc"({{ "uint64", 4i }});
-    z  := "i__malloc"({{ "uint64", 4i }});
-    w  := "i__malloc"({{ "uint64", 4i }});
-    ret := {{ "uint64", 0i }};
-    return
+        x := undefined; (* signed int * * x; *)
+        retval_malloc_1 := undefined; (* void * retval_malloc_1; *)
+        tmp_0 := "i__malloc"({{ "uint64", 64i }});
+        retval_malloc_1 := tmp_0;
+        tmp_1 := "i__unops_cast"(32i, retval_malloc_1);
+        x := tmp_1;
+        y := undefined; (* signed int * y; *)
+        retval_malloc_2 := undefined; (* void * retval_malloc_2; *)
+        tmp_2 := "i__malloc"({{ "uint64", 4i }});
+        retval_malloc_2 := tmp_2;
+        tmp_3 := "i__unops_cast"(4i, retval_malloc_2);
+        y := tmp_3;
+        tmp_4 := "i__binops_add"(x, {{ "int64", 0i }});
+        tmp := "i__store"(tmp_4, y);
+        tmp_6 := "i__binops_add"(x, {{ "int64", 1i }});
+        tmp := "i__store"(tmp_6, y);
+        z := undefined; (* signed int * z; *)
+        tmp_8 := "i__binops_add"(x, {{ "int64", 0i }});
+        tmp_9 := "i__load"(tmp_8, "cap");
+        z := tmp_9;
+        y := "i__free"(y);
+        x := "i__free"(x);
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
 };

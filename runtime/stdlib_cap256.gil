@@ -23,7 +23,7 @@ proc calloc(siz) {
       bl := [alloc](siz);
       i := 0i;
       cl := "i__unops_cast"(1i, bl);
-  l1: goto [ i i< l-nth(siz, 1.) ] t1 f1;
+  l1: goto [ i i< l-nth(siz, 1i) ] t1 f1;
   t1: tmp := [store](cl, {{ "uint8", 0i }});
       cl := "i__binops_add"(cl, {{ "int32", 1i }});
       i := i i+ 1i;
@@ -40,10 +40,10 @@ proc realloc(cap, siz) {
  tru: ret := [alloc](siz);
       return;
  fal: bl := [alloc](siz);
-      goto [ l-nth(siz, 1.) i< l-nth(cap, 3.) ] lt ge;
-  lt: minv := l-nth(siz, 1.);
+      goto [ l-nth(siz, 1i) i< l-nth(cap, 3i) ] lt ge;
+  lt: minv := l-nth(siz, 1i);
       goto nt;
-  ge: minv := l-nth(cap, 3.);
+  ge: minv := l-nth(cap, 3i);
   nt: tmp := [memcpy](bl, cap, minv);
       tmp := [free](cap);
       ret := bl;

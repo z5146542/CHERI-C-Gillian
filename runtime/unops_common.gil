@@ -1,7 +1,7 @@
 #internal
 
 proc i__unops_negb (val) {
-       goto [ l-nth(val, 1.) = 0i ] ctn utd;
+       goto [ l-nth(val, 1i) = 0i ] ctn utd;
   ctn: ret := {{ "int32", 1i }};
        return;
   utd: ret := {{ "int32", 0i }};
@@ -26,13 +26,13 @@ proc i__unops_cast (typ, val) {
    t1: tmp := [NULL]();
        ret := "i__binops_cmp_neq"(val, tmp);
        return;
-   t2: ret := "i__binops_cmp_neq"(val, {{ l-nth(val, 0.), 0i }});
+   t2: ret := "i__binops_cmp_neq"(val, {{ l-nth(val, 0i), 0i }});
        return;
   nct: ptrt := "i__is_cap"(val);
        goto [ ptrt ] pend feil;
- pend: ret := {{ l-nth(val, 0.), l-nth(val, 1.), l-nth(val, 2.), l-nth(val, 3.), 
-                 l-nth(val, 4.), l-nth(val, 5.), l-nth(val, 6.), l-nth(val, 7.), 
-                 l-nth(val, 8.), l-nth(val, 9.), l-nth(val, 10.), typ }};
+ pend: ret := {{ l-nth(val, 0i), l-nth(val, 1i), l-nth(val, 2i), l-nth(val, 3i), 
+                 l-nth(val, 4i), l-nth(val, 5i), l-nth(val, 6i), l-nth(val, 7i), 
+                 l-nth(val, 8i), l-nth(val, 9i), l-nth(val, 10i), typ }};
        return;
        (* case 2 *)
  nptr: goto [ typeOf(typ) = Str ] tval feil;
@@ -43,18 +43,18 @@ proc i__unops_cast (typ, val) {
 
 proc i__is_cap (cap) {
        goto [ l-len(cap) = 12i ] nxt utd;
-  nxt: goto [( (typeOf(l-nth(cap, 0.)) = Obj) and
-               (typeOf(l-nth(cap, 1.)) = Int) and
-               (typeOf(l-nth(cap, 2.)) = Int) and
-               (typeOf(l-nth(cap, 3.)) = Int) and
-               (typeOf(l-nth(cap, 4.)) = Bool) and
-               (typeOf(l-nth(cap, 5.)) = Bool) and
-               (typeOf(l-nth(cap, 6.)) = Bool) and
-               (typeOf(l-nth(cap, 7.)) = Bool) and
-               (typeOf(l-nth(cap, 8.)) = Bool) and
-               (typeOf(l-nth(cap, 9.)) = Bool) and
-               (typeOf(l-nth(cap, 10.)) = Bool) and
-               (typeOf(l-nth(cap, 11.)) = Int) )] ctn utd;
+  nxt: goto [( (typeOf(l-nth(cap, 0i)) = Obj) and
+               (typeOf(l-nth(cap, 1i)) = Int) and
+               (typeOf(l-nth(cap, 2i)) = Int) and
+               (typeOf(l-nth(cap, 3i)) = Int) and
+               (typeOf(l-nth(cap, 4i)) = Bool) and
+               (typeOf(l-nth(cap, 5i)) = Bool) and
+               (typeOf(l-nth(cap, 6i)) = Bool) and
+               (typeOf(l-nth(cap, 7i)) = Bool) and
+               (typeOf(l-nth(cap, 8i)) = Bool) and
+               (typeOf(l-nth(cap, 9i)) = Bool) and
+               (typeOf(l-nth(cap, 10i)) = Bool) and
+               (typeOf(l-nth(cap, 11i)) = Int) )] ctn utd;
   ctn: ret := true;
        return;
   utd: ret := false;

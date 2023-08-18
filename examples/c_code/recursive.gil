@@ -1,4 +1,4 @@
-import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil";
+import "unops_common.gil", "binops_common.gil", "internals.gil", "stdlib_cap256.gil", "cheri_purecap_uncompressed.gil", "string_common.gil";
 
 (* unsigned int ( unsigned int ) *)
 proc fibonacci(n) {

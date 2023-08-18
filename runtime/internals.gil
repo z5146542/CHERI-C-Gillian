@@ -21,7 +21,7 @@ proc i__value_of_bool(v) {
 };
 
 proc i__bool_of_value(v) {
-            goto [ l-nth(v, 1.) = 0i ] fl tr;
+            goto [ l-nth(v, 1i) = 0i ] fl tr;
       fl:   ret := false;
             return;
       tr:   ret := true;
@@ -29,8 +29,8 @@ proc i__bool_of_value(v) {
 };
 
 proc i__neg_bool_value(v) {
-            goto [ l-nth(v, 0.) = "int32" ] int unde;
-      int:  goto [ l-nth(v, 1.) = 0. ] fl tr;
+            goto [ l-nth(v, 0i) = "int32" ] int unde;
+      int:  goto [ l-nth(v, 1i) = 0. ] fl tr;
       fl:   ret := {{ "int32", 1i }};
             return;
       tr:   ret := {{ "int32", 0i }};

@@ -16,7 +16,7 @@ end ;;
 let chunk_to_string = Chunk.to_string
 let string_to_chunk = Chunk.of_string
 
-let c_to_vtypes s = 
+let c_to_vtypes s =
   let open VTypes in
   match s with
   | "unsigned char" -> u8_type
@@ -28,13 +28,13 @@ let c_to_vtypes s =
   | "unsigned long int" -> u64_type
   | "signed long int" -> s64_type
   | u8_type -> u8_type
-  | s8_type -> s8_type 
+  | s8_type -> s8_type
   | u16_type -> u16_type
   | s16_type -> s16_type
   | u32_type -> u32_type
   | s32_type -> s32_type
   | u64_type -> u64_type
-  | s64_type -> s64_type 
+  | s64_type -> s64_type
   | _ -> failwith "FAIL: conversion of c type to vtype failed."
 
 let rec vtype_to_mm_type str =
@@ -50,6 +50,20 @@ let rec vtype_to_mm_type str =
   else if str = s64_type then Sint64
   else if str = cap_type then Cap
   else failwith "FAIL: VType does not match any of the MM types."
+
+let rec vtype_to_smm_type str =
+  let open VTypes in
+  let open Chunk in
+  if str = u8_type then Uint8
+  else if str = s8_type then Sint8
+  else if str = u16_type then Uint16
+  else if str = s16_type then Sint16
+  else if str = u32_type then Uint32
+  else if str = s32_type then Sint32
+  else if str = u64_type then Uint64
+  else if str = s64_type then Sint64
+  else if str = cap_type then Cap
+  else failwith "FAIL: VType does not match any of the Symbolic MM types."
 
 let gil_to_mm gil_value =
   let open Literal in

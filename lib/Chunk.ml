@@ -49,7 +49,7 @@ let phy_equal a b =
   | _ -> false
 *)
 
-let phy_equal a b = 
+let phy_equal a b =
   match (a, b) with
   | Sint8, Sint8
   | Uint8, Uint8
@@ -108,7 +108,6 @@ let to_string = function
   | Sint64 -> "signed long int"
   | Uint64 -> "unsigned long int"
   | Cap -> "cap"
-
 
 let pp fmt chunk = Fmt.pf fmt "%s" (to_string chunk)
 

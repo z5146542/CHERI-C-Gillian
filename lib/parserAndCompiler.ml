@@ -1,4 +1,7 @@
+module Annot = Gillian.Gil_syntax.Annot.Basic
+module Gil_parsing = Gil_parsing.Make(Annot)
 type init_data = unit
+type tl_ast = unit
 
 (* Because the compiler is a foreign program, we need to run externally *)
 let run cmd =
@@ -87,7 +90,7 @@ module TargetLangOptions = struct
   *)
 end
 
-type tl_ast = unit (* ESBMC (probs) does not emit an abstract syntax tree *)
+(*type tl_ast = unit ( * ESBMC (probs) does not emit an abstract syntax tree *)
 type err = unit (* Deal with errors later *)
 
 let pp_err _ _ =
@@ -127,14 +130,14 @@ let parse_and_compile_file path =
 
 let parse_and_compile_files files =
   let open IncrementalAnalysis in
-  let open CommandLine.ParserAndCompiler in 
+  let open Command_line.ParserAndCompiler in 
   let exec_mode = !Gillian.Utils.Config.current_exec_mode in
   let source_files = SourceFiles.make () in
   let rec g filez = match filez with 
     | f :: fs -> SourceFiles.add_source_file source_files f; (parse_and_compile_file f) :: g fs
     | []      -> [] in
   let progs = g files in
-  Ok ({ gil_progs = progs ; source_files; tl_ast = (); init_data = () })
+  Ok ({ gil_progs = progs ; source_files; tl_ast = (); init_data = ()})
 
 
 let other_imports = []

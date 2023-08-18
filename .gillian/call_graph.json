@@ -6,6 +6,63 @@
         "id": "proc_main",
         "ntype": [ "Proc" ],
         "name": "main",
+        "children": [
+          "proc_i__load", "proc_i__store", "proc_i__binops_add",
+          "proc_i__unops_cast", "proc_i__malloc"
+        ]
+      }
+    ],
+    [
+      "proc_i__is_cap",
+      {
+        "id": "proc_i__is_cap",
+        "ntype": [ "Proc" ],
+        "name": "i__is_cap",
+        "children": []
+      }
+    ],
+    [
+      "proc_i__malloc",
+      {
+        "id": "proc_i__malloc",
+        "ntype": [ "Proc" ],
+        "name": "i__malloc",
+        "children": []
+      }
+    ],
+    [
+      "proc_i__load",
+      {
+        "id": "proc_i__load",
+        "ntype": [ "Proc" ],
+        "name": "i__load",
+        "children": []
+      }
+    ],
+    [
+      "proc_i__binops_add",
+      {
+        "id": "proc_i__binops_add",
+        "ntype": [ "Proc" ],
+        "name": "i__binops_add",
+        "children": [ "proc_i__is_cap" ]
+      }
+    ],
+    [
+      "proc_i__unops_cast",
+      {
+        "id": "proc_i__unops_cast",
+        "ntype": [ "Proc" ],
+        "name": "i__unops_cast",
+        "children": [ "proc_i__is_cap" ]
+      }
+    ],
+    [
+      "proc_i__store",
+      {
+        "id": "proc_i__store",
+        "ntype": [ "Proc" ],
+        "name": "i__store",
         "children": []
       }
     ]

@@ -1,8 +1,8 @@
 #internal
 
 proc i__binops_cmp_lt (v1, v2) {
-        goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
-   tsc: goto [ l-nth(v1, 1.) i< l-nth(v2, 1.) ] vsc vft;
+        goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
+   tsc: goto [ l-nth(v1, 1i) i< l-nth(v2, 1i) ] vsc vft;
    vsc: ret := {{ "int32", 1i }};
         return;
    vft: ret := {{ "int32", 0i }};
@@ -11,8 +11,8 @@ proc i__binops_cmp_lt (v1, v2) {
 };
 
 proc i__binops_cmp_geq (v1, v2) {
-        goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
-   tsc: goto [ l-nth(v1, 1.) i>= l-nth(v2, 1.) ] vsc vft;
+        goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
+   tsc: goto [ l-nth(v1, 1i) i>= l-nth(v2, 1i) ] vsc vft;
    vsc: ret := {{ "int32", 1i }};
         return;
    vft: ret := {{ "int32", 0i }};
@@ -21,8 +21,8 @@ proc i__binops_cmp_geq (v1, v2) {
 };
 
 proc i__binops_cmp_ge (v1, v2) {
-        goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
-   tsc: goto [ l-nth(v1, 1.) i> l-nth(v2, 1.) ] vsc vft;
+        goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
+   tsc: goto [ l-nth(v1, 1i) i> l-nth(v2, 1i) ] vsc vft;
    vsc: ret := {{ "int32", 1i }};
         return;
    vft: ret := {{ "int32", 0i }};
@@ -31,11 +31,11 @@ proc i__binops_cmp_ge (v1, v2) {
 };
 
 proc i__binops_cmp_leq (v1, v2) {
-        goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
-   tsc: goto [ l-nth(v1, 1.) i<= l-nth(v2, 1.) ] vsc vft;
-   vsc: ret := {{ l-nth(v1, 0.), 1i }};
+        goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
+   tsc: goto [ l-nth(v1, 1i) i<= l-nth(v2, 1i) ] vsc vft;
+   vsc: ret := {{ l-nth(v1, 0i), 1i }};
         return;
-   vft: ret := {{ l-nth(v1, 0.), 0i }};
+   vft: ret := {{ l-nth(v1, 0i), 0i }};
         return;
    tft: fail[comparison]("Type of two values do not match")
 };
@@ -44,9 +44,9 @@ proc i__binops_cmp_eq (v1, v2) {
         (* TODO: cap fragments must not compare to cap. Current semantics allows this *)
         tmp := "i__is_cap"(v1);
         goto [ tmp ] ccp pcp;
-   ccp: goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc vft;
-   pcp: goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
-   tsc: goto [ l-nth(v1, 1.) = l-nth(v2, 1.) ] vsc vft;
+   ccp: goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc vft;
+   pcp: goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
+   tsc: goto [ l-nth(v1, 1i) = l-nth(v2, 1i) ] vsc vft;
    vsc: ret := {{ "int32", 1i }};
         return;
    vft: ret := {{ "int32", 0i }};
@@ -66,25 +66,25 @@ proc i__binops_add (v1, v2) {
         goto [ tmp ] s1 f1;
     f1: tmp := "i__is_cap"(v2);
         goto [ tmp ] s2 f2;
-    s1: goto [ typeOf(l-nth(v2, 0.)) = Obj ] tft n1;
-    n1: tmp := l-nth(v2, 1.) i* l-nth(v1, 11.);
-        res := l-nth(v1, 1.) i+ tmp;
+    s1: goto [ typeOf(l-nth(v2, 0i)) = Obj ] tft n1;
+    n1: tmp := l-nth(v2, 1i) i* l-nth(v1, 11i);
+        res := l-nth(v1, 1i) i+ tmp;
         goto end2;
-    s2: goto [ typeOf(l-nth(v1, 0.)) = Obj ] tft n2;
-    n2: tmp := l-nth(v1, 1.) i* l-nth(v2, 11.);
-        res := l-nth(v2, 1.) i+ tmp;
+    s2: goto [ typeOf(l-nth(v1, 0i)) = Obj ] tft n2;
+    n2: tmp := l-nth(v1, 1i) i* l-nth(v2, 11i);
+        res := l-nth(v2, 1i) i+ tmp;
         goto end3;
-    f2: goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
-   tsc: res := l-nth(v1, 1.) i+ l-nth(v2, 1.);
-        ret := "i__unops_cast"(l-nth(v1, 0.), {{ l-nth(v1, 0.), res }});
+    f2: goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
+   tsc: res := l-nth(v1, 1i) i+ l-nth(v2, 1i);
+        ret := "i__unops_cast"(l-nth(v1, 0i), {{ l-nth(v1, 0i), res }});
         return;
-  end2: ret := {{ l-nth(v1, 0.), res, l-nth(v1, 2.), l-nth(v1, 3.), l-nth(v1, 4.),
-                  l-nth(v1, 5.), l-nth(v1, 6.), l-nth(v1, 7.), l-nth(v1, 8.),
-                  l-nth(v1, 9.), l-nth(v1, 10.), l-nth(v1, 11.) }};
+  end2: ret := {{ l-nth(v1, 0i), res, l-nth(v1, 2i), l-nth(v1, 3i), l-nth(v1, 4i),
+                  l-nth(v1, 5i), l-nth(v1, 6i), l-nth(v1, 7i), l-nth(v1, 8i),
+                  l-nth(v1, 9i), l-nth(v1, 10i), l-nth(v1, 11i) }};
         return;
-  end3: ret := {{ l-nth(v2, 0.), res, l-nth(v2, 2.), l-nth(v2, 3.), l-nth(v2, 4.),
-                  l-nth(v2, 5.), l-nth(v2, 6.), l-nth(v2, 7.), l-nth(v2, 8.),
-                  l-nth(v2, 9.), l-nth(v2, 10.), l-nth(v2, 11.) }};
+  end3: ret := {{ l-nth(v2, 0i), res, l-nth(v2, 2i), l-nth(v2, 3i), l-nth(v2, 4i),
+                  l-nth(v2, 5i), l-nth(v2, 6i), l-nth(v2, 7i), l-nth(v2, 8i),
+                  l-nth(v2, 9i), l-nth(v2, 10i), l-nth(v2, 11i) }};
         return;
    tft: fail[comparison]("Type of two values do not match")
 };
@@ -95,25 +95,25 @@ proc i__binops_sub (v1, v2) {
         goto [ tmp ] s1 f1;
     f1: tmp := "i__is_cap"(v2);
         goto [ tmp ] s2 f2;
-    s1: goto [ typeOf(l-nth(v2, 0.)) = Obj ] tft n1;
-    n1: tmp := l-nth(v2, 1.) i* l-nth(v1, 11.);
-        res := l-nth(v1, 1.) i- tmp;
+    s1: goto [ typeOf(l-nth(v2, 0i)) = Obj ] tft n1;
+    n1: tmp := l-nth(v2, 1i) i* l-nth(v1, 11i);
+        res := l-nth(v1, 1i) i- tmp;
         goto end2;
-    s2: goto [ typeOf(l-nth(v1, 0.)) = Obj ] tft n2;
-    n2: tmp := l-nth(v1, 1.) i* l-nth(v2, 11.);
-        res := l-nth(v2, 1.) i- tmp;
+    s2: goto [ typeOf(l-nth(v1, 0i)) = Obj ] tft n2;
+    n2: tmp := l-nth(v1, 1i) i* l-nth(v2, 11i);
+        res := l-nth(v2, 1i) i- tmp;
         goto end3;
-    f2: goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
-   tsc: res := l-nth(v1, 1.) i- l-nth(v2, 1.);
-        ret := "i__unops_cast"(l-nth(v1, 0.), {{ l-nth(v1, 0.), res }});
+    f2: goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
+   tsc: res := l-nth(v1, 1i) i- l-nth(v2, 1i);
+        ret := "i__unops_cast"(l-nth(v1, 0i), {{ l-nth(v1, 0i), res }});
         return;
-  end2: ret := {{ l-nth(v1, 0.), res, l-nth(v1, 2.), l-nth(v1, 3.), l-nth(v1, 4.),
-                  l-nth(v1, 5.), l-nth(v1, 6.), l-nth(v1, 7.), l-nth(v1, 8.),
-                  l-nth(v1, 9.), l-nth(v1, 10.), l-nth(v1, 11.) }};
+  end2: ret := {{ l-nth(v1, 0i), res, l-nth(v1, 2i), l-nth(v1, 3i), l-nth(v1, 4i),
+                  l-nth(v1, 5i), l-nth(v1, 6i), l-nth(v1, 7i), l-nth(v1, 8i),
+                  l-nth(v1, 9i), l-nth(v1, 10i), l-nth(v1, 11i) }};
         return;
-  end3: ret := {{ l-nth(v2, 0.), res, l-nth(v2, 2.), l-nth(v2, 3.), l-nth(v2, 4.),
-                  l-nth(v2, 5.), l-nth(v2, 6.), l-nth(v2, 7.), l-nth(v2, 8.),
-                  l-nth(v2, 9.), l-nth(v2, 10.), l-nth(v2, 11.) }};
+  end3: ret := {{ l-nth(v2, 0i), res, l-nth(v2, 2i), l-nth(v2, 3i), l-nth(v2, 4i),
+                  l-nth(v2, 5i), l-nth(v2, 6i), l-nth(v2, 7i), l-nth(v2, 8i),
+                  l-nth(v2, 9i), l-nth(v2, 10i), l-nth(v2, 11i) }};
         return;
    tft: fail[comparison]("Type of two values do not match")
 };
@@ -124,8 +124,8 @@ proc i__binops_leftshift (v1, v2) {
         goto [ tmp ] tft f1;
     f1: tmp := "i__is_cap"(v2);
         goto [ tmp ] tft tsc;
-   tsc: res := l-nth(v1, 1.) <<l l-nth(v2, 1.);
-        ret := "i__unops_cast"(l-nth(v2, 0.), {{ l-nth(v2, 0.), res }});
+   tsc: res := l-nth(v1, 1i) <<l l-nth(v2, 1i);
+        ret := "i__unops_cast"(l-nth(v2, 0i), {{ l-nth(v2, 0i), res }});
         return;
    tft: fail[comparison]("Bitwise & not support for caps")
 };
@@ -136,17 +136,17 @@ proc i__binops_bitwiseand (v1, v2) {
         goto [ tmp ] tft f1;
     f1: tmp := "i__is_cap"(v2);
         goto [ tmp ] tft tsc;
-   tsc: res := l-nth(v1, 1.) &l l-nth(v2, 1.);
-        ret := "i__unops_cast"(l-nth(v2, 0.), {{ l-nth(v2, 0.), res }});
+   tsc: res := l-nth(v1, 1i) &l l-nth(v2, 1i);
+        ret := "i__unops_cast"(l-nth(v2, 0i), {{ l-nth(v2, 0i), res }});
         return;
    tft: fail[comparison]("Bitwise & not support for caps")
 };
 
 proc i__binops_mul (v1, v2) {
-        goto [ l-nth(v1, 0.) = l-nth(v2, 0.) ] tsc tft;
-   tsc: goto [ typeOf(l-nth(v1, 0.)) = Str ] nxt tft;
-   nxt: res := l-nth(v1, 1.) i* l-nth(v2, 1.);
-        ret := "i__unops_cast"(l-nth(v1, 0.), {{ l-nth(v1, 0.), res }});
+        goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
+   tsc: goto [ typeOf(l-nth(v1, 0i)) = Str ] nxt tft;
+   nxt: res := l-nth(v1, 1i) i* l-nth(v2, 1i);
+        ret := "i__unops_cast"(l-nth(v1, 0i), {{ l-nth(v1, 0i), res }});
         return;
    tft: fail[comparison]("Type of two values do not match")
 };

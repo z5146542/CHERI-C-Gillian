@@ -281,7 +281,7 @@ let sure_is_zero = function
   | SSint32_v (Lit (Int z)) when Z.equal z Z.zero -> true
   | SUint64_v (Lit (Int z)) when Z.equal z Z.zero -> true
   | SSint64_v (Lit (Int z)) when Z.equal z Z.zero -> true
-  | null_cap -> true
+  | SCap_v c when SCap_v c = null_cap -> true
   | _ -> false
 
 module SVArray = struct

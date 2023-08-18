@@ -47,15 +47,17 @@ type vt = Values.t
 type st = Subst.t
 type err_t = CHERI.errtype
 type init_data = unit
+(*type init_data = unit*)
 
 type t = { mem : unit CHERI.heap_ext }
 
 let empty = { mem = CHERI.init_heap }
 
-let init () = empty
+let init _ = empty
 
 let copy x = x
-type action_ret = ASucc of (t * vt list) | AFail of err_t list
+(* type action_ret = Ok of (t * vt list) | Error of err_t list *)
+type action_ret = (t * vt list, err_t) result
 
 let execute_alloc heap params =
   let open Literal in
@@ -65,8 +67,8 @@ let execute_alloc heap params =
     | [ LList [ String typ ; Int siz ] ] ->
       let res = CHERI.alloc heap.mem true (Arith.nat_of_integer siz) in
       (match res with
-      | Error e -> AFail [e]
-      | Success (memout, cap) -> ASucc ({ mem = memout }, llist_to_list (mm_to_gil (Cap_v cap))))
+      | Error e -> Error e
+      | Success (memout, cap) -> Ok ({ mem = memout }, llist_to_list (mm_to_gil (Cap_v cap))))
     | _ -> failwith "FAIL: alloc arguments does not match"
 
 let execute_free heap params =
@@ -84,8 +86,8 @@ let execute_free heap params =
       let (Cap_v mm_cap) = gil_to_mm gil_cap in
       let res = CHERI.free heap.mem mm_cap in
       (match res with
-      | Error e -> AFail [e]
-      | Success (memout, cap) -> ASucc ({ mem = memout }, llist_to_list (mm_to_gil (Cap_v cap))))
+      | Error e -> Error e
+      | Success (memout, cap) -> Ok ({ mem = memout }, llist_to_list (mm_to_gil (Cap_v cap))))
     | _ -> failwith "FAIL: free params does not match capability."
 
 let execute_load heap params =
@@ -112,8 +114,8 @@ let execute_load heap params =
       let (Cap_v mm_cap) = gil_to_mm gil_cap in
       let res = CHERI.load heap.mem mm_cap (vtype_to_mm_type typ) in
       (match res with
-      | Error e -> AFail [e]
-      | Success mval -> ASucc (heap, llist_to_list (mm_to_gil mval)))
+      | Error e -> Error e
+      | Success mval -> Ok (heap, llist_to_list (mm_to_gil mval)))
     | _ -> failwith "FAIL: load params does not match."
 
 let execute_store heap params =
@@ -132,8 +134,8 @@ let execute_store heap params =
       let mval = gil_to_mm (list_to_llist value) in
       let res = CHERI.store heap.mem mm_cap mval in
       (match res with
-      | Error e -> AFail [e]
-      | Success memout -> ASucc ({ mem = memout }, []))
+      | Error e -> Error e
+      | Success memout -> Ok ({ mem = memout }, []))
     | _ -> failwith "FAIL : store params do not match."
 
 let execute_copy heap params =
@@ -158,8 +160,8 @@ let execute_copy heap params =
     let (Cap_v mm_cap_src) = gil_to_mm gil_cap_2 in
     let res = CHERI.memcpy heap.mem mm_cap_dst mm_cap_src (Arith.nat_of_integer n) in
     (match res with
-    | Error e -> AFail [e]
-    | Success memout -> ASucc ({ mem = memout }, [gil_cap_1]))
+    | Error e -> Error e
+    | Success memout -> Ok ({ mem = memout }, [gil_cap_1]))
   | _ -> failwith "Fail : store params do not match." 
 
 let execute_cast heap params =
@@ -170,12 +172,12 @@ let execute_cast heap params =
   | [ String ctyp ; LList [ String typ ; Int siz ] ] ->
     let vtyp = c_to_vtypes ctyp in
     let res = cast_val vtyp siz in
-    ASucc (heap, [ String vtyp ; Int res ])
+    Ok (heap, [ String vtyp ; Int res ])
   | _ -> failwith "FAIL: cast params do not match."
 
 let execute_null heap params =
   match params with
-  | [] -> ASucc (heap, llist_to_list (mm_to_gil (Cap_v CHERI.null_capability)))
+  | [] -> Ok (heap, llist_to_list (mm_to_gil (Cap_v CHERI.null_capability)))
   | _ -> failwith "FAIL: NULL has arguments. Check file.log"
 
 let execute_action name heap params =
@@ -224,3 +226,6 @@ let pp_err fmt t =
       | Unhandled str -> "Unhandled: " ^ str)
     )
 
+let pp_err_t = pp_err
+
+let show_err_t = Fmt.to_to_string pp_err

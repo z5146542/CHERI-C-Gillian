@@ -56,6 +56,19 @@ type t =
     }
 [@@deriving yojson]
 
+let typeof (v : t) : Chunk.t =
+  match v with
+  | SUint8_v _    -> Uint8
+  | SSint8_v _    -> Sint8
+  | SUint16_v _   -> Uint16
+  | SSint16_v _   -> Sint16
+  | SUint32_v _   -> Uint32
+  | SSint32_v _   -> Sint32
+  | SUint64_v _   -> Uint64
+  | SSint64_v _   -> Sint64
+  | SCap_v _      -> Cap
+  | SCap_v_frag _ -> Uint8
+
 let null_cap = SCap_v {
         block  = "0";
         offset = Expr.zero_i;
@@ -111,7 +124,7 @@ type typ =
 
 let is_loc gamma loc =
   let r_opt =
-    let* loc_t = TypEnv.get gamma loc in
+    let* loc_t = Type_env.get gamma loc in
     match loc_t with
     | Type.ObjectType -> Some true
     | _ -> Some false
@@ -127,7 +140,7 @@ let is_zero = function
   | SSint32_v (Lit (Int z)) when Z.equal z Z.zero -> true
   | SUint64_v (Lit (Int z)) when Z.equal z Z.zero -> true
   | SSint64_v (Lit (Int z)) when Z.equal z Z.zero -> true
-  | null_cap -> true
+  | SCap_v c when SCap_v c = null_cap -> true
   | _ -> false
 
 (*
@@ -154,8 +167,8 @@ let zero_of_chunk (chunk : Chunk.t) =
 
 let is_loc_ofs gamma loc ofs =
   let r_opt =
-    let* loc_t = TypEnv.get gamma loc in
-    let* ofs_t = TypEnv.get gamma ofs in
+    let* loc_t = Type_env.get gamma loc in
+    let* ofs_t = Type_env.get gamma ofs in
     match (loc_t, ofs_t) with
     | Type.ObjectType, Type.IntType -> Some true
     | _ -> Some false
@@ -164,18 +177,18 @@ let is_loc_ofs gamma loc ofs =
 
 let is_cap_types gamma block offset base length load cload store cstore clstre global tag offsiz =
   let r_opt =
-    let* block_t  = TypEnv.get gamma block  in
-    let* offset_t = TypEnv.get gamma offset in
-    let* base_t   = TypEnv.get gamma base   in
-    let* length_t = TypEnv.get gamma length in
-    let* load_t   = TypEnv.get gamma load   in
-    let* cload_t  = TypEnv.get gamma cload  in
-    let* store_t  = TypEnv.get gamma store  in
-    let* cstore_t = TypEnv.get gamma cstore in
-    let* clstre_t = TypEnv.get gamma clstre in
-    let* global_t = TypEnv.get gamma global in
-    let* tag_t    = TypEnv.get gamma tag    in
-    let* offsiz_t = TypEnv.get gamma offsiz in
+    let* block_t  = Type_env.get gamma block  in
+    let* offset_t = Type_env.get gamma offset in
+    let* base_t   = Type_env.get gamma base   in
+    let* length_t = Type_env.get gamma length in
+    let* load_t   = Type_env.get gamma load   in
+    let* cload_t  = Type_env.get gamma cload  in
+    let* store_t  = Type_env.get gamma store  in
+    let* cstore_t = Type_env.get gamma cstore in
+    let* clstre_t = Type_env.get gamma clstre in
+    let* global_t = Type_env.get gamma global in
+    let* tag_t    = Type_env.get gamma tag    in
+    let* offsiz_t = Type_env.get gamma offsiz in
     match (block_t, offset_t, base_t, length_t, load_t, cload_t, store_t, cstore_t, clstre_t, global_t, tag_t, offsiz_t) with
     | Type.ObjectType, Type.IntType, Type.IntType, Type.IntType, Type.BooleanType,
       Type.BooleanType, Type.BooleanType, Type.BooleanType, Type.BooleanType,
@@ -186,19 +199,19 @@ let is_cap_types gamma block offset base length load cload store cstore clstre g
 
 let is_cap_frag_types gamma block offset base length load cload store cstore clstre global tag offsiz nth =
   let r_opt =
-    let* block_t  = TypEnv.get gamma block  in
-    let* offset_t = TypEnv.get gamma offset in
-    let* base_t   = TypEnv.get gamma base   in
-    let* length_t = TypEnv.get gamma length in
-    let* load_t   = TypEnv.get gamma load   in
-    let* cload_t  = TypEnv.get gamma cload  in
-    let* store_t  = TypEnv.get gamma store  in
-    let* cstore_t = TypEnv.get gamma cstore in
-    let* clstre_t = TypEnv.get gamma clstre in
-    let* global_t = TypEnv.get gamma global in
-    let* tag_t    = TypEnv.get gamma tag    in
-    let* offsiz_t = TypEnv.get gamma offsiz in
-    let* nth_t    = TypEnv.get gamma nth    in
+    let* block_t  = Type_env.get gamma block  in
+    let* offset_t = Type_env.get gamma offset in
+    let* base_t   = Type_env.get gamma base   in
+    let* length_t = Type_env.get gamma length in
+    let* load_t   = Type_env.get gamma load   in
+    let* cload_t  = Type_env.get gamma cload  in
+    let* store_t  = Type_env.get gamma store  in
+    let* cstore_t = Type_env.get gamma cstore in
+    let* clstre_t = Type_env.get gamma clstre in
+    let* global_t = Type_env.get gamma global in
+    let* tag_t    = Type_env.get gamma tag    in
+    let* offsiz_t = Type_env.get gamma offsiz in
+    let* nth_t    = Type_env.get gamma nth    in
     match (block_t, offset_t, base_t, length_t, load_t, cload_t, store_t, cstore_t, clstre_t, global_t, tag_t, offsiz_t, nth_t) with
     | Type.ObjectType, Type.IntType, Type.IntType, Type.IntType, Type.BooleanType,
       Type.BooleanType, Type.BooleanType, Type.BooleanType, Type.BooleanType,
@@ -207,7 +220,7 @@ let is_cap_frag_types gamma block offset base length load cload store cstore cls
   in
   Option.value ~default:false r_opt
 (* TODO: somehow offsiz needs to be included *)
-let of_gil_expr_almost_concrete ?(gamma = TypEnv.init ()) gexpr =
+let of_gil_expr_almost_concrete ?(gamma = Type_env.init ()) gexpr =
   let open Expr in
   let open ValueTranslation.VTypes in
   match gexpr with
@@ -279,11 +292,11 @@ let of_gil_expr_almost_concrete ?(gamma = TypEnv.init ()) gexpr =
   | EList [ Lit (String typ); value ] when String.equal typ s64_type -> Some (SSint64_v value, [])
   | _ -> None
 
-let of_gil_expr ?(pfs = PureContext.init ()) ?(gamma = TypEnv.init ()) sval_e
+let of_gil_expr ?(pfs = Pure_context.init ()) ?(gamma = Type_env.init ()) sval_e
     =
   Logging.verbose (fun fmt -> fmt "OF_GIL_EXPR : %a" Expr.pp sval_e);
   let possible_exprs =
-    sval_e :: FOLogic.Reduction.get_equal_expressions pfs sval_e
+    sval_e :: FO_logic.Reduction.get_equal_expressions pfs sval_e
   in
   List.fold_left
     (fun ac exp ->
@@ -294,8 +307,8 @@ let of_gil_expr ?(pfs = PureContext.init ()) ?(gamma = TypEnv.init ()) sval_e
     None possible_exprs
 
 let of_gil_expr_exn
-    ?(pfs = PureContext.init ())
-    ?(gamma = TypEnv.init ())
+    ?(pfs = Pure_context.init ())
+    ?(gamma = Type_env.init ())
     gexp =
   match of_gil_expr ~pfs ~gamma gexp with
   | Some s -> s
@@ -303,7 +316,7 @@ let of_gil_expr_exn
       failwith
         (Format.asprintf
            "The following expression does not seem to correspond to any \
-            compcert value : %a"
+            CHERI-C value : %a"
            Expr.pp gexp)
 
 let to_gil_expr gexpr =

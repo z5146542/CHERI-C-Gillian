@@ -75,7 +75,7 @@ end
 module Range = struct
   type t = Expr.t * Expr.t [@@deriving yojson]
 
-  let pp fmt (a, b) = Fmt.pf fmt "@[<h>[%a; %a[@]" Expr.pp a Expr.pp b
+  let pp fmt (a, b) = Fmt.pf fmt "@[<h>[%a; %a]@]" Expr.pp a Expr.pp b
   let make low high = (low, high)
 
   module Lift = struct
@@ -85,9 +85,9 @@ module Range = struct
         ~(make_node :
            name:string ->
            value:string ->
-           ?children:variable list ->
+           ?children:Variable.t list ->
            unit ->
-           variable)
+           Variable.t)
         (low, high) =
       let str = Fmt.to_to_string (Fmt.hbox Expr.pp) in
       let from = make_node ~name:"From" ~value:(str low) () in
@@ -648,10 +648,10 @@ module Tree = struct
         ~(make_node :
            name:string ->
            value:string ->
-           ?children:variable list ->
+           ?children:Variable.t list ->
            unit ->
-           variable)
-        (tree : t) : variable =
+           Variable.t)
+        (tree : t) : Variable.t =
       let as_variable = as_variable ~make_node in
       let str pp = Fmt.to_to_string (Fmt.hbox pp) in
       let name = (str Range.pp) tree.span in
@@ -1044,6 +1044,7 @@ module Tree = struct
                 "SHeapTree Load Error: Memory Partially Not Owned (Currently \
                  Unsupported)");
           Error (LogicErr MissingResource)
+      | MemVal _ -> Ok node
     in
     let rebuild_parent = with_children in
     let** framed, tree = frame_range t ~replace_node ~rebuild_parent range in
@@ -1064,6 +1065,8 @@ module Tree = struct
                 "SHeapTree Store Error: Memory Partially Not Owned (Currently \
                  Unsupported)");
           Error (LogicErr MissingResource)
+      | MemVal _ ->
+          Ok (sval_leaf ~low ~chunk ~value:sval)
     in
     let rebuild_parent = of_children in
     let++ _, tree = frame_range t ~replace_node ~rebuild_parent range in
@@ -1678,11 +1681,11 @@ module Lift = struct
       ~(make_node :
          name:string ->
          value:string ->
-         ?children:variable list ->
+         ?children:Variable.t list ->
          unit ->
-         variable)
+         Variable.t)
       ~loc
-      t : variable =
+      t : Variable.t =
     match t with
     | Freed -> make_node ~name:loc ~value:"Freed" ()
     | Tree { bounds; root } ->

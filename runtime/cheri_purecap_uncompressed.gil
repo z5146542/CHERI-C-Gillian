@@ -3,7 +3,7 @@
 proc i__cheri_address_get(cap) {
       tmp := "i__is_cap"(cap);
       goto [ tmp ] tru fal;
- tru: ret := {{ l-nth(cap, 0.), l-nth(cap, 1.) }};
+ tru: ret := {{ l-nth(cap, 0i), l-nth(cap, 1i) }};
       return;
  fal: fail[invalidcap]("i__cheri_address_get(cap) : cap is not a capability. ")
 };
@@ -11,7 +11,7 @@ proc i__cheri_address_get(cap) {
 proc i__cheri_base_get(cap) {
       tmp := "i__is_cap"(cap);
       goto [ tmp ] tru fal;
- tru: ret := {{ l-nth(cap, 0.), l-nth(cap, 2.) }};
+ tru: ret := {{ l-nth(cap, 0i), l-nth(cap, 2i) }};
       return;
  fal: fail[invalidcap]("i__cheri_base_get(cap) : cap is not a capability. ")
 };
@@ -19,7 +19,7 @@ proc i__cheri_base_get(cap) {
 proc i__cheri_length_get(cap) {
       tmp := "i__is_cap"(cap);
       goto [ tmp ] tru fal;
- tru: ret := "i__unops_cast"("uint64", {{ "uint64", l-nth(cap, 3.) }});
+ tru: ret := "i__unops_cast"("uint64", {{ "uint64", l-nth(cap, 3i) }});
       return;
  fal: fail[invalidcap]("i__cheri_length_get(cap) : cap is not a capability. ")
 };
@@ -27,7 +27,7 @@ proc i__cheri_length_get(cap) {
 proc i__cheri_offset_get(cap) {
       tmp := "i__is_cap"(cap);
       goto [ tmp ] tru fal;
- tru: ret := "i__unops_cast"("uint64", {{ "uint64", l-nth(cap, 1.) }});
+ tru: ret := "i__unops_cast"("uint64", {{ "uint64", l-nth(cap, 1i) }});
       return;
  fal: fail[invalidcap]("i__cheri_offset_get(cap) : cap is not a capability. ")
 };
@@ -35,7 +35,7 @@ proc i__cheri_offset_get(cap) {
 proc i__cheri_tag_get(cap) {
       tmp := "i__is_cap"(cap);
       goto [ tmp ] yes nop;
- yes: goto [ l-nth(cap, 10.) ] tru fal;
+ yes: goto [ l-nth(cap, 10i) ] tru fal;
  tru: ret := {{ "int32", 1i }};
       return;
  fal: ret := {{ "int32", 0i }};
@@ -46,10 +46,10 @@ proc i__cheri_tag_get(cap) {
 proc i__cheri_address_set(cap, addr) {
       tmp := "i__is_cap"(cap);
       goto [ tmp ] tru fal;
- tru: goto [ l-nth(cap, 0.) = l-nth(addr, 0.) ] asd wdr;
- asd: ret := {{ l-nth(cap, 0.), l-nth(addr, 1.), l-nth(cap, 2.), l-nth(cap, 3.),
-                l-nth(cap, 4.), l-nth(cap, 5.), l-nth(cap, 6.), l-nth(cap, 7.),
-                l-nth(cap, 8.), l-nth(cap, 9.), l-nth(cap, 10.), l-nth(cap, 11.) }};
+ tru: goto [ l-nth(cap, 0i) = l-nth(addr, 0i) ] asd wdr;
+ asd: ret := {{ l-nth(cap, 0i), l-nth(addr, 1i), l-nth(cap, 2i), l-nth(cap, 3i),
+                l-nth(cap, 4i), l-nth(cap, 5i), l-nth(cap, 6i), l-nth(cap, 7i),
+                l-nth(cap, 8i), l-nth(cap, 9i), l-nth(cap, 10i), l-nth(cap, 11i) }};
       return;
  wdr: fail[invalidblockid]("i__cheri_address_set(cap, addr) : different block values.");
  fal: fail[invalidcap]("i__cheri_address_set(cap, addr) : cap is not a capability.")
@@ -59,13 +59,13 @@ proc i__cheri_bounds_set(cap, val) {
       tmp := "i__is_cap"(cap);
       goto [ tmp ] tru fal;
       (* NOTE: check offset geq base && val leq len *)
- tru: tmp := l-nth(cap, 1.) i< l-nth(cap, 2.);
+ tru: tmp := l-nth(cap, 1i) i< l-nth(cap, 2i);
       goto [ tmp ] lft lsc;
- lsc: tmp := l-nth(cap, 3.) i< l-nth(val, 1.);
+ lsc: tmp := l-nth(cap, 3i) i< l-nth(val, 1i);
       goto [ tmp ] lft suc;
- suc: ret := {{ l-nth(cap, 0.), l-nth(cap, 1.), l-nth(cap, 1.), l-nth(val, 1.),
-                l-nth(cap, 4.), l-nth(cap, 5.), l-nth(cap, 6.), l-nth(cap, 7.), 
-                l-nth(cap, 8.), l-nth(cap, 9.), l-nth(cap, 10.), l-nth(cap, 11.) }};
+ suc: ret := {{ l-nth(cap, 0i), l-nth(cap, 1i), l-nth(cap, 1i), l-nth(val, 1i),
+                l-nth(cap, 4i), l-nth(cap, 5i), l-nth(cap, 6i), l-nth(cap, 7i), 
+                l-nth(cap, 8i), l-nth(cap, 9i), l-nth(cap, 10i), l-nth(cap, 11i) }};
       return;
  lft: fail[boundmono]("i__cheri_bounds_set(cap, val) : bound monotonicity fail.");
  fal: fail[invalidcap]("i__cheri_bounds_set(cap, val) : cap is not a capability.")
@@ -79,9 +79,9 @@ proc i__cheri_bounds_set_exact(cap, val) {
 proc i__cheri_tag_clear(cap) {
       tmp := "i__is_cap"(cap);
       goto [ tmp ] tru fal;
- tru: ret := {{ l-nth(cap, 0.), l-nth(cap, 1.), l-nth(cap, 2.), l-nth(cap, 3.), 
-                l-nth(cap, 4.), l-nth(cap, 5.), l-nth(cap, 6.), l-nth(cap, 7.), 
-                l-nth(cap, 8.), l-nth(cap, 9.), false, l-nth(cap, 11.) }};
+ tru: ret := {{ l-nth(cap, 0i), l-nth(cap, 1i), l-nth(cap, 2i), l-nth(cap, 3i), 
+                l-nth(cap, 4i), l-nth(cap, 5i), l-nth(cap, 6i), l-nth(cap, 7i), 
+                l-nth(cap, 8i), l-nth(cap, 9i), false, l-nth(cap, 11i) }};
       return;
  fal: fail[invalidcap]("i__cheri_tag_clear(cap) : cap is not a capability.")
 };
@@ -97,9 +97,9 @@ proc i__cheri_tag_clear(cap) {
   * STORE_LOCAL_CAPABILITY  4
   * GLOBAL                  5 *)
 proc i__builtin_cheri_perms_get(cap, val) {
-      nval := {{ "int32", l-nth(val, 1.) i+ 4i }};
-      goto [ l-nth(nval, 1.) i> 9i ] fai suc;
- suc: ret := "i__value_of_bool"(l-nth(cap, l-nth(nval, 1.)));
+      nval := {{ "int32", l-nth(val, 1i) i+ 4i }};
+      goto [ l-nth(nval, 1i) i> 9i ] fai suc;
+ suc: ret := "i__value_of_bool"(l-nth(cap, l-nth(nval, 1i)));
       return;
  fai: fail[invalid]("permission parameter invalid! Use constants...")
 };

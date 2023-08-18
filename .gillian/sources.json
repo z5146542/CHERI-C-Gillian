@@ -1,1 +1,10 @@
-[]
+[
+  [
+    "examples/c_code/vals.c",
+    {
+      "path": "examples/c_code/vals.c",
+      "contents": "7b0e529eeaa5e0f91dbd29579270d61b",
+      "dependents": []
+    }
+  ]
+]

@@ -1,4 +1,4 @@
-include Gillian.Monadic.MonadicSMemory.S with type init_data = Global_env.t
+include Gillian.Monadic.MonadicSMemory.S with type init_data = unit
 
 module Lift : sig
   open Gillian.Debugger.Utils
@@ -8,6 +8,6 @@ module Lift : sig
     memory:t ->
     is_gil_file:'a ->
     get_new_scope_id:(unit -> int) ->
-    (int, variable list) Hashtbl.t ->
-    scope list
+    (int, Variable.t list) Hashtbl.t ->
+    Variable.scope list
 end
