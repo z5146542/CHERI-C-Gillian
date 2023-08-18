@@ -1,14 +1,34 @@
 {
   "nodes": [
     [
+      "proc_i__bool_of_value",
+      {
+        "id": "proc_i__bool_of_value",
+        "ntype": [ "Proc" ],
+        "name": "i__bool_of_value",
+        "children": []
+      }
+    ],
+    [
+      "proc_i__binops_cmp_eq",
+      {
+        "id": "proc_i__binops_cmp_eq",
+        "ntype": [ "Proc" ],
+        "name": "i__binops_cmp_eq",
+        "children": [ "proc_i__is_cap" ]
+      }
+    ],
+    [
       "proc_main",
       {
         "id": "proc_main",
         "ntype": [ "Proc" ],
         "name": "main",
         "children": [
-          "proc_i__load", "proc_i__store", "proc_i__binops_add",
-          "proc_i__unops_cast", "proc_i__malloc"
+          "proc_i__binops_cmp_eq", "proc_i__load", "proc_i__bool_of_value",
+          "proc_i__unops_negb", "proc_i__binops_cmp_lt", "proc_i__memmove",
+          "proc_i__binops_sub", "proc_i__store", "proc_i__binops_add",
+          "proc_i__unops_cast", "proc_i__malloc", "proc_i__binops_mul"
         ]
       }
     ],
@@ -19,6 +39,42 @@
         "ntype": [ "Proc" ],
         "name": "i__is_cap",
         "children": []
+      }
+    ],
+    [
+      "proc_i__memmove",
+      {
+        "id": "proc_i__memmove",
+        "ntype": [ "Proc" ],
+        "name": "i__memmove",
+        "children": []
+      }
+    ],
+    [
+      "proc_i__binops_sub",
+      {
+        "id": "proc_i__binops_sub",
+        "ntype": [ "Proc" ],
+        "name": "i__binops_sub",
+        "children": [ "proc_i__unops_cast", "proc_i__is_cap" ]
+      }
+    ],
+    [
+      "proc_i__unops_negb",
+      {
+        "id": "proc_i__unops_negb",
+        "ntype": [ "Proc" ],
+        "name": "i__unops_negb",
+        "children": []
+      }
+    ],
+    [
+      "proc_i__binops_mul",
+      {
+        "id": "proc_i__binops_mul",
+        "ntype": [ "Proc" ],
+        "name": "i__binops_mul",
+        "children": [ "proc_i__unops_cast" ]
       }
     ],
     [
@@ -40,12 +96,21 @@
       }
     ],
     [
+      "proc_i__binops_cmp_lt",
+      {
+        "id": "proc_i__binops_cmp_lt",
+        "ntype": [ "Proc" ],
+        "name": "i__binops_cmp_lt",
+        "children": []
+      }
+    ],
+    [
       "proc_i__binops_add",
       {
         "id": "proc_i__binops_add",
         "ntype": [ "Proc" ],
         "name": "i__binops_add",
-        "children": [ "proc_i__is_cap" ]
+        "children": [ "proc_i__unops_cast", "proc_i__is_cap" ]
       }
     ],
     [
