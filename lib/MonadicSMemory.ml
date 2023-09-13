@@ -717,6 +717,9 @@ let execute_cast heap params =
     let vtyp = ValueTranslation.c_to_vtypes ctyp in 
     (*TODO: add a function that actually does the casting. *)
     DR.ok (make_branch ~heap:heap ~rets:[ Expr.Lit (String vtyp); Expr.Lit (Int siz) ] ())
+  | [ Expr.Lit (String ctyp) ; Expr.EList [ Expr.Lit (String typ); x ]] ->
+    let vtyp = ValueTranslation.c_to_vtypes ctyp in
+    DR.ok (make_branch ~heap:heap ~rets:[ Expr.Lit (String vtyp); x ] ())
   | _ -> failwith "Cast parameters do not match."
 
 let execute_get_single heap params =
