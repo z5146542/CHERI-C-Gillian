@@ -1,0 +1,129 @@
+#internal 
+
+proc int_exp(x, n) {
+  x := as_num(x); n := as_num(n); ret := x ** n; ret := as_int(ret);
+  return
+};
+
+proc upper_bound(size) {
+        El := 14i; 
+        Eh := 50i;
+        Em := (Eh i- El) i/ 2i i+ El;
+  test: goto [ Eh i- El i> 1i ] loop done;
+  loop: e := "int_exp"(2i, Em);
+        goto [ size i< e ] iflb ellb;
+  iflb: Eh := Em;
+        Em := (Eh i- El) i/ 2i i+ El;
+        goto test;
+  ellb: El := Em;
+        Em := (Eh i- El) i/ 2i i+ El;
+        goto test;
+  done:
+        ret := Eh;
+        return
+};
+
+proc length(size) {
+  t1:  e := "int_exp"(2i, 14i);
+       goto [ size i<= e] b1 t2;
+  b1:  ret := size;
+       return;
+  t2:  e := "int_exp"(2i, 50i);
+       goto [ size i> e ] b2 b3;
+  b2:  ret := "int_exp"(2i, 64i);
+       return;
+  b3:  ub := "upper_bound"(size);
+       x := "int_exp"(2i, ub i- 12i);
+       goto [ size i% x = 0i ] b4 b5;
+  b4:  ret := size;
+       return;
+  b5:  ret := size i+ x i- (size i% x);
+       return
+};
+
+proc i__cheri_representable_length(tsize) {
+       size := l-nth(tsize, 1i);
+       len := "length"(size);
+       ret := "i__unops_cast"("uint64", {{"uint64", len}});
+       return
+};
+
+proc i__cheri_representable_alignment_mask(tlen) {
+        len := l-nth(tlen, 1i);
+        b := "int_exp"(2i, 14i);
+        (* is the length precisely representable? *)
+        goto [ len i<= b ] tlab flab;
+  tlab: ret := "int_exp"(2i, 64i);
+        ret := ret i- 1i;
+        ret := "i__unops_cast"("uint64", {{ "uint64", ret }});
+        return;
+  flab: e := "upper_bound"(len);
+        e := e i- 12i;
+        ret := "int_exp"(2i, e);
+        ret := ret i- 1i;
+        ret := as_num(ret);
+        ret := ~ret;
+        ret := as_int(ret);
+        ret := "i__unops_cast"("uint64", {{ "uint64", ret }});
+        return
+};
+
+proc i__builtin_align_up(cap, talignment) {
+	tmp := "i__is_cap"(cap);
+	goto [ tmp ] iscp ntcp;
+  iscp: alignment := l-nth(talignment, 1i);
+        offset := l-nth(cap, 1i);
+        (* is the capabability already aligned? *)
+        goto [offset i% alignment = 0i] isal ntal;
+  ntal: d := offset i/ alignment;
+        new_offset := alignment i* (d i+ 1i);
+        block := l-nth(cap, 0i);
+        new_addr := {{ block, new_offset }};
+        base := l-nth(cap, 2i);
+        length := l-nth(cap, 3i);
+        (* check if the new address is within bounds, i.e. if validity is maintained *)
+        goto [ (base i<= new_offset) and (new_offset i<= (base i+ length))] vali invl;
+  invl: cap := "i__cheri_tag_clear"(cap);
+  vali: ret :=  "i__cheri_address_set"(cap, new_addr);
+        return;
+  isal: ret := cap;
+        return;
+  ntcp: fail[invalidcap]("i__builtin_align_up(cap, talignment) : cap is not a capability.")
+};
+
+proc i__cheri_bounds_set(cap, val) {
+        tmp := "i__is_cap"(cap);
+        goto [ tmp ] iscp ntcp;
+  iscp: tmask := "i__cheri_representable_alignment_mask"(val);
+	mask := l-nth(tmask, 1i);
+        tlen := "i__cheri_representable_length"(val); 
+	new_length := l-nth(tlen, 1i);
+        old_base := l-nth(cap, 2i);
+        old_length := l-nth(cap, 3i);
+        old_offset := l-nth(cap, 1i);
+	new_offset := old_offset &l mask;
+        new_base := new_offset;
+        (* check bound monotonicity is not violated *)
+        goto [ (old_base i<= new_offset) and ((new_offset i+ new_length) i<= (old_base i+ old_length)) ] vali invl;
+  invl: ret := {{ l-nth(cap, 0i), new_offset, new_offset , new_length,
+                l-nth(cap, 4i), l-nth(cap, 5i), l-nth(cap, 6i), l-nth(cap, 7i),
+                l-nth(cap, 8i), l-nth(cap, 9i), false, l-nth(cap, 11i) }};
+        return;
+  vali: ret := {{ l-nth(cap, 0i), new_offset, new_offset , new_length,
+                l-nth(cap, 4i), l-nth(cap, 5i), l-nth(cap, 6i), l-nth(cap, 7i),
+                l-nth(cap, 8i), l-nth(cap, 9i), l-nth(cap, 10i), l-nth(cap, 11i) }};
+	return;
+  ntcp: fail[invalidcap]("i__cheri_bounds_set(cap, val) : cap is not a capability.")
+};
+
+proc i__cheri_bounds_set_exact(cap, val) {
+        tmp := "i__is_cap"(cap);
+        goto [ tmp ] iscp ntcp;
+  iscp: rep_len := "i__cheri_representable_length"(val);
+ 	(* is the length precisely representable? *)
+        goto [ rep_len = val ] ispr ntpr;
+  ispr: ret := "i__cheri_bounds_set"(cap, val);
+	return;
+  ntpr: fail[noexactrep]("i__cheri_bounds_set_exact(cap, val) : result is not precisely representable");
+  ntcp: fail[invalidcap]("i__cheri_bounds_set_exact(cap, val) : cap is not a capability.")
+};

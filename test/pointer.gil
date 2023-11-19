@@ -1,0 +1,24 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "cheri_purecap_compressed.gil", "cheri_purecap_uncompressed.gil", "stdlib_cap256.gil", "string_common.gil";
+
+(* signed int (  ) *)
+proc main() {
+        px := undefined; (* signed int * px; *)
+        retval_malloc_1 := undefined; (* void * retval_malloc_1; *)
+        tmp_0 := "i__malloc"({{ "uint64", 4i }});
+        retval_malloc_1 := tmp_0;
+        tmp_1 := "i__unops_cast"(4i, retval_malloc_1);
+        px := tmp_1;
+        tmp := "i__store"(px, {{ "int32", 42i }});
+        x := undefined; (* signed int x; *)
+        tmp_3 := "i__load"(px, "int32");
+        x := tmp_3;
+        ret := x;
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};

@@ -1,0 +1,67 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "cheri_purecap_compressed.gil", "cheri_purecap_uncompressed.gil", "stdlib_cap256.gil", "string_common.gil";
+
+(* signed int (  ) *)
+proc main() {
+        p := undefined; (* signed int * p; *)
+        retval_malloc_1 := undefined; (* void * retval_malloc_1; *)
+        tmp_0 := "i__malloc"({{ "uint64", 4i }});
+        retval_malloc_1 := tmp_0;
+        tmp_1 := "i__unops_cast"(4i, retval_malloc_1);
+        p := tmp_1;
+        tmp := "i__store"(p, {{ "int32", 42i }});
+        i := undefined; (* signed int i; *)
+        i := {{ "int32", 4i }};
+    t1: tmp_3 := "i__binops_cmp_geq"(i, {{ "int32", 0i }});
+        tmp_4 := "i__unops_negb"(tmp_3);
+        vtb := "i__bool_of_value"(tmp_4);
+        goto [vtb] t2 s2;
+    s2: skip;
+        retval_i__cheri_bounds_set_2 := undefined; (* void * retval_i__cheri_bounds_set_2; *)
+        tmp_5 := "i__unops_cast"(1i, p);
+        tmp_6 := "i__unops_cast"("unsigned long int", i);
+        retval_i__cheri_bounds_set_2 := "i__cheri_bounds_set"(tmp_5, tmp_6);
+        tmp_7 := "i__unops_cast"(4i, retval_i__cheri_bounds_set_2);
+        p := tmp_7;
+        tmp_8 := "i__binops_sub"(i, {{ "int32", 1i }});
+        i := tmp_8;
+        goto t1;
+    t2: skip;
+        q := undefined; (* signed int * q; *)
+        retval_malloc_3 := undefined; (* void * retval_malloc_3; *)
+        tmp_9 := "i__malloc"({{ "uint64", 4i }});
+        retval_malloc_3 := tmp_9;
+        tmp_10 := "i__unops_cast"(4i, retval_malloc_3);
+        q := tmp_10;
+        retval_i__cheri_bounds_set_4 := undefined; (* void * retval_i__cheri_bounds_set_4; *)
+        tmp_11 := "i__unops_cast"(1i, q);
+        tmp_12 := "i__binops_add"({{ "uint64", 4i }}, {{ "uint64", 1i }});
+        retval_i__cheri_bounds_set_4 := "i__cheri_bounds_set"(tmp_11, tmp_12);
+        tmp_13 := "i__unops_cast"(4i, retval_i__cheri_bounds_set_4);
+        q := tmp_13;
+        i := undefined; (* signed int i; *)
+        i := {{ "int32", 4i }};
+    t3: tmp_14 := "i__binops_cmp_geq"(i, {{ "int32", 0i }});
+        tmp_15 := "i__unops_negb"(tmp_14);
+        vtb := "i__bool_of_value"(tmp_15);
+        goto [vtb] t4 s4;
+    s4: skip;
+        retval_i__cheri_bounds_set_5 := undefined; (* void * retval_i__cheri_bounds_set_5; *)
+        tmp_16 := "i__unops_cast"(1i, p);
+        tmp_17 := "i__unops_cast"("unsigned long int", i);
+        retval_i__cheri_bounds_set_5 := "i__cheri_bounds_set"(tmp_16, tmp_17);
+        tmp_18 := "i__unops_cast"(4i, retval_i__cheri_bounds_set_5);
+        p := tmp_18;
+        tmp_19 := "i__binops_sub"(i, {{ "int32", 1i }});
+        i := tmp_19;
+        goto t3;
+    t4: skip;
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};
