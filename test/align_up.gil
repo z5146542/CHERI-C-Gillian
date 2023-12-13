@@ -1,0 +1,64 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "cheri_purecap_compressed.gil", "cheri_purecap_uncompressed.gil", "stdlib_cap256.gil", "string_common.gil";
+
+(* signed int (  ) *)
+proc main() {
+        p0 := undefined; (* signed int * p0; *)
+        retval_malloc_1 := undefined; (* void * retval_malloc_1; *)
+        tmp_0 := "i__binops_mul"({{ "uint64", 4i }}, {{ "uint64", 4i }});
+        tmp_1 := "i__malloc"(tmp_0);
+        retval_malloc_1 := tmp_1;
+        tmp_2 := "i__unops_cast"(4i, retval_malloc_1);
+        p0 := tmp_2;
+        p1 := undefined; (* signed int * p1; *)
+        tmp_3 := "i__binops_add"(p0, {{ "int32", 1i }});
+        p1 := tmp_3;
+        p2 := undefined; (* signed int * p2; *)
+        tmp_4 := "i__binops_add"(p0, {{ "int32", 2i }});
+        p2 := tmp_4;
+        p3 := undefined; (* signed int * p3; *)
+        tmp_5 := "i__binops_add"(p0, {{ "int32", 3i }});
+        p3 := tmp_5;
+        retval_i__builtin_align_up_2 := undefined; (* void * retval_i__builtin_align_up_2; *)
+        tmp_6 := "i__unops_cast"(1i, p1);
+        retval_i__builtin_align_up_2 := "i__builtin_align_up"(tmp_6, {{ "uint64", 7i }});
+        tmp_7 := "i__unops_cast"(4i, retval_i__builtin_align_up_2);
+        p1 := tmp_7;
+        retval_i__cheri_tag_get_3 := undefined; (* _Bool retval_i__cheri_tag_get_3; *)
+        tmp_8 := "i__unops_cast"(1i, p1);
+        retval_i__cheri_tag_get_3 := "i__cheri_tag_get"(tmp_8);
+        tmp_9 := "i__unops_cast"("signed int", retval_i__cheri_tag_get_3);
+        tmp_10 := "i__binops_cmp_eq"(tmp_9, {{ "int32", 1i }});
+        assert (tmp_10 == {{ "int32", 1i }});
+        tmp_11 := "i__unops_cast"("signed int", retval_i__cheri_tag_get_3);
+        tmp_12 := "i__binops_cmp_eq"(tmp_11, {{ "int32", 1i }});
+        tmp_13 := "i__unops_negb"(tmp_12);
+        vtb := "i__bool_of_value"(tmp_13);
+        goto [vtb] t1 s1;
+    s1: skip;
+    t1: retval_i__builtin_align_up_4 := undefined; (* void * retval_i__builtin_align_up_4; *)
+        tmp_14 := "i__unops_cast"(1i, p2);
+        retval_i__builtin_align_up_4 := "i__builtin_align_up"(tmp_14, {{ "uint64", 100i }});
+        tmp_15 := "i__unops_cast"(4i, retval_i__builtin_align_up_4);
+        p2 := tmp_15;
+        retval_i__cheri_tag_get_5 := undefined; (* _Bool retval_i__cheri_tag_get_5; *)
+        tmp_16 := "i__unops_cast"(1i, p2);
+        retval_i__cheri_tag_get_5 := "i__cheri_tag_get"(tmp_16);
+        tmp_17 := "i__unops_cast"("signed int", retval_i__cheri_tag_get_5);
+        tmp_18 := "i__binops_cmp_eq"(tmp_17, {{ "int32", 0i }});
+        assert (tmp_18 == {{ "int32", 1i }});
+        tmp_19 := "i__unops_cast"("signed int", retval_i__cheri_tag_get_5);
+        tmp_20 := "i__binops_cmp_eq"(tmp_19, {{ "int32", 0i }});
+        tmp_21 := "i__unops_negb"(tmp_20);
+        vtb := "i__bool_of_value"(tmp_21);
+        goto [vtb] t2 s2;
+    s2: skip;
+    t2: ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};

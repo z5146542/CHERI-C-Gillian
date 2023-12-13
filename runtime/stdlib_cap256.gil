@@ -13,8 +13,10 @@ proc i__memmove(dst, src, n) {
      return
 };
 
+(* edited for compression *)
 proc i__malloc(siz) {
-      bl := [alloc](siz);
+      new_siz := "i__cheri_representable_length"(siz);
+      bl := [alloc](new_siz);
       ret := bl;
       return
 };

@@ -55,27 +55,6 @@ proc i__cheri_address_set(cap, addr) {
  fal: fail[invalidcap]("i__cheri_address_set(cap, addr) : cap is not a capability.")
 };
 
-proc i__cheri_bounds_set(cap, val) {
-      tmp := "i__is_cap"(cap);
-      goto [ tmp ] tru fal;
-      (* NOTE: check offset geq base && val leq len *)
- tru: tmp := l-nth(cap, 1i) i< l-nth(cap, 2i);
-      goto [ tmp ] lft lsc;
- lsc: tmp := l-nth(cap, 3i) i< l-nth(val, 1i);
-      goto [ tmp ] lft suc;
- suc: ret := {{ l-nth(cap, 0i), l-nth(cap, 1i), l-nth(cap, 1i), l-nth(val, 1i),
-                l-nth(cap, 4i), l-nth(cap, 5i), l-nth(cap, 6i), l-nth(cap, 7i), 
-                l-nth(cap, 8i), l-nth(cap, 9i), l-nth(cap, 10i), l-nth(cap, 11i) }};
-      return;
- lft: fail[boundmono]("i__cheri_bounds_set(cap, val) : bound monotonicity fail.");
- fal: fail[invalidcap]("i__cheri_bounds_set(cap, val) : cap is not a capability.")
-};
-
-proc i__cheri_bounds_set_exact(cap, val) {
-      ret := "i__cheri_bounds_set"(cap, val);
-      return
-};
-
 proc i__cheri_tag_clear(cap) {
       tmp := "i__is_cap"(cap);
       goto [ tmp ] tru fal;
@@ -96,6 +75,7 @@ proc i__cheri_tag_clear(cap) {
   * STORE_CAPABILITY        3
   * STORE_LOCAL_CAPABILITY  4
   * GLOBAL                  5 *)
+
 proc i__builtin_cheri_perms_get(cap, val) {
       nval := {{ "int32", l-nth(val, 1i) i+ 4i }};
       goto [ l-nth(nval, 1i) i> 9i ] fai suc;
