@@ -26,7 +26,10 @@ let includes = "import \"unops_common.gil\", \"binops_common.gil\", \"internals.
 let esbmc_run = "bin/esbmc "
 let cheri_settings = "--no-library --cheri purecap --cheri-uncompressed "
 let sysroot = "--sysroot ~/Downloads/rootfs-mips64-purecap.cheribsd-headers "
-let remove_misc = "tail -n +8 | grep -v \"^\\s\\s*$\" | grep -v \"^\\ *skip;\" "
+let remove_misc = "tail -n +8 | grep -v \"^\\s\\s*$\" | grep -v \"^[ ]*skip;\" "
+
+(* commands that add struct-related procedures *)
+let parse_st_run = "ocaml -I +str str.cma bin/parseST.ml "
 
 let l_emit_parse_tree = ref false
 let l_emit_symbol_table = ref false
@@ -119,7 +122,16 @@ let parse_and_compile_file path =
   (* let snd = Filename.chop_extension path ^ ".giltmp" in *)
   let oc = open_out pathgil in
   (* let od = open_out snd in *)
-  let output = includes ^ (run (esbmc_run ^ cheri_settings ^ sysroot ^ (if !l_esbmc_args = [] then "" else String.concat " " !l_esbmc_args) ^ " --goto-functions-only " ^ path ^ " | " ^ remove_misc)) in
+  let pathtxt' = Filename.chop_extension path ^ ".txt" in 
+  let pathtxt = "/tmp/" ^ Filename.basename pathtxt' in
+  let output = includes ^
+    (run (esbmc_run ^ cheri_settings ^ sysroot 
+        ^ "--symbol-table-only " ^ path ^ " > " ^ pathtxt ^ "; " ^ parse_st_run 
+        ^ pathtxt ^ "; rm " ^ pathtxt)) ^ 
+    (run (esbmc_run ^ cheri_settings ^ sysroot 
+        ^ (if !l_esbmc_args = [] then "" else String.concat " " !l_esbmc_args) 
+        ^ " --goto-functions-only " ^ path ^ " | " ^ remove_misc)) 
+  in
   let () = Printf.fprintf oc "%s" output in
   (* let () = Printf.fprintf od "%s" output in *)
   let () = close_out oc in
