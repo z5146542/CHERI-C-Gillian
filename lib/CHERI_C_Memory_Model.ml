@@ -1,3 +1,36 @@
+module Str_Literal =
+struct
+
+let implode f xs =
+  let rec length xs = match xs with
+      [] -> 0
+    | x :: xs -> 1 + length xs in
+  let rec nth xs n = match xs with
+    (x :: xs) -> if n <= 0 then x else nth xs (n - 1)
+  in String.init (length xs) (fun n -> f (nth xs n));;
+
+let explode f s =
+  let rec map_range f n =
+    if n <= 0 then [] else map_range f (n - 1) @ [f n]
+  in map_range (fun n -> f (String.get s n)) (String.length s);;
+
+let z_128 = Z.of_int 128;;
+
+let check_ascii (k : Z.t) =
+  if Z.leq Z.zero k && Z.lt k z_128
+  then k
+  else failwith "Non-ASCII character in literal";;
+
+let char_of_ascii k = Char.chr (Z.to_int (check_ascii k));;
+
+let ascii_of_char c = check_ascii (Z.of_int (Char.code c));;
+
+let literal_of_asciis ks = implode char_of_ascii ks;;
+
+let asciis_of_literal s = explode ascii_of_char s;;
+
+end;;
+
 module HOL : sig
   type 'a equal = {equal : 'a -> 'a -> bool}
   val equal : 'a equal -> 'a -> 'a -> bool
@@ -39,6 +72,76 @@ let rec map_of _A
 
 end;; (*struct Map*)
 
+module Orderings : sig
+  type 'a ord = {less_eq : 'a -> 'a -> bool; less : 'a -> 'a -> bool}
+  val less_eq : 'a ord -> 'a -> 'a -> bool
+  val less : 'a ord -> 'a -> 'a -> bool
+  type 'a preorder = {ord_preorder : 'a ord}
+  type 'a order = {preorder_order : 'a preorder}
+  type 'a linorder = {order_linorder : 'a order}
+  val max : 'a ord -> 'a -> 'a -> 'a
+end = struct
+
+type 'a ord = {less_eq : 'a -> 'a -> bool; less : 'a -> 'a -> bool};;
+let less_eq _A = _A.less_eq;;
+let less _A = _A.less;;
+
+type 'a preorder = {ord_preorder : 'a ord};;
+
+type 'a order = {preorder_order : 'a preorder};;
+
+type 'a linorder = {order_linorder : 'a order};;
+
+let rec max _A a b = (if less_eq _A a b then b else a);;
+
+end;; (*struct Orderings*)
+
+module Str : sig
+  val equal_literal : string HOL.equal
+  val linorder_literal : string Orderings.linorder
+end = struct
+
+let equal_literal =
+  ({HOL.equal = (fun a b -> ((a : string) = b))} : string HOL.equal);;
+
+let ord_literal =
+  ({Orderings.less_eq = (fun a b -> ((a : string) <= b));
+     Orderings.less = (fun a b -> ((a : string) < b))}
+    : string Orderings.ord);;
+
+let preorder_literal =
+  ({Orderings.ord_preorder = ord_literal} : string Orderings.preorder);;
+
+let order_literal =
+  ({Orderings.preorder_order = preorder_literal} : string Orderings.order);;
+
+let linorder_literal =
+  ({Orderings.order_linorder = order_literal} : string Orderings.linorder);;
+
+end;; (*struct Str*)
+
+module List : sig
+  val rev : 'a list -> 'a list
+  val foldr : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
+  val hd : 'a list -> 'a
+  val map : ('a -> 'b) -> 'a list -> 'b list
+end = struct
+
+let rec fold f x1 s = match f, x1, s with f, x :: xs, s -> fold f xs (f x s)
+               | f, [], s -> s;;
+
+let rec rev xs = fold (fun a b -> a :: b) xs [];;
+
+let rec foldr f x1 = match f, x1 with f, [] -> Fun.id
+                | f, x :: xs -> Fun.comp (f x) (foldr f xs);;
+
+let rec hd (x21 :: x22) = x21;;
+
+let rec map f x1 = match f, x1 with f, [] -> []
+              | f, x21 :: x22 -> f x21 :: map f x22;;
+
+end;; (*struct List*)
+
 module Product_Type : sig
   val equal_unit : unit HOL.equal
   val apsnd : ('a -> 'b) -> 'c * 'a -> 'c * 'b
@@ -67,30 +170,6 @@ let rec equal_prod _A _B
   (x1, x2) (y1, y2) = HOL.eq _A x1 y1 && HOL.eq _B x2 y2;;
 
 end;; (*struct Product_Type*)
-
-module Orderings : sig
-  type 'a ord = {less_eq : 'a -> 'a -> bool; less : 'a -> 'a -> bool}
-  val less_eq : 'a ord -> 'a -> 'a -> bool
-  val less : 'a ord -> 'a -> 'a -> bool
-  type 'a preorder = {ord_preorder : 'a ord}
-  type 'a order = {preorder_order : 'a preorder}
-  type 'a linorder = {order_linorder : 'a order}
-  val max : 'a ord -> 'a -> 'a -> 'a
-end = struct
-
-type 'a ord = {less_eq : 'a -> 'a -> bool; less : 'a -> 'a -> bool};;
-let less_eq _A = _A.less_eq;;
-let less _A = _A.less;;
-
-type 'a preorder = {ord_preorder : 'a ord};;
-
-type 'a order = {preorder_order : 'a preorder};;
-
-type 'a linorder = {order_linorder : 'a order};;
-
-let rec max _A a b = (if less_eq _A a b then b else a);;
-
-end;; (*struct Orderings*)
 
 module Arith : sig
   type int = Int_of_integer of Z.t
@@ -162,9 +241,6 @@ module Arith : sig
     {neg_numeral_ring_1 : 'a neg_numeral; ring_ring_1 : 'a ring;
       semiring_1_cancel_ring_1 : 'a semiring_1_cancel}
   val zero_neq_one_int : int zero_neq_one
-  val less_eq_int : int -> int -> bool
-  val less_int : int -> int -> bool
-  val ord_int : int Orderings.ord
   type 'a ab_semigroup_mult
   type 'a comm_semiring
   type 'a comm_semiring_0 =
@@ -208,12 +284,24 @@ module Arith : sig
   val minus_nat : nat -> nat -> nat
   val zero_nat : nat
   val power : 'a power -> 'a -> nat -> 'a
-  val abs_int : int -> int
+  val less_int : int -> int -> bool
   val int_of_nat : nat -> int
   val nat_of_integer : Z.t -> nat
+  val less_eq_int : int -> int -> bool
   val times_nat : nat -> nat -> nat
   val of_bool : 'a zero_neq_one -> bool -> 'a
   val modulo_nat : nat -> nat -> nat
+  val bit_integer : Z.t -> nat -> bool
+  val not_integer : Z.t -> Z.t
+  val or_integer : Z.t -> Z.t -> Z.t
+  val and_integer : Z.t -> Z.t -> Z.t
+  val xor_integer : Z.t -> Z.t -> Z.t
+  val mask_integer : nat -> Z.t
+  val push_bit_integer : nat -> Z.t -> Z.t
+  val set_bit_integer : nat -> Z.t -> Z.t
+  val flip_bit_integer : nat -> Z.t -> Z.t
+  val take_bit_integer : nat -> Z.t -> Z.t
+  val unset_bit_integer : nat -> Z.t -> Z.t
 end = struct
 
 type int = Int_of_integer of Z.t;;
@@ -436,20 +524,20 @@ k l
 (if Z.equal s Z.zero then (Z.neg r, Z.zero)
   else (Z.sub (Z.neg r) (Z.of_int 1), Z.sub (Z.neg l) s)))))));;
 
-let rec divide_integer k l = Product_Type.fst (divmod_integer k l);;
+let rec divide_integera k l = Product_Type.fst (divmod_integer k l);;
 
 let rec divide_inta
-  k l = Int_of_integer (divide_integer (integer_of_int k) (integer_of_int l));;
+  k l = Int_of_integer (divide_integera (integer_of_int k) (integer_of_int l));;
 
 type 'a divide = {divide : 'a -> 'a -> 'a};;
 let divide _A = _A.divide;;
 
 let divide_int = ({divide = divide_inta} : int divide);;
 
-let rec modulo_integer k l = Product_Type.snd (divmod_integer k l);;
+let rec modulo_integera k l = Product_Type.snd (divmod_integer k l);;
 
 let rec modulo_inta
-  k l = Int_of_integer (modulo_integer (integer_of_int k) (integer_of_int l));;
+  k l = Int_of_integer (modulo_integera (integer_of_int k) (integer_of_int l));;
 
 type 'a modulo =
   {divide_modulo : 'a divide; dvd_modulo : 'a dvd; modulo : 'a -> 'a -> 'a};;
@@ -521,14 +609,6 @@ let ring_1_int =
   ({neg_numeral_ring_1 = neg_numeral_int; ring_ring_1 = ring_int;
      semiring_1_cancel_ring_1 = semiring_1_cancel_int}
     : int ring_1);;
-
-let rec less_eq_int k l = Z.leq (integer_of_int k) (integer_of_int l);;
-
-let rec less_int k l = Z.lt (integer_of_int k) (integer_of_int l);;
-
-let ord_int =
-  ({Orderings.less_eq = less_eq_int; Orderings.less = less_int} :
-    int Orderings.ord);;
 
 type 'a semiring_no_zero_divisors =
   {semiring_0_semiring_no_zero_divisors : 'a semiring_0};;
@@ -732,10 +812,172 @@ let linorder_nat =
 
 let equal_integer = ({HOL.equal = Z.equal} : Z.t HOL.equal);;
 
+let times_integer = ({times = Z.mul} : Z.t times);;
+
+let dvd_integer = ({times_dvd = times_integer} : Z.t dvd);;
+
+let one_integera : Z.t = (Z.of_int 1);;
+
+let one_integer = ({one = one_integera} : Z.t one);;
+
+let plus_integer = ({plus = Z.add} : Z.t plus);;
+
 let zero_integer = ({zero = Z.zero} : Z.t zero);;
+
+let semigroup_add_integer =
+  ({plus_semigroup_add = plus_integer} : Z.t semigroup_add);;
+
+let numeral_integer =
+  ({one_numeral = one_integer; semigroup_add_numeral = semigroup_add_integer} :
+    Z.t numeral);;
+
+let power_integer =
+  ({one_power = one_integer; times_power = times_integer} : Z.t power);;
+
+let minus_integer = ({minus = Z.sub} : Z.t minus);;
+
+let divide_integer = ({divide = divide_integera} : Z.t divide);;
+
+let modulo_integer =
+  ({divide_modulo = divide_integer; dvd_modulo = dvd_integer;
+     modulo = modulo_integera}
+    : Z.t modulo);;
 
 let ord_integer =
   ({Orderings.less_eq = Z.leq; Orderings.less = Z.lt} : Z.t Orderings.ord);;
+
+let ab_semigroup_add_integer =
+  ({semigroup_add_ab_semigroup_add = semigroup_add_integer} :
+    Z.t ab_semigroup_add);;
+
+let monoid_add_integer =
+  ({semigroup_add_monoid_add = semigroup_add_integer;
+     zero_monoid_add = zero_integer}
+    : Z.t monoid_add);;
+
+let comm_monoid_add_integer =
+  ({ab_semigroup_add_comm_monoid_add = ab_semigroup_add_integer;
+     monoid_add_comm_monoid_add = monoid_add_integer}
+    : Z.t comm_monoid_add);;
+
+let mult_zero_integer =
+  ({times_mult_zero = times_integer; zero_mult_zero = zero_integer} :
+    Z.t mult_zero);;
+
+let semigroup_mult_integer =
+  ({times_semigroup_mult = times_integer} : Z.t semigroup_mult);;
+
+let semiring_integer =
+  ({ab_semigroup_add_semiring = ab_semigroup_add_integer;
+     semigroup_mult_semiring = semigroup_mult_integer}
+    : Z.t semiring);;
+
+let semiring_0_integer =
+  ({comm_monoid_add_semiring_0 = comm_monoid_add_integer;
+     mult_zero_semiring_0 = mult_zero_integer;
+     semiring_semiring_0 = semiring_integer}
+    : Z.t semiring_0);;
+
+let semiring_no_zero_divisors_integer =
+  ({semiring_0_semiring_no_zero_divisors = semiring_0_integer} :
+    Z.t semiring_no_zero_divisors);;
+
+let monoid_mult_integer =
+  ({semigroup_mult_monoid_mult = semigroup_mult_integer;
+     power_monoid_mult = power_integer}
+    : Z.t monoid_mult);;
+
+let semiring_numeral_integer =
+  ({monoid_mult_semiring_numeral = monoid_mult_integer;
+     numeral_semiring_numeral = numeral_integer;
+     semiring_semiring_numeral = semiring_integer}
+    : Z.t semiring_numeral);;
+
+let zero_neq_one_integer =
+  ({one_zero_neq_one = one_integer; zero_zero_neq_one = zero_integer} :
+    Z.t zero_neq_one);;
+
+let semiring_1_integer =
+  ({semiring_numeral_semiring_1 = semiring_numeral_integer;
+     semiring_0_semiring_1 = semiring_0_integer;
+     zero_neq_one_semiring_1 = zero_neq_one_integer}
+    : Z.t semiring_1);;
+
+let semiring_1_no_zero_divisors_integer =
+  ({semiring_1_semiring_1_no_zero_divisors = semiring_1_integer;
+     semiring_no_zero_divisors_semiring_1_no_zero_divisors =
+       semiring_no_zero_divisors_integer}
+    : Z.t semiring_1_no_zero_divisors);;
+
+let cancel_semigroup_add_integer =
+  ({semigroup_add_cancel_semigroup_add = semigroup_add_integer} :
+    Z.t cancel_semigroup_add);;
+
+let cancel_ab_semigroup_add_integer =
+  ({ab_semigroup_add_cancel_ab_semigroup_add = ab_semigroup_add_integer;
+     cancel_semigroup_add_cancel_ab_semigroup_add =
+       cancel_semigroup_add_integer;
+     minus_cancel_ab_semigroup_add = minus_integer}
+    : Z.t cancel_ab_semigroup_add);;
+
+let cancel_comm_monoid_add_integer =
+  ({cancel_ab_semigroup_add_cancel_comm_monoid_add =
+      cancel_ab_semigroup_add_integer;
+     comm_monoid_add_cancel_comm_monoid_add = comm_monoid_add_integer}
+    : Z.t cancel_comm_monoid_add);;
+
+let semiring_0_cancel_integer =
+  ({cancel_comm_monoid_add_semiring_0_cancel = cancel_comm_monoid_add_integer;
+     semiring_0_semiring_0_cancel = semiring_0_integer}
+    : Z.t semiring_0_cancel);;
+
+let ab_semigroup_mult_integer =
+  ({semigroup_mult_ab_semigroup_mult = semigroup_mult_integer} :
+    Z.t ab_semigroup_mult);;
+
+let comm_semiring_integer =
+  ({ab_semigroup_mult_comm_semiring = ab_semigroup_mult_integer;
+     semiring_comm_semiring = semiring_integer}
+    : Z.t comm_semiring);;
+
+let comm_semiring_0_integer =
+  ({comm_semiring_comm_semiring_0 = comm_semiring_integer;
+     semiring_0_comm_semiring_0 = semiring_0_integer}
+    : Z.t comm_semiring_0);;
+
+let comm_semiring_0_cancel_integer =
+  ({comm_semiring_0_comm_semiring_0_cancel = comm_semiring_0_integer;
+     semiring_0_cancel_comm_semiring_0_cancel = semiring_0_cancel_integer}
+    : Z.t comm_semiring_0_cancel);;
+
+let semiring_1_cancel_integer =
+  ({semiring_0_cancel_semiring_1_cancel = semiring_0_cancel_integer;
+     semiring_1_semiring_1_cancel = semiring_1_integer}
+    : Z.t semiring_1_cancel);;
+
+let comm_monoid_mult_integer =
+  ({ab_semigroup_mult_comm_monoid_mult = ab_semigroup_mult_integer;
+     monoid_mult_comm_monoid_mult = monoid_mult_integer;
+     dvd_comm_monoid_mult = dvd_integer}
+    : Z.t comm_monoid_mult);;
+
+let comm_semiring_1_integer =
+  ({comm_monoid_mult_comm_semiring_1 = comm_monoid_mult_integer;
+     comm_semiring_0_comm_semiring_1 = comm_semiring_0_integer;
+     semiring_1_comm_semiring_1 = semiring_1_integer}
+    : Z.t comm_semiring_1);;
+
+let comm_semiring_1_cancel_integer =
+  ({comm_semiring_0_cancel_comm_semiring_1_cancel =
+      comm_semiring_0_cancel_integer;
+     comm_semiring_1_comm_semiring_1_cancel = comm_semiring_1_integer;
+     semiring_1_cancel_comm_semiring_1_cancel = semiring_1_cancel_integer}
+    : Z.t comm_semiring_1_cancel);;
+
+let semidom_integer =
+  ({comm_semiring_1_cancel_semidom = comm_semiring_1_cancel_integer;
+     semiring_1_no_zero_divisors_semidom = semiring_1_no_zero_divisors_integer}
+    : Z.t semidom);;
 
 let preorder_integer =
   ({Orderings.ord_preorder = ord_integer} : Z.t Orderings.preorder);;
@@ -745,6 +987,32 @@ let order_integer =
 
 let linorder_integer =
   ({Orderings.order_linorder = order_integer} : Z.t Orderings.linorder);;
+
+let semiring_no_zero_divisors_cancel_integer =
+  ({semiring_no_zero_divisors_semiring_no_zero_divisors_cancel =
+      semiring_no_zero_divisors_integer}
+    : Z.t semiring_no_zero_divisors_cancel);;
+
+let semidom_divide_integer =
+  ({divide_semidom_divide = divide_integer;
+     semidom_semidom_divide = semidom_integer;
+     semiring_no_zero_divisors_cancel_semidom_divide =
+       semiring_no_zero_divisors_cancel_integer}
+    : Z.t semidom_divide);;
+
+let algebraic_semidom_integer =
+  ({semidom_divide_algebraic_semidom = semidom_divide_integer} :
+    Z.t algebraic_semidom);;
+
+let semiring_modulo_integer =
+  ({comm_semiring_1_cancel_semiring_modulo = comm_semiring_1_cancel_integer;
+     modulo_semiring_modulo = modulo_integer}
+    : Z.t semiring_modulo);;
+
+let semidom_modulo_integer =
+  ({algebraic_semidom_semidom_modulo = algebraic_semidom_integer;
+     semiring_modulo_semidom_modulo = semiring_modulo_integer}
+    : Z.t semidom_modulo);;
 
 let rec nat k = Nat (Orderings.max ord_integer Z.zero (integer_of_int k));;
 
@@ -769,11 +1037,13 @@ let rec power _A
   a n = (if equal_nata n zero_nat then one _A.one_power
           else times _A.times_power a (power _A a (minus_nat n one_nat)));;
 
-let rec abs_int i = (if less_int i zero_inta then uminus_inta i else i);;
+let rec less_int k l = Z.lt (integer_of_int k) (integer_of_int l);;
 
 let rec int_of_nat n = Int_of_integer (integer_of_nat n);;
 
 let rec nat_of_integer k = Nat (Orderings.max ord_integer Z.zero k);;
+
+let rec less_eq_int k l = Z.leq (integer_of_int k) (integer_of_int l);;
 
 let rec times_nat m n = Nat (Z.mul (integer_of_nat m) (integer_of_nat n));;
 
@@ -781,7 +1051,64 @@ let rec of_bool _A = function true -> one _A.one_zero_neq_one
                      | false -> zero _A.zero_zero_neq_one;;
 
 let rec modulo_nat
-  m n = Nat (modulo_integer (integer_of_nat m) (integer_of_nat n));;
+  m n = Nat (modulo_integera (integer_of_nat m) (integer_of_nat n));;
+
+let rec drop_bit_integer
+  n k = divide_integera k (power power_integer (Z.of_int 2) n);;
+
+let rec bit_integer
+  k n = not (dvd (equal_integer, semidom_modulo_integer) (Z.of_int 2)
+              (drop_bit_integer n k));;
+
+let rec not_integer k = Z.sub (Z.neg k) (Z.of_int 1);;
+
+let rec or_integer
+  k l = (if Z.equal k (Z.neg (Z.of_int 1)) || Z.equal l (Z.neg (Z.of_int 1))
+          then (Z.neg (Z.of_int 1))
+          else (if Z.equal k Z.zero then l
+                 else (if Z.equal l Z.zero then k
+                        else Z.add (Orderings.max ord_integer
+                                     (modulo_integera k (Z.of_int 2))
+                                     (modulo_integera l (Z.of_int 2)))
+                               (Z.mul (Z.of_int 2)
+                                 (or_integer (divide_integera k (Z.of_int 2))
+                                   (divide_integera l (Z.of_int 2)))))));;
+
+let rec and_integer
+  k l = (if Z.equal k Z.zero || Z.equal l Z.zero then Z.zero
+          else (if Z.equal k (Z.neg (Z.of_int 1)) then l
+                 else (if Z.equal l (Z.neg (Z.of_int 1)) then k
+                        else Z.add (Z.mul (modulo_integera k (Z.of_int 2))
+                                     (modulo_integera l (Z.of_int 2)))
+                               (Z.mul (Z.of_int 2)
+                                 (and_integer (divide_integera k (Z.of_int 2))
+                                   (divide_integera l (Z.of_int 2)))))));;
+
+let rec xor_integer
+  k l = (if Z.equal k (Z.neg (Z.of_int 1)) then not_integer l
+          else (if Z.equal l (Z.neg (Z.of_int 1)) then not_integer k
+                 else (if Z.equal k Z.zero then l
+                        else (if Z.equal l Z.zero then k
+                               else Z.add (Z.abs
+    (Z.sub (modulo_integera k (Z.of_int 2)) (modulo_integera l (Z.of_int 2))))
+                                      (Z.mul (Z.of_int 2)
+(xor_integer (divide_integera k (Z.of_int 2))
+  (divide_integera l (Z.of_int 2))))))));;
+
+let rec mask_integer
+  n = Z.sub (power power_integer (Z.of_int 2) n) (Z.of_int 1);;
+
+let rec push_bit_integer n k = Z.mul k (power power_integer (Z.of_int 2) n);;
+
+let rec set_bit_integer n k = or_integer k (push_bit_integer n (Z.of_int 1));;
+
+let rec flip_bit_integer n k = xor_integer k (push_bit_integer n (Z.of_int 1));;
+
+let rec take_bit_integer
+  n k = modulo_integera k (power power_integer (Z.of_int 2) n);;
+
+let rec unset_bit_integer
+  n k = and_integer k (not_integer (push_bit_integer n (Z.of_int 1)));;
 
 end;; (*struct Arith*)
 
@@ -794,12 +1121,7 @@ module Bit_Operations : sig
   val signed_take_bit : 'a ring_bit_operations -> Arith.nat -> 'a -> 'a
 end = struct
 
-let rec bit_int
-  k n = not (Arith.dvd (Arith.equal_int, Arith.semidom_modulo_int)
-              (Arith.Int_of_integer (Z.of_int 2))
-              (Arith.divide_inta k
-                (Arith.power Arith.power_int (Arith.Int_of_integer (Z.of_int 2))
-                  n)));;
+let rec bit_int (Arith.Int_of_integer k) n = Arith.bit_integer k n;;
 
 type 'a semiring_bits =
   {semiring_parity_semiring_bits : 'a Arith.semiring_parity;
@@ -810,87 +1132,43 @@ let semiring_bits_int =
   ({semiring_parity_semiring_bits = Arith.semiring_parity_int; bit = bit_int} :
     Arith.int semiring_bits);;
 
-let rec push_bit_int
-  n k = Arith.times_inta k
-          (Arith.power Arith.power_int (Arith.Int_of_integer (Z.of_int 2)) n);;
-
-let rec and_int
-  k l = (if Arith.equal_inta k Arith.zero_inta ||
-              Arith.equal_inta l Arith.zero_inta
-          then Arith.zero_inta
-          else (if Arith.equal_inta k (Arith.uminus_inta Arith.one_inta) then l
-                 else (if Arith.equal_inta l (Arith.uminus_inta Arith.one_inta)
-                        then k
-                        else Arith.plus_inta
-                               (Arith.times_inta
-                                 (Arith.modulo_inta k
-                                   (Arith.Int_of_integer (Z.of_int 2)))
-                                 (Arith.modulo_inta l
-                                   (Arith.Int_of_integer (Z.of_int 2))))
-                               (Arith.times_inta
-                                 (Arith.Int_of_integer (Z.of_int 2))
-                                 (and_int
-                                   (Arith.divide_inta k
-                                     (Arith.Int_of_integer (Z.of_int 2)))
-                                   (Arith.divide_inta l
-                                     (Arith.Int_of_integer (Z.of_int 2))))))));;
-
-let rec not_int k = Arith.minus_inta (Arith.uminus_inta k) Arith.one_inta;;
-
 let rec unset_bit_int
-  n k = and_int k (not_int (push_bit_int n Arith.one_inta));;
+  n (Arith.Int_of_integer k) =
+    Arith.Int_of_integer (Arith.unset_bit_integer n k);;
 
 let rec take_bit_int
-  n k = Arith.modulo_inta k
-          (Arith.power Arith.power_int (Arith.Int_of_integer (Z.of_int 2)) n);;
+  n (Arith.Int_of_integer k) =
+    Arith.Int_of_integer (Arith.take_bit_integer n k);;
 
-let rec xor_int
-  k l = (if Arith.equal_inta k (Arith.uminus_inta Arith.one_inta) then not_int l
-          else (if Arith.equal_inta l (Arith.uminus_inta Arith.one_inta)
-                 then not_int k
-                 else (if Arith.equal_inta k Arith.zero_inta then l
-                        else (if Arith.equal_inta l Arith.zero_inta then k
-                               else Arith.plus_inta
-                                      (Arith.abs_int
-(Arith.minus_inta (Arith.modulo_inta k (Arith.Int_of_integer (Z.of_int 2)))
-  (Arith.modulo_inta l (Arith.Int_of_integer (Z.of_int 2)))))
-                                      (Arith.times_inta
-(Arith.Int_of_integer (Z.of_int 2))
-(xor_int (Arith.divide_inta k (Arith.Int_of_integer (Z.of_int 2)))
-  (Arith.divide_inta l (Arith.Int_of_integer (Z.of_int 2)))))))));;
+let rec push_bit_int
+  n (Arith.Int_of_integer k) =
+    Arith.Int_of_integer (Arith.push_bit_integer n k);;
 
-let rec flip_bit_int n k = xor_int k (push_bit_int n Arith.one_inta);;
+let rec flip_bit_int
+  n (Arith.Int_of_integer k) =
+    Arith.Int_of_integer (Arith.flip_bit_integer n k);;
 
 let rec drop_bit_int
   n k = Arith.divide_inta k
           (Arith.power Arith.power_int (Arith.Int_of_integer (Z.of_int 2)) n);;
 
+let rec set_bit_int
+  n (Arith.Int_of_integer k) =
+    Arith.Int_of_integer (Arith.set_bit_integer n k);;
+
+let rec mask_int n = Arith.Int_of_integer (Arith.mask_integer n);;
+
+let rec xor_int
+  (Arith.Int_of_integer k) (Arith.Int_of_integer l) =
+    Arith.Int_of_integer (Arith.xor_integer k l);;
+
+let rec and_int
+  (Arith.Int_of_integer k) (Arith.Int_of_integer l) =
+    Arith.Int_of_integer (Arith.and_integer k l);;
+
 let rec or_int
-  k l = (if Arith.equal_inta k (Arith.uminus_inta Arith.one_inta) ||
-              Arith.equal_inta l (Arith.uminus_inta Arith.one_inta)
-          then Arith.uminus_inta Arith.one_inta
-          else (if Arith.equal_inta k Arith.zero_inta then l
-                 else (if Arith.equal_inta l Arith.zero_inta then k
-                        else Arith.plus_inta
-                               (Orderings.max Arith.ord_int
-                                 (Arith.modulo_inta k
-                                   (Arith.Int_of_integer (Z.of_int 2)))
-                                 (Arith.modulo_inta l
-                                   (Arith.Int_of_integer (Z.of_int 2))))
-                               (Arith.times_inta
-                                 (Arith.Int_of_integer (Z.of_int 2))
-                                 (or_int
-                                   (Arith.divide_inta k
-                                     (Arith.Int_of_integer (Z.of_int 2)))
-                                   (Arith.divide_inta l
-                                     (Arith.Int_of_integer (Z.of_int 2))))))));;
-
-let rec set_bit_int n k = or_int k (push_bit_int n Arith.one_inta);;
-
-let rec mask_int
-  n = Arith.minus_inta
-        (Arith.power Arith.power_int (Arith.Int_of_integer (Z.of_int 2)) n)
-        Arith.one_inta;;
+  (Arith.Int_of_integer k) (Arith.Int_of_integer l) =
+    Arith.Int_of_integer (Arith.or_integer k l);;
 
 type 'a semiring_bit_operations =
   {semiring_bits_semiring_bit_operations : 'a semiring_bits;
@@ -909,6 +1187,9 @@ let flip_bit _A = _A.flip_bit;;
 let push_bit _A = _A.push_bit;;
 let drop_bit _A = _A.drop_bit;;
 let take_bit _A = _A.take_bit;;
+
+let rec not_int
+  (Arith.Int_of_integer k) = Arith.Int_of_integer (Arith.not_integer k);;
 
 type 'a ring_bit_operations =
   {semiring_bit_operations_ring_bit_operations : 'a semiring_bit_operations;
@@ -945,9 +1226,8 @@ let rec bin_rsplit_aux
   n m c bs =
     (if Arith.equal_nata m Arith.zero_nat || Arith.equal_nata n Arith.zero_nat
       then bs
-      else (let a = bin_split n c in
-            let (aa, b) = a in
-             bin_rsplit_aux n (Arith.minus_nat m n) aa (b :: bs)));;
+      else (let (a, b) = bin_split n c in
+             bin_rsplit_aux n (Arith.minus_nat m n) a (b :: bs)));;
 
 let rec bin_rsplit
   n w = bin_rsplit_aux n (Product_Type.fst w) (Product_Type.snd w) [];;
@@ -1028,35 +1308,13 @@ let len_num1 = ({len0_len = len0_num1} : Numeral_Type.num1 len);;
 
 end;; (*struct Type_Length*)
 
-module Lista : sig
-  val rev : 'a list -> 'a list
-  val foldr : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
-  val hd : 'a list -> 'a
-  val map : ('a -> 'b) -> 'a list -> 'b list
-end = struct
-
-let rec fold f x1 s = match f, x1, s with f, x :: xs, s -> fold f xs (f x s)
-               | f, [], s -> s;;
-
-let rec rev xs = fold (fun a b -> a :: b) xs [];;
-
-let rec foldr f x1 = match f, x1 with f, [] -> Fun.id
-                | f, x :: xs -> Fun.comp (f x) (foldr f xs);;
-
-let rec hd (x21 :: x22) = x21;;
-
-let rec map f x1 = match f, x1 with f, [] -> []
-              | f, x21 :: x22 -> f x21 :: map f x22;;
-
-end;; (*struct Lista*)
-
 module Groups_List : sig
   val horner_sum : 'b Arith.comm_semiring_0 -> ('a -> 'b) -> 'b -> 'a list -> 'b
 end = struct
 
 let rec horner_sum _B
   f a xs =
-    Lista.foldr
+    List.foldr
       (fun x b ->
         Arith.plus
           _B.Arith.semiring_0_comm_semiring_0.Arith.comm_monoid_add_semiring_0.Arith.monoid_add_comm_monoid_add.Arith.semigroup_add_monoid_add.Arith.plus_semigroup_add
@@ -1102,7 +1360,7 @@ let rec word_rcat _A _B
         (Groups_List.horner_sum Arith.comm_semiring_0_int (the_int _A)
           (Arith.power Arith.power_int (Arith.Int_of_integer (Z.of_int 2))
             (Type_Length.len_of _A.Type_Length.len0_len HOL.Type))))
-      Lista.rev;;
+      List.rev;;
 
 let rec the_signed_int _A
   w = Bit_Operations.signed_take_bit Bit_Operations.ring_bit_operations_int
@@ -1177,7 +1435,7 @@ module Rsplit : sig
 end = struct
 
 let rec word_rsplit _A _B
-  w = Lista.map (Word.of_int _B)
+  w = List.map (Word.of_int _B)
         (Bit_Operations.bin_rsplit
           (Type_Length.len_of _B.Type_Length.len0_len HOL.Type)
           (Type_Length.len_of _A.Type_Length.len0_len HOL.Type,
@@ -1213,30 +1471,6 @@ let rec compare_integer
 
 end;; (*struct Compare_Instances*)
 
-module Stringa : sig
-  val equal_literal : string HOL.equal
-  val linorder_literal : string Orderings.linorder
-end = struct
-
-let equal_literal =
-  ({HOL.equal = (fun a b -> ((a : string) = b))} : string HOL.equal);;
-
-let ord_literal =
-  ({Orderings.less_eq = (fun a b -> ((a : string) <= b));
-     Orderings.less = (fun a b -> ((a : string) < b))}
-    : string Orderings.ord);;
-
-let preorder_literal =
-  ({Orderings.ord_preorder = ord_literal} : string Orderings.preorder);;
-
-let order_literal =
-  ({Orderings.preorder_order = preorder_literal} : string Orderings.order);;
-
-let linorder_literal =
-  ({Orderings.order_linorder = order_literal} : string Orderings.linorder);;
-
-end;; (*struct Stringa*)
-
 module Collection_Order : sig
   type 'a ccompare = {ccompare : ('a -> 'a -> Comparator.order) option}
   val ccompare : 'a ccompare -> ('a -> 'a -> Comparator.order) option
@@ -1254,8 +1488,7 @@ let ccompare _A = _A.ccompare;;
 let ccompare_nat = ({ccompare = ccompare_nata} : Arith.nat ccompare);;
 
 let rec compare_literal
-  x = Comparator.comparator_of (Stringa.equal_literal, Stringa.linorder_literal)
-        x;;
+  x = Comparator.comparator_of (Str.equal_literal, Str.linorder_literal) x;;
 
 let ccompare_literala : (string -> string -> Comparator.order) option
   = Some compare_literal;;
@@ -1545,6 +1778,7 @@ module Mapping_Impl : sig
     'a Collection_Order.ccompare -> mapping_impl -> ('a, 'b) Mapping.mapping
   val mapping_impl_nat : (Arith.nat, mapping_impl) Phantom_Type.phantom
   val mapping_impl_integer : (Z.t, mapping_impl) Phantom_Type.phantom
+  val mapping_impl_literal : (string, mapping_impl) Phantom_Type.phantom
 end = struct
 
 type mapping_impl = Mapping_Choose | Mapping_Assoc_List | Mapping_RBT |
@@ -1567,6 +1801,9 @@ let mapping_impl_nat : (Arith.nat, mapping_impl) Phantom_Type.phantom
 let mapping_impl_integer : (Z.t, mapping_impl) Phantom_Type.phantom
   = Phantom_Type.Phantom Mapping_RBT;;
 
+let mapping_impl_literal : (string, mapping_impl) Phantom_Type.phantom
+  = Phantom_Type.Phantom Mapping_RBT;;
+
 end;; (*struct Mapping_Impl*)
 
 module Signed_Words : sig
@@ -1587,7 +1824,29 @@ let rec len_signed _A =
 
 end;; (*struct Signed_Words*)
 
-module More_Word_Library : sig
+module Separation_Algebra : sig
+  type 'a pre_sep_algebra =
+    {plus_pre_sep_algebra : 'a Arith.plus; zero_pre_sep_algebra : 'a Arith.zero;
+      sep_disj : 'a -> 'a -> bool}
+  val sep_disj : 'a pre_sep_algebra -> 'a -> 'a -> bool
+  type 'a sep_algebra = {pre_sep_algebra_sep_algebra : 'a pre_sep_algebra}
+  type 'a cancellative_sep_algebra =
+    {sep_algebra_cancellative_sep_algebra : 'a sep_algebra}
+end = struct
+
+type 'a pre_sep_algebra =
+  {plus_pre_sep_algebra : 'a Arith.plus; zero_pre_sep_algebra : 'a Arith.zero;
+    sep_disj : 'a -> 'a -> bool};;
+let sep_disj _A = _A.sep_disj;;
+
+type 'a sep_algebra = {pre_sep_algebra_sep_algebra : 'a pre_sep_algebra};;
+
+type 'a cancellative_sep_algebra =
+  {sep_algebra_cancellative_sep_algebra : 'a sep_algebra};;
+
+end;; (*struct Separation_Algebra*)
+
+module Preliminary_Library : sig
   type 'a capability_ext = Capability_ext of bool * 'a
   val equal_capability_ext : 'a HOL.equal -> 'a capability_ext HOL.equal
   type ('a, 'b) mem_capability_ext =
@@ -2332,32 +2591,10 @@ let rec perm_global_update _A
           perm_cap_store, perm_cap_store_local, perm_globala perm_global,
           more);;
 
-end;; (*struct More_Word_Library*)
-
-module Separation_Algebra : sig
-  type 'a pre_sep_algebra =
-    {plus_pre_sep_algebra : 'a Arith.plus; zero_pre_sep_algebra : 'a Arith.zero;
-      sep_disj : 'a -> 'a -> bool}
-  val sep_disj : 'a pre_sep_algebra -> 'a -> 'a -> bool
-  type 'a sep_algebra = {pre_sep_algebra_sep_algebra : 'a pre_sep_algebra}
-  type 'a cancellative_sep_algebra =
-    {sep_algebra_cancellative_sep_algebra : 'a sep_algebra}
-end = struct
-
-type 'a pre_sep_algebra =
-  {plus_pre_sep_algebra : 'a Arith.plus; zero_pre_sep_algebra : 'a Arith.zero;
-    sep_disj : 'a -> 'a -> bool};;
-let sep_disj _A = _A.sep_disj;;
-
-type 'a sep_algebra = {pre_sep_algebra_sep_algebra : 'a pre_sep_algebra};;
-
-type 'a cancellative_sep_algebra =
-  {sep_algebra_cancellative_sep_algebra : 'a sep_algebra};;
-
-end;; (*struct Separation_Algebra*)
+end;; (*struct Preliminary_Library*)
 
 module CHERI_C_Concrete_Memory_Model : sig
-  val comp_countable_integer : Z.t More_Word_Library.comp_countable
+  val comp_countable_integer : Z.t Preliminary_Library.comp_countable
   type memval
   type 'a object_ext
   type t
@@ -2368,44 +2605,46 @@ module CHERI_C_Concrete_Memory_Model : sig
     BadAddressViolation
   type errtype = C2Err of c2errtype | LogicErr of logicerrtype
   type 'a result = Success of 'a | Error of errtype
-  type 'a heap_ext
+  type 'a heap_ext = Heap_ext of Z.t * (Z.t, t) Mapping.mapping * 'a
   val null_capability :
-    (Z.t, unit More_Word_Library.capability_ext)
-      More_Word_Library.mem_capability_ext
+    (Z.t, unit Preliminary_Library.capability_ext)
+      Preliminary_Library.mem_capability_ext
   val free :
     unit heap_ext ->
-      (Z.t, unit More_Word_Library.capability_ext)
-        More_Word_Library.mem_capability_ext ->
+      (Z.t, unit Preliminary_Library.capability_ext)
+        Preliminary_Library.mem_capability_ext ->
         (unit heap_ext *
-          (Z.t, unit More_Word_Library.capability_ext)
-            More_Word_Library.mem_capability_ext)
+          (Z.t, unit Preliminary_Library.capability_ext)
+            Preliminary_Library.mem_capability_ext)
           result
   val load :
     unit heap_ext ->
-      (Z.t, unit More_Word_Library.capability_ext)
-        More_Word_Library.mem_capability_ext ->
-        More_Word_Library.cctype -> Z.t More_Word_Library.ccval result
+      (Z.t, unit Preliminary_Library.capability_ext)
+        Preliminary_Library.mem_capability_ext ->
+        Preliminary_Library.cctype -> Z.t Preliminary_Library.ccval result
   val next_block : 'a heap_ext -> Z.t
   val alloc :
     unit heap_ext ->
       bool ->
         Arith.nat ->
           (unit heap_ext *
-            (Z.t, unit More_Word_Library.capability_ext)
-              More_Word_Library.mem_capability_ext)
+            (Z.t, unit Preliminary_Library.capability_ext)
+              Preliminary_Library.mem_capability_ext)
             result
   val store :
     unit heap_ext ->
-      (Z.t, unit More_Word_Library.capability_ext)
-        More_Word_Library.mem_capability_ext ->
-        Z.t More_Word_Library.ccval -> unit heap_ext result
+      (Z.t, unit Preliminary_Library.capability_ext)
+        Preliminary_Library.mem_capability_ext ->
+        Z.t Preliminary_Library.ccval -> unit heap_ext result
+  val is_Success : 'a result -> bool
   val res : 'a result -> 'a
+  val err : 'a result -> errtype
   val memcpy :
     unit heap_ext ->
-      (Z.t, unit More_Word_Library.capability_ext)
-        More_Word_Library.mem_capability_ext ->
-        (Z.t, unit More_Word_Library.capability_ext)
-          More_Word_Library.mem_capability_ext ->
+      (Z.t, unit Preliminary_Library.capability_ext)
+        Preliminary_Library.mem_capability_ext ->
+        (Z.t, unit Preliminary_Library.capability_ext)
+          Preliminary_Library.mem_capability_ext ->
           Arith.nat -> unit heap_ext result
   val init_heap : unit heap_ext
   val get_unfreed_blocks : unit heap_ext -> Arith.nat -> Z.t list
@@ -2439,22 +2678,22 @@ let cancellative_sep_algebra_unit =
 let countable_integer = (() : Z.t Countable.countable);;
 
 let comp_countable_integer =
-  ({More_Word_Library.countable_comp_countable = countable_integer;
-     More_Word_Library.zero_comp_countable = Arith.zero_integer;
-     More_Word_Library.ord_comp_countable = Arith.ord_integer}
-    : Z.t More_Word_Library.comp_countable);;
+  ({Preliminary_Library.countable_comp_countable = countable_integer;
+     Preliminary_Library.zero_comp_countable = Arith.zero_integer;
+     Preliminary_Library.ord_comp_countable = Arith.ord_integer}
+    : Z.t Preliminary_Library.comp_countable);;
 
 type memval =
   Byte of
     Numeral_Type.num1 Numeral_Type.bit0 Numeral_Type.bit0 Numeral_Type.bit0
       Word.word
-  | ACap of (Z.t, unit) More_Word_Library.mem_capability_ext * Arith.nat;;
+  | ACap of (Z.t, unit) Preliminary_Library.mem_capability_ext * Arith.nat;;
 
 let rec equal_memvala
   x0 x1 = match x0, x1 with Byte x1, ACap (x21, x22) -> false
     | ACap (x21, x22), Byte x1 -> false
     | ACap (x21, x22), ACap (y21, y22) ->
-        More_Word_Library.equal_mem_capability_exta
+        Preliminary_Library.equal_mem_capability_exta
           (Arith.equal_integer, comp_countable_integer) Product_Type.equal_unit
           x21 y21 &&
           Arith.equal_nata x22 y22
@@ -2467,11 +2706,11 @@ let rec equal_memvala
 let equal_memval = ({HOL.equal = equal_memvala} : memval HOL.equal);;
 
 let rec zero_capability_exta _A
-  = More_Word_Library.Capability_ext (false, Arith.zero _A);;
+  = Preliminary_Library.Capability_ext (false, Arith.zero _A);;
 
 let rec zero_capability_ext _A =
   ({Arith.zero = zero_capability_exta _A} :
-    'a More_Word_Library.capability_ext Arith.zero);;
+    'a Preliminary_Library.capability_ext Arith.zero);;
 
 type 'a object_ext =
   Object_ext of
@@ -2498,14 +2737,14 @@ let rec heap_map_update
     Heap_ext (next_block, heap_mapa heap_map, more);;
 
 let rec zero_mem_capability_ext _A _B
-  = More_Word_Library.Mem_capability_ext
-      (Arith.zero _A.More_Word_Library.zero_comp_countable, Arith.zero_inta,
+  = Preliminary_Library.Mem_capability_ext
+      (Arith.zero _A.Preliminary_Library.zero_comp_countable, Arith.zero_inta,
         Arith.zero_nat, Arith.zero_nat, false, false, false, false, false,
         false, Arith.zero _B);;
 
 let null_capability :
-  (Z.t, unit More_Word_Library.capability_ext)
-    More_Word_Library.mem_capability_ext
+  (Z.t, unit Preliminary_Library.capability_ext)
+    Preliminary_Library.mem_capability_ext
   = zero_mem_capability_ext comp_countable_integer
       (zero_capability_ext zero_unit);;
 
@@ -2514,16 +2753,16 @@ let rec bounds (Object_ext (bounds, content, tags, more)) = bounds;;
 let rec heap_map (Heap_ext (next_block, heap_map, more)) = heap_map;;
 
 let rec free
-  h c = (if More_Word_Library.equal_mem_capability_exta
+  h c = (if Preliminary_Library.equal_mem_capability_exta
               (Arith.equal_integer, comp_countable_integer)
-              (More_Word_Library.equal_capability_ext Product_Type.equal_unit) c
-              null_capability
+              (Preliminary_Library.equal_capability_ext Product_Type.equal_unit)
+              c null_capability
           then Success (h, c)
           else (if Product_Type.equal_bool
-                     (More_Word_Library.tag comp_countable_integer c) false
+                     (Preliminary_Library.tag comp_countable_integer c) false
                  then Error (C2Err TagViolation)
                  else (if Product_Type.equal_bool
-                            (More_Word_Library.perm_global
+                            (Preliminary_Library.perm_global
                               comp_countable_integer c)
                             true
                         then Error (LogicErr (Unhandled ""))
@@ -2532,24 +2771,24 @@ let rec free
                                  (Collection_Order.ccompare_integer,
                                    Arith.equal_integer)
                                  (heap_map h)
-                                 (More_Word_Library.block_id
+                                 (Preliminary_Library.block_id
                                    comp_countable_integer c)
                                with None -> Error (LogicErr MissingResource)
                                | Some Freed -> Error (LogicErr UseAfterFree)
                                | Some (Map m) ->
                                  (if not (Arith.equal_inta
-   (More_Word_Library.offset comp_countable_integer c) Arith.zero_inta)
+   (Preliminary_Library.offset comp_countable_integer c) Arith.zero_inta)
                                    then Error (LogicErr (Unhandled ""))
                                    else (if Arith.less_int
       (Arith.int_of_nat
-        (Arith.plus_nat (More_Word_Library.base comp_countable_integer c)
-          (More_Word_Library.len comp_countable_integer c)))
-      (More_Word_Library.offset comp_countable_integer c)
+        (Arith.plus_nat (Preliminary_Library.base comp_countable_integer c)
+          (Preliminary_Library.len comp_countable_integer c)))
+      (Preliminary_Library.offset comp_countable_integer c)
   then Error (LogicErr (Unhandled ""))
   else (let cap_bound =
-          (More_Word_Library.base comp_countable_integer c,
-            Arith.plus_nat (More_Word_Library.base comp_countable_integer c)
-              (More_Word_Library.len comp_countable_integer c))
+          (Preliminary_Library.base comp_countable_integer c,
+            Arith.plus_nat (Preliminary_Library.base comp_countable_integer c)
+              (Preliminary_Library.len comp_countable_integer c))
           in
          (if not (Product_Type.equal_prod Arith.equal_nat Arith.equal_nat
                    cap_bound (bounds m))
@@ -2560,12 +2799,12 @@ let rec free
                        Mapping.update
                          (Collection_Order.ccompare_integer,
                            Arith.equal_integer)
-                         (More_Word_Library.block_id comp_countable_integer c)
+                         (Preliminary_Library.block_id comp_countable_integer c)
                          Freed (heap_map h))
                      h
                    in
                  let cap =
-                   More_Word_Library.tag_update comp_countable_integer
+                   Preliminary_Library.tag_update comp_countable_integer
                      (fun _ -> false) c
                    in
                   Success (ha, cap))))))))));;
@@ -2617,7 +2856,7 @@ let rec is_contiguous_cap
                       (Mapping.lookup
                         (Collection_Order.ccompare_nat, Arith.equal_nat) uu
                         uw))) &&
-               (More_Word_Library.equal_mem_capability_exta
+               (Preliminary_Library.equal_mem_capability_exta
                   (Arith.equal_integer, comp_countable_integer)
                   Product_Type.equal_unit
                   (of_cap
@@ -2660,15 +2899,15 @@ let rec get_cap
           off));;
 
 let rec sizeof
-  tau = (match tau with More_Word_Library.Uint8 -> Arith.one_nat
-          | More_Word_Library.Sint8 -> Arith.one_nat
-          | More_Word_Library.Uint16 -> Arith.nat_of_integer (Z.of_int 2)
-          | More_Word_Library.Sint16 -> Arith.nat_of_integer (Z.of_int 2)
-          | More_Word_Library.Uint32 -> Arith.nat_of_integer (Z.of_int 4)
-          | More_Word_Library.Sint32 -> Arith.nat_of_integer (Z.of_int 4)
-          | More_Word_Library.Uint64 -> Arith.nat_of_integer (Z.of_int 8)
-          | More_Word_Library.Sint64 -> Arith.nat_of_integer (Z.of_int 8)
-          | More_Word_Library.Cap -> Arith.nat_of_integer (Z.of_int 32));;
+  tau = (match tau with Preliminary_Library.Uint8 -> Arith.one_nat
+          | Preliminary_Library.Sint8 -> Arith.one_nat
+          | Preliminary_Library.Uint16 -> Arith.nat_of_integer (Z.of_int 2)
+          | Preliminary_Library.Sint16 -> Arith.nat_of_integer (Z.of_int 2)
+          | Preliminary_Library.Uint32 -> Arith.nat_of_integer (Z.of_int 4)
+          | Preliminary_Library.Sint32 -> Arith.nat_of_integer (Z.of_int 4)
+          | Preliminary_Library.Uint64 -> Arith.nat_of_integer (Z.of_int 8)
+          | Preliminary_Library.Sint64 -> Arith.nat_of_integer (Z.of_int 8)
+          | Preliminary_Library.Cap -> Arith.nat_of_integer (Z.of_int 32));;
 
 let rec is_cap
   m off =
@@ -2684,11 +2923,11 @@ let rec retrieve_tval
   obj off typ pcl =
     (if is_contiguous_bytes (content obj) off (sizeof typ)
       then (match typ
-             with More_Word_Library.Uint8 ->
-               More_Word_Library.Uint8_v
-                 (Lista.hd (retrieve_bytes (content obj) off (sizeof typ)))
-             | More_Word_Library.Sint8 ->
-               More_Word_Library.Sint8_v
+             with Preliminary_Library.Uint8 ->
+               Preliminary_Library.Uint8_v
+                 (List.hd (retrieve_bytes (content obj) off (sizeof typ)))
+             | Preliminary_Library.Sint8 ->
+               Preliminary_Library.Sint8_v
                  (Word.cast
                    (Type_Length.len_bit0
                      (Type_Length.len_bit0
@@ -2697,9 +2936,9 @@ let rec retrieve_tval
                      (Type_Length.len_bit0
                        (Type_Length.len_bit0
                          (Type_Length.len_bit0 Type_Length.len_num1))))
-                   (Lista.hd (retrieve_bytes (content obj) off (sizeof typ))))
-             | More_Word_Library.Uint16 ->
-               More_Word_Library.Uint16_v
+                   (List.hd (retrieve_bytes (content obj) off (sizeof typ))))
+             | Preliminary_Library.Uint16 ->
+               Preliminary_Library.Uint16_v
                  (Word.word_rcat
                    (Type_Length.len_bit0
                      (Type_Length.len_bit0
@@ -2709,8 +2948,8 @@ let rec retrieve_tval
                        (Type_Length.len_bit0
                          (Type_Length.len_bit0 Type_Length.len_num1))))
                    (retrieve_bytes (content obj) off (sizeof typ)))
-             | More_Word_Library.Sint16 ->
-               More_Word_Library.Sint16_v
+             | Preliminary_Library.Sint16 ->
+               Preliminary_Library.Sint16_v
                  (Word.word_rcat
                    (Type_Length.len_bit0
                      (Type_Length.len_bit0
@@ -2721,8 +2960,8 @@ let rec retrieve_tval
                          (Type_Length.len_bit0
                            (Type_Length.len_bit0 Type_Length.len_num1)))))
                    (retrieve_bytes (content obj) off (sizeof typ)))
-             | More_Word_Library.Uint32 ->
-               More_Word_Library.Uint32_v
+             | Preliminary_Library.Uint32 ->
+               Preliminary_Library.Uint32_v
                  (Word.word_rcat
                    (Type_Length.len_bit0
                      (Type_Length.len_bit0
@@ -2733,8 +2972,8 @@ let rec retrieve_tval
                          (Type_Length.len_bit0
                            (Type_Length.len_bit0 Type_Length.len_num1)))))
                    (retrieve_bytes (content obj) off (sizeof typ)))
-             | More_Word_Library.Sint32 ->
-               More_Word_Library.Sint32_v
+             | Preliminary_Library.Sint32 ->
+               Preliminary_Library.Sint32_v
                  (Word.word_rcat
                    (Type_Length.len_bit0
                      (Type_Length.len_bit0
@@ -2746,8 +2985,8 @@ let rec retrieve_tval
                            (Type_Length.len_bit0
                              (Type_Length.len_bit0 Type_Length.len_num1))))))
                    (retrieve_bytes (content obj) off (sizeof typ)))
-             | More_Word_Library.Uint64 ->
-               More_Word_Library.Uint64_v
+             | Preliminary_Library.Uint64 ->
+               Preliminary_Library.Uint64_v
                  (Word.word_rcat
                    (Type_Length.len_bit0
                      (Type_Length.len_bit0
@@ -2759,8 +2998,8 @@ let rec retrieve_tval
                            (Type_Length.len_bit0
                              (Type_Length.len_bit0 Type_Length.len_num1))))))
                    (retrieve_bytes (content obj) off (sizeof typ)))
-             | More_Word_Library.Sint64 ->
-               More_Word_Library.Sint64_v
+             | Preliminary_Library.Sint64 ->
+               Preliminary_Library.Sint64_v
                  (Word.word_rcat
                    (Type_Length.len_bit0
                      (Type_Length.len_bit0
@@ -2773,10 +3012,10 @@ let rec retrieve_tval
                              (Type_Length.len_bit0
                                (Type_Length.len_bit0 Type_Length.len_num1)))))))
                    (retrieve_bytes (content obj) off (sizeof typ)))
-             | More_Word_Library.Cap ->
+             | Preliminary_Library.Cap ->
                (if is_contiguous_zeros (content obj) off (sizeof typ)
-                 then More_Word_Library.Cap_v null_capability
-                 else More_Word_Library.Undef))
+                 then Preliminary_Library.Cap_v null_capability
+                 else Preliminary_Library.Undef))
       else (if is_cap (content obj) off
              then (let cap = get_cap (content obj) off in
                    let tv =
@@ -2786,17 +3025,17 @@ let rec retrieve_tval
                          (tags obj)
                          (if Arith.equal_nata
                                (Arith.modulo_nat off
-                                 (sizeof More_Word_Library.Cap))
+                                 (sizeof Preliminary_Library.Cap))
                                Arith.zero_nat
                            then off
                            else Arith.minus_nat off
                                   (Arith.modulo_nat off
-                                    (sizeof More_Word_Library.Cap))))
+                                    (sizeof Preliminary_Library.Cap))))
                      in
                    let t = (match pcl with true -> tv | false -> false) in
                    let cv =
-                     More_Word_Library.extend comp_countable_integer cap
-                       (More_Word_Library.Capability_ext (t, ()))
+                     Preliminary_Library.extend comp_countable_integer cap
+                       (Preliminary_Library.Capability_ext (t, ()))
                      in
                    let nth_frag =
                      of_nth
@@ -2806,74 +3045,75 @@ let rec retrieve_tval
                            (content obj) off))
                      in
                     (match typ
-                      with More_Word_Library.Uint8 ->
-                        More_Word_Library.Cap_v_frag
-                          (More_Word_Library.extend comp_countable_integer cap
-                             (More_Word_Library.Capability_ext (false, ())),
+                      with Preliminary_Library.Uint8 ->
+                        Preliminary_Library.Cap_v_frag
+                          (Preliminary_Library.extend comp_countable_integer cap
+                             (Preliminary_Library.Capability_ext (false, ())),
                             nth_frag)
-                      | More_Word_Library.Sint8 ->
-                        More_Word_Library.Cap_v_frag
-                          (More_Word_Library.extend comp_countable_integer cap
-                             (More_Word_Library.Capability_ext (false, ())),
+                      | Preliminary_Library.Sint8 ->
+                        Preliminary_Library.Cap_v_frag
+                          (Preliminary_Library.extend comp_countable_integer cap
+                             (Preliminary_Library.Capability_ext (false, ())),
                             nth_frag)
-                      | More_Word_Library.Uint16 -> More_Word_Library.Undef
-                      | More_Word_Library.Sint16 -> More_Word_Library.Undef
-                      | More_Word_Library.Uint32 -> More_Word_Library.Undef
-                      | More_Word_Library.Sint32 -> More_Word_Library.Undef
-                      | More_Word_Library.Uint64 -> More_Word_Library.Undef
-                      | More_Word_Library.Sint64 -> More_Word_Library.Undef
-                      | More_Word_Library.Cap ->
+                      | Preliminary_Library.Uint16 -> Preliminary_Library.Undef
+                      | Preliminary_Library.Sint16 -> Preliminary_Library.Undef
+                      | Preliminary_Library.Uint32 -> Preliminary_Library.Undef
+                      | Preliminary_Library.Sint32 -> Preliminary_Library.Undef
+                      | Preliminary_Library.Uint64 -> Preliminary_Library.Undef
+                      | Preliminary_Library.Sint64 -> Preliminary_Library.Undef
+                      | Preliminary_Library.Cap ->
                         (if is_contiguous_cap (content obj) cap off (sizeof typ)
-                          then More_Word_Library.Cap_v cv
-                          else More_Word_Library.Undef)))
-             else More_Word_Library.Undef));;
+                          then Preliminary_Library.Cap_v cv
+                          else Preliminary_Library.Undef)))
+             else Preliminary_Library.Undef));;
 
 let rec load
   h c t =
-    (if Product_Type.equal_bool (More_Word_Library.tag comp_countable_integer c)
-          false
+    (if Product_Type.equal_bool
+          (Preliminary_Library.tag comp_countable_integer c) false
       then Error (C2Err TagViolation)
       else (if Product_Type.equal_bool
-                 (More_Word_Library.perm_load comp_countable_integer c) false
+                 (Preliminary_Library.perm_load comp_countable_integer c) false
              then Error (C2Err PermitLoadViolation)
              else (if Arith.less_int
                         (Arith.int_of_nat
                           (Arith.plus_nat
-                            (More_Word_Library.base comp_countable_integer c)
-                            (More_Word_Library.len comp_countable_integer c)))
+                            (Preliminary_Library.base comp_countable_integer c)
+                            (Preliminary_Library.len comp_countable_integer c)))
                         (Arith.plus_inta
-                          (More_Word_Library.offset comp_countable_integer c)
+                          (Preliminary_Library.offset comp_countable_integer c)
                           (Arith.int_of_nat (sizeof t)))
                     then Error (C2Err LengthViolation)
                     else (if Arith.less_int
-                               (More_Word_Library.offset comp_countable_integer
-                                 c)
+                               (Preliminary_Library.offset
+                                 comp_countable_integer c)
                                (Arith.int_of_nat
-                                 (More_Word_Library.base comp_countable_integer
-                                   c))
+                                 (Preliminary_Library.base
+                                   comp_countable_integer c))
                            then Error (C2Err LengthViolation)
                            else (if not (Arith.equal_inta
-  (Arith.modulo_inta (More_Word_Library.offset comp_countable_integer c)
+  (Arith.modulo_inta (Preliminary_Library.offset comp_countable_integer c)
     (Arith.int_of_nat (sizeof t)))
   Arith.zero_inta)
                                   then Error (C2Err BadAddressViolation)
                                   else (match
  Mapping.lookup (Collection_Order.ccompare_integer, Arith.equal_integer)
-   (heap_map h) (More_Word_Library.block_id comp_countable_integer c)
+   (heap_map h) (Preliminary_Library.block_id comp_countable_integer c)
  with None -> Error (LogicErr MissingResource)
  | Some Freed -> Error (LogicErr UseAfterFree)
  | Some (Map m) ->
-   (if Arith.less_int (More_Word_Library.offset comp_countable_integer c)
+   (if Arith.less_int (Preliminary_Library.offset comp_countable_integer c)
          (Arith.int_of_nat (Product_Type.fst (bounds m))) ||
          Arith.less_int (Arith.int_of_nat (Product_Type.snd (bounds m)))
-           (Arith.plus_inta (More_Word_Library.offset comp_countable_integer c)
+           (Arith.plus_inta
+             (Preliminary_Library.offset comp_countable_integer c)
              (Arith.int_of_nat (sizeof t)))
      then Error (LogicErr BufferOverrun)
      else Success
             (retrieve_tval m
-              (Arith.nat (More_Word_Library.offset comp_countable_integer c)) t
-              (More_Word_Library.perm_cap_load comp_countable_integer
-                c)))))))));;
+              (Arith.nat (Preliminary_Library.offset comp_countable_integer c))
+              t (Preliminary_Library.perm_cap_load comp_countable_integer
+                  c)))))))));;
 
 let rec next_block_update
   next_blocka (Heap_ext (next_block, heap_map, more)) =
@@ -2884,9 +3124,9 @@ let rec next_block (Heap_ext (next_block, heap_map, more)) = next_block;;
 let rec alloc
   h c s =
     (let cap =
-       More_Word_Library.Mem_capability_ext
+       Preliminary_Library.Mem_capability_ext
          (next_block h, Arith.zero_inta, Arith.zero_nat, s, true, c, true, c, c,
-           false, More_Word_Library.Capability_ext (true, ()))
+           false, Preliminary_Library.Capability_ext (true, ()))
        in
      let ha =
        heap_map_update
@@ -2927,7 +3167,7 @@ let rec store_cap
     (if Arith.equal_nata n Arith.zero_nat then obj
       else store_cap
              (Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat) uu
-               (ACap (More_Word_Library.truncate comp_countable_integer uv,
+               (ACap (Preliminary_Library.truncate comp_countable_integer uv,
                        Arith.minus_nat n Arith.one_nat))
                obj)
              (Arith.suc uu) uv (Arith.minus_nat n Arith.one_nat));;
@@ -2935,28 +3175,28 @@ let rec store_cap
 let rec store_tval
   obj off vala =
     (match vala
-      with More_Word_Library.Uint8_v v ->
+      with Preliminary_Library.Uint8_v v ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
               false (tags obj))
           (content_update (fun _ -> store_bytes (content obj) off [v]) obj)
-      | More_Word_Library.Sint8_v v ->
+      | Preliminary_Library.Sint8_v v ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
               false (tags obj))
           (content_update
             (fun _ ->
@@ -2971,16 +3211,16 @@ let rec store_tval
                        (Type_Length.len_bit0 Type_Length.len_num1)))
                    v])
             obj)
-      | More_Word_Library.Uint16_v v ->
+      | Preliminary_Library.Uint16_v v ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
               false (tags obj))
           (content_update
             (fun _ ->
@@ -2995,16 +3235,16 @@ let rec store_tval
                       (Type_Length.len_bit0 Type_Length.len_num1)))
                   v))
             obj)
-      | More_Word_Library.Sint16_v v ->
+      | Preliminary_Library.Sint16_v v ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
               false (tags obj))
           (content_update
             (fun _ ->
@@ -3020,16 +3260,16 @@ let rec store_tval
                       (Type_Length.len_bit0 Type_Length.len_num1)))
                   v))
             obj)
-      | More_Word_Library.Uint32_v v ->
+      | Preliminary_Library.Uint32_v v ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
               false (tags obj))
           (content_update
             (fun _ ->
@@ -3045,16 +3285,16 @@ let rec store_tval
                       (Type_Length.len_bit0 Type_Length.len_num1)))
                   v))
             obj)
-      | More_Word_Library.Sint32_v v ->
+      | Preliminary_Library.Sint32_v v ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
               false (tags obj))
           (content_update
             (fun _ ->
@@ -3071,16 +3311,16 @@ let rec store_tval
                       (Type_Length.len_bit0 Type_Length.len_num1)))
                   v))
             obj)
-      | More_Word_Library.Uint64_v v ->
+      | Preliminary_Library.Uint64_v v ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
               false (tags obj))
           (content_update
             (fun _ ->
@@ -3097,16 +3337,16 @@ let rec store_tval
                       (Type_Length.len_bit0 Type_Length.len_num1)))
                   v))
             obj)
-      | More_Word_Library.Sint64_v v ->
+      | Preliminary_Library.Sint64_v v ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
               false (tags obj))
           (content_update
             (fun _ ->
@@ -3124,123 +3364,127 @@ let rec store_tval
                       (Type_Length.len_bit0 Type_Length.len_num1)))
                   v))
             obj)
-      | More_Word_Library.Cap_v c ->
+      | Preliminary_Library.Cap_v c ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
-              (More_Word_Library.tag comp_countable_integer c) (tags obj))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
+              (Preliminary_Library.tag comp_countable_integer c) (tags obj))
           (content_update
             (fun _ ->
-              store_cap (content obj) off c (sizeof More_Word_Library.Cap))
+              store_cap (content obj) off c (sizeof Preliminary_Library.Cap))
             obj)
-      | More_Word_Library.Cap_v_frag (c, n) ->
+      | Preliminary_Library.Cap_v_frag (c, n) ->
         tags_update
           (fun _ ->
             Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
               (if Arith.equal_nata
-                    (Arith.modulo_nat off (sizeof More_Word_Library.Cap))
+                    (Arith.modulo_nat off (sizeof Preliminary_Library.Cap))
                     Arith.zero_nat
                 then off
                 else Arith.minus_nat off
-                       (Arith.modulo_nat off (sizeof More_Word_Library.Cap)))
+                       (Arith.modulo_nat off (sizeof Preliminary_Library.Cap)))
               false (tags obj))
           (content_update
             (fun _ ->
               Mapping.update (Collection_Order.ccompare_nat, Arith.equal_nat)
-                off (ACap (More_Word_Library.truncate comp_countable_integer c,
+                off (ACap (Preliminary_Library.truncate comp_countable_integer
+                             c,
                             n))
                 (content obj))
             obj));;
 
 let rec store
   h c v =
-    (if Product_Type.equal_bool (More_Word_Library.tag comp_countable_integer c)
-          false
+    (if Product_Type.equal_bool
+          (Preliminary_Library.tag comp_countable_integer c) false
       then Error (C2Err TagViolation)
       else (if Product_Type.equal_bool
-                 (More_Word_Library.perm_store comp_countable_integer c) false
+                 (Preliminary_Library.perm_store comp_countable_integer c) false
              then Error (C2Err PermitStoreViolation)
-             else (if (match v with More_Word_Library.Uint8_v _ -> false
-                        | More_Word_Library.Sint8_v _ -> false
-                        | More_Word_Library.Uint16_v _ -> false
-                        | More_Word_Library.Sint16_v _ -> false
-                        | More_Word_Library.Uint32_v _ -> false
-                        | More_Word_Library.Sint32_v _ -> false
-                        | More_Word_Library.Uint64_v _ -> false
-                        | More_Word_Library.Sint64_v _ -> false
-                        | More_Word_Library.Cap_v cv ->
-                          not (More_Word_Library.perm_cap_store
+             else (if (match v with Preliminary_Library.Uint8_v _ -> false
+                        | Preliminary_Library.Sint8_v _ -> false
+                        | Preliminary_Library.Uint16_v _ -> false
+                        | Preliminary_Library.Sint16_v _ -> false
+                        | Preliminary_Library.Uint32_v _ -> false
+                        | Preliminary_Library.Sint32_v _ -> false
+                        | Preliminary_Library.Uint64_v _ -> false
+                        | Preliminary_Library.Sint64_v _ -> false
+                        | Preliminary_Library.Cap_v cv ->
+                          not (Preliminary_Library.perm_cap_store
                                 comp_countable_integer c) &&
-                            More_Word_Library.tag comp_countable_integer cv
-                        | More_Word_Library.Cap_v_frag (_, _) -> false
-                        | More_Word_Library.Undef -> false)
+                            Preliminary_Library.tag comp_countable_integer cv
+                        | Preliminary_Library.Cap_v_frag (_, _) -> false
+                        | Preliminary_Library.Undef -> false)
                     then Error (C2Err PermitStoreCapViolation)
-                    else (if (match v with More_Word_Library.Uint8_v _ -> false
-                               | More_Word_Library.Sint8_v _ -> false
-                               | More_Word_Library.Uint16_v _ -> false
-                               | More_Word_Library.Sint16_v _ -> false
-                               | More_Word_Library.Uint32_v _ -> false
-                               | More_Word_Library.Sint32_v _ -> false
-                               | More_Word_Library.Uint64_v _ -> false
-                               | More_Word_Library.Sint64_v _ -> false
-                               | More_Word_Library.Cap_v cv ->
-                                 not (More_Word_Library.perm_cap_store_local
+                    else (if (match v
+                               with Preliminary_Library.Uint8_v _ -> false
+                               | Preliminary_Library.Sint8_v _ -> false
+                               | Preliminary_Library.Uint16_v _ -> false
+                               | Preliminary_Library.Sint16_v _ -> false
+                               | Preliminary_Library.Uint32_v _ -> false
+                               | Preliminary_Library.Sint32_v _ -> false
+                               | Preliminary_Library.Uint64_v _ -> false
+                               | Preliminary_Library.Sint64_v _ -> false
+                               | Preliminary_Library.Cap_v cv ->
+                                 not (Preliminary_Library.perm_cap_store_local
                                        comp_countable_integer c) &&
-                                   (More_Word_Library.tag comp_countable_integer
-                                      cv &&
-                                     not (More_Word_Library.perm_global
+                                   (Preliminary_Library.tag
+                                      comp_countable_integer cv &&
+                                     not (Preliminary_Library.perm_global
    comp_countable_integer cv))
-                               | More_Word_Library.Cap_v_frag (_, _) -> false
-                               | More_Word_Library.Undef -> false)
+                               | Preliminary_Library.Cap_v_frag (_, _) -> false
+                               | Preliminary_Library.Undef -> false)
                            then Error (C2Err PermitStoreLocalCapViolation)
                            else (if Arith.less_int
                                       (Arith.int_of_nat
-(Arith.plus_nat (More_Word_Library.base comp_countable_integer c)
-  (More_Word_Library.len comp_countable_integer c)))
+(Arith.plus_nat (Preliminary_Library.base comp_countable_integer c)
+  (Preliminary_Library.len comp_countable_integer c)))
                                       (Arith.plus_inta
-(More_Word_Library.offset comp_countable_integer c)
-(Arith.int_of_nat (sizeof (More_Word_Library.memval_type v))))
+(Preliminary_Library.offset comp_countable_integer c)
+(Arith.int_of_nat (sizeof (Preliminary_Library.memval_type v))))
                                   then Error (C2Err LengthViolation)
                                   else (if Arith.less_int
-     (More_Word_Library.offset comp_countable_integer c)
-     (Arith.int_of_nat (More_Word_Library.base comp_countable_integer c))
+     (Preliminary_Library.offset comp_countable_integer c)
+     (Arith.int_of_nat (Preliminary_Library.base comp_countable_integer c))
  then Error (C2Err LengthViolation)
  else (if not (Arith.equal_inta
                 (Arith.modulo_inta
-                  (More_Word_Library.offset comp_countable_integer c)
-                  (Arith.int_of_nat (sizeof (More_Word_Library.memval_type v))))
+                  (Preliminary_Library.offset comp_countable_integer c)
+                  (Arith.int_of_nat
+                    (sizeof (Preliminary_Library.memval_type v))))
                 Arith.zero_inta)
         then Error (C2Err BadAddressViolation)
-        else (if More_Word_Library.equal_ccval
+        else (if Preliminary_Library.equal_ccval
                    (Arith.equal_integer, comp_countable_integer) v
-                   More_Word_Library.Undef
+                   Preliminary_Library.Undef
                then Error (LogicErr (Unhandled ""))
                else (match
                       Mapping.lookup
                         (Collection_Order.ccompare_integer, Arith.equal_integer)
                         (heap_map h)
-                        (More_Word_Library.block_id comp_countable_integer c)
+                        (Preliminary_Library.block_id comp_countable_integer c)
                       with None -> Error (LogicErr MissingResource)
                       | Some Freed -> Error (LogicErr UseAfterFree)
                       | Some (Map m) ->
                         (if Arith.less_int
-                              (More_Word_Library.offset comp_countable_integer
+                              (Preliminary_Library.offset comp_countable_integer
                                 c)
                               (Arith.int_of_nat
                                 (Product_Type.fst (bounds m))) ||
                               Arith.less_int
                                 (Arith.int_of_nat (Product_Type.snd (bounds m)))
                                 (Arith.plus_inta
-                                  (More_Word_Library.offset
+                                  (Preliminary_Library.offset
                                     comp_countable_integer c)
                                   (Arith.int_of_nat
-                                    (sizeof (More_Word_Library.memval_type v))))
+                                    (sizeof
+                                      (Preliminary_Library.memval_type v))))
                           then Error (LogicErr BufferOverrun)
                           else Success
                                  (heap_map_update
@@ -3248,10 +3492,10 @@ let rec store
                                      Mapping.update
                                        (Collection_Order.ccompare_integer,
  Arith.equal_integer)
-                                       (More_Word_Library.block_id
+                                       (Preliminary_Library.block_id
  comp_countable_integer c)
                                        (Map
- (store_tval m (Arith.nat (More_Word_Library.offset comp_countable_integer c))
+ (store_tval m (Arith.nat (Preliminary_Library.offset comp_countable_integer c))
    v))
                                        (heap_map h))
                                    h)))))))))));;
@@ -3267,17 +3511,17 @@ let rec memcpy_cap
   h uw ux n =
     (if Arith.equal_nata n Arith.zero_nat then Success h
       else (if Arith.less_nat (Arith.suc (Arith.minus_nat n Arith.one_nat))
-                 (sizeof More_Word_Library.Cap)
+                 (sizeof Preliminary_Library.Cap)
              then memcpy_prim h uw ux
                     (Arith.suc (Arith.minus_nat n Arith.one_nat))
-             else (let x = load h ux More_Word_Library.Cap in
+             else (let x = load h ux Preliminary_Library.Cap in
                     (if not (is_Success x)
                       then memcpy_prim h uw ux
                              (Arith.suc (Arith.minus_nat n Arith.one_nat))
                       else (let xs = res x in
-                             (if More_Word_Library.equal_ccval
+                             (if Preliminary_Library.equal_ccval
                                    (Arith.equal_integer, comp_countable_integer)
-                                   xs More_Word_Library.Undef
+                                   xs Preliminary_Library.Undef
                                then memcpy_prim h uw ux
                                       (Arith.suc
 (Arith.minus_nat n Arith.one_nat))
@@ -3286,42 +3530,42 @@ let rec memcpy_cap
 then memcpy_prim h uw ux (Arith.suc (Arith.minus_nat n Arith.one_nat))
 else (let ys = res y in
        memcpy_cap ys
-         (More_Word_Library.offset_update comp_countable_integer
+         (Preliminary_Library.offset_update comp_countable_integer
            (fun _ ->
              Arith.plus_inta
-               (More_Word_Library.offset comp_countable_integer uw)
-               (Arith.int_of_nat (sizeof More_Word_Library.Cap)))
+               (Preliminary_Library.offset comp_countable_integer uw)
+               (Arith.int_of_nat (sizeof Preliminary_Library.Cap)))
            uw)
-         (More_Word_Library.offset_update comp_countable_integer
+         (Preliminary_Library.offset_update comp_countable_integer
            (fun _ ->
              Arith.plus_inta
-               (More_Word_Library.offset comp_countable_integer ux)
-               (Arith.int_of_nat (sizeof More_Word_Library.Cap)))
+               (Preliminary_Library.offset comp_countable_integer ux)
+               (Arith.int_of_nat (sizeof Preliminary_Library.Cap)))
            ux)
          (Arith.minus_nat (Arith.suc (Arith.minus_nat n Arith.one_nat))
-           (sizeof More_Word_Library.Cap)))))))))))
+           (sizeof Preliminary_Library.Cap)))))))))))
 and memcpy_prim
   h uu uv n =
     (if Arith.equal_nata n Arith.zero_nat then Success h
-      else (let x = load h uv More_Word_Library.Uint8 in
+      else (let x = load h uv Preliminary_Library.Uint8 in
              (if not (is_Success x) then Error (err x)
                else (let xs = res x in
-                      (if More_Word_Library.equal_ccval
+                      (if Preliminary_Library.equal_ccval
                             (Arith.equal_integer, comp_countable_integer) xs
-                            More_Word_Library.Undef
+                            Preliminary_Library.Undef
                         then Error (LogicErr (Unhandled ""))
                         else (let y = store h uu xs in
                                (if not (is_Success y) then Error (err y)
                                  else (let ys = res y in
 memcpy_cap ys
-  (More_Word_Library.offset_update comp_countable_integer
+  (Preliminary_Library.offset_update comp_countable_integer
     (fun _ ->
-      Arith.plus_inta (More_Word_Library.offset comp_countable_integer uu)
+      Arith.plus_inta (Preliminary_Library.offset comp_countable_integer uu)
         Arith.one_inta)
     uu)
-  (More_Word_Library.offset_update comp_countable_integer
+  (Preliminary_Library.offset_update comp_countable_integer
     (fun _ ->
-      Arith.plus_inta (More_Word_Library.offset comp_countable_integer uv)
+      Arith.plus_inta (Preliminary_Library.offset comp_countable_integer uv)
         Arith.one_inta)
     uv)
   (Arith.minus_nat n Arith.one_nat)))))))));;
@@ -3329,23 +3573,23 @@ memcpy_cap ys
 let rec memcpy
   h dst src n =
     (if Arith.equal_nata n Arith.zero_nat then Success h
-      else (if Z.equal (More_Word_Library.block_id comp_countable_integer dst)
-                 (More_Word_Library.block_id comp_countable_integer src) &&
+      else (if Z.equal (Preliminary_Library.block_id comp_countable_integer dst)
+                 (Preliminary_Library.block_id comp_countable_integer src) &&
                  (Arith.less_eq_int
-                    (More_Word_Library.offset comp_countable_integer dst)
-                    (More_Word_Library.offset comp_countable_integer src) &&
+                    (Preliminary_Library.offset comp_countable_integer dst)
+                    (Preliminary_Library.offset comp_countable_integer src) &&
                     Arith.less_int
-                      (More_Word_Library.offset comp_countable_integer src)
+                      (Preliminary_Library.offset comp_countable_integer src)
                       (Arith.plus_inta
-                        (More_Word_Library.offset comp_countable_integer dst)
+                        (Preliminary_Library.offset comp_countable_integer dst)
                         (Arith.int_of_nat n)) ||
                    Arith.less_eq_int
-                     (More_Word_Library.offset comp_countable_integer src)
-                     (More_Word_Library.offset comp_countable_integer dst) &&
+                     (Preliminary_Library.offset comp_countable_integer src)
+                     (Preliminary_Library.offset comp_countable_integer dst) &&
                      Arith.less_int
-                       (More_Word_Library.offset comp_countable_integer dst)
+                       (Preliminary_Library.offset comp_countable_integer dst)
                        (Arith.plus_inta
-                         (More_Word_Library.offset comp_countable_integer src)
+                         (Preliminary_Library.offset comp_countable_integer src)
                          (Arith.int_of_nat n)))
              then Error (LogicErr (Unhandled ""))
              else memcpy_cap h dst src n));;
@@ -3406,41 +3650,113 @@ let rec get_memory_leak_size
 end;; (*struct CHERI_C_Concrete_Memory_Model*)
 
 module CHERI_C_Global_Environment : sig
+  type 'a genv_ext
+  val genv_init : unit genv_ext
   val set_glob_var :
-    unit CHERI_C_Concrete_Memory_Model.heap_ext ->
+    unit genv_ext ->
       bool ->
         Arith.nat ->
           string ->
-            (string,
-              (Z.t, unit More_Word_Library.capability_ext)
-                More_Word_Library.mem_capability_ext)
-              Mapping.mapping ->
-              (unit CHERI_C_Concrete_Memory_Model.heap_ext *
-                ((Z.t, unit More_Word_Library.capability_ext)
-                   More_Word_Library.mem_capability_ext *
-                  (string,
-                    (Z.t, unit More_Word_Library.capability_ext)
-                      More_Word_Library.mem_capability_ext)
-                    Mapping.mapping))
-                CHERI_C_Concrete_Memory_Model.result
+            (unit genv_ext *
+              (Z.t, unit Preliminary_Library.capability_ext)
+                Preliminary_Library.mem_capability_ext)
+              CHERI_C_Concrete_Memory_Model.result
+  val load_glob_var :
+    unit genv_ext ->
+      string ->
+        Preliminary_Library.cctype ->
+          Z.t Preliminary_Library.ccval CHERI_C_Concrete_Memory_Model.result
+  val store_glob_var :
+    unit genv_ext ->
+      string ->
+        Z.t Preliminary_Library.ccval ->
+          unit genv_ext CHERI_C_Concrete_Memory_Model.result
 end = struct
 
+type 'a genv_ext =
+  Genv_ext of
+    unit CHERI_C_Concrete_Memory_Model.heap_ext *
+      (string,
+        (Z.t, unit Preliminary_Library.capability_ext)
+          Preliminary_Library.mem_capability_ext)
+        Mapping.mapping *
+      'a;;
+
+let genv_init : unit genv_ext
+  = Genv_ext
+      (CHERI_C_Concrete_Memory_Model.Heap_ext
+         (Z.zero,
+           Mapping_Impl.mapping_empty Collection_Order.ccompare_integer
+             (Phantom_Type.of_phantom Mapping_Impl.mapping_impl_integer),
+           ()),
+        Mapping_Impl.mapping_empty Collection_Order.ccompare_literal
+          (Phantom_Type.of_phantom Mapping_Impl.mapping_impl_literal),
+        ());;
+
+let rec memory (Genv_ext (memory, var_map, more)) = memory;;
+
+let rec var_map (Genv_ext (memory, var_map, more)) = var_map;;
+
+let rec var_map_update
+  var_mapa (Genv_ext (memory, var_map, more)) =
+    Genv_ext (memory, var_mapa var_map, more);;
+
+let rec memory_update
+  memorya (Genv_ext (memory, var_map, more)) =
+    Genv_ext (memorya memory, var_map, more);;
+
 let rec alloc_glob_var
-  h c s =
-    (let ha = CHERI_C_Concrete_Memory_Model.alloc h c s in
+  g c s =
+    (let h = CHERI_C_Concrete_Memory_Model.alloc (memory g) c s in
       CHERI_C_Concrete_Memory_Model.Success
-        (Product_Type.fst (CHERI_C_Concrete_Memory_Model.res ha),
-          More_Word_Library.perm_global_update
+        (memory_update
+           (fun _ -> Product_Type.fst (CHERI_C_Concrete_Memory_Model.res h)) g,
+          Preliminary_Library.perm_global_update
             CHERI_C_Concrete_Memory_Model.comp_countable_integer (fun _ -> true)
-            (Product_Type.snd (CHERI_C_Concrete_Memory_Model.res ha))));;
+            (Product_Type.snd (CHERI_C_Concrete_Memory_Model.res h))));;
 
 let rec set_glob_var
-  h c s v g =
-    (let (ha, cap) = CHERI_C_Concrete_Memory_Model.res (alloc_glob_var h c s) in
-     let ga =
-       Mapping.update (Collection_Order.ccompare_literal, Stringa.equal_literal)
-         v cap g
+  g c s v =
+    (let (ga, cap) = CHERI_C_Concrete_Memory_Model.res (alloc_glob_var g c s) in
+     let vm =
+       Mapping.update (Collection_Order.ccompare_literal, Str.equal_literal) v
+         cap (var_map ga)
        in
-      CHERI_C_Concrete_Memory_Model.Success (ha, (cap, ga)));;
+      CHERI_C_Concrete_Memory_Model.Success
+        (var_map_update (fun _ -> vm) ga, cap));;
+
+let rec load_glob_var
+  g x t =
+    (let cap_op =
+       Mapping.lookup (Collection_Order.ccompare_literal, Str.equal_literal)
+         (var_map g) x
+       in
+      (if Option.is_none cap_op
+        then CHERI_C_Concrete_Memory_Model.Error
+               (CHERI_C_Concrete_Memory_Model.LogicErr
+                 (CHERI_C_Concrete_Memory_Model.Unhandled ""))
+        else (let cap = Option.the cap_op in
+               CHERI_C_Concrete_Memory_Model.load (memory g) cap t)));;
+
+let rec store_glob_var
+  g x v =
+    (let cap_op =
+       Mapping.lookup (Collection_Order.ccompare_literal, Str.equal_literal)
+         (var_map g) x
+       in
+      (if Option.is_none cap_op
+        then CHERI_C_Concrete_Memory_Model.Error
+               (CHERI_C_Concrete_Memory_Model.LogicErr
+                 (CHERI_C_Concrete_Memory_Model.Unhandled ""))
+        else (let cap = Option.the cap_op in
+              let st = CHERI_C_Concrete_Memory_Model.store (memory g) cap v in
+               (if not (CHERI_C_Concrete_Memory_Model.is_Success st)
+                 then CHERI_C_Concrete_Memory_Model.Error
+                        (CHERI_C_Concrete_Memory_Model.err st)
+                 else CHERI_C_Concrete_Memory_Model.Success
+                        (memory_update
+                          (fun _ -> CHERI_C_Concrete_Memory_Model.res st)
+                          g)))));;
 
 end;; (*struct CHERI_C_Global_Environment*)
+
