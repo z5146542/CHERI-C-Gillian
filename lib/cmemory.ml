@@ -3,6 +3,7 @@ module Literal = Gillian.Gil_syntax.Literal
 module Expr = Gillian.Gil_syntax.Expr
 open CHERI_C_Memory_Model
 module CHERI = CHERI_C_Concrete_Memory_Model
+module CHERI_GENV = CHERI_C_Global_Environment
 open ValueTranslation
 open LActions
 (* ************** *)
@@ -47,11 +48,10 @@ type vt = Values.t
 type st = Subst.t
 type err_t = CHERI.errtype
 type init_data = unit
-(*type init_data = unit*)
 
-type t = { mem : unit CHERI.heap_ext }
+type t = { mem : unit CHERI.heap_ext; genv : unit CHERI_GENV.genv_ext }
 
-let empty = { mem = CHERI.init_heap }
+let empty = { mem = CHERI.init_heap; genv = CHERI_GENV.genv_init }
 
 let init _ = empty
 
@@ -62,19 +62,19 @@ type action_ret = (t * vt list, err_t) result
 let execute_alloc heap params =
   let open Literal in
   let open VTypes in
-  let open More_Word_Library in
+  let open Preliminary_Library in
     match params with
     | [ LList [ String typ ; Int siz ] ] ->
       let res = CHERI.alloc heap.mem true (Arith.nat_of_integer siz) in
       (match res with
       | Error e -> Error e
-      | Success (memout, cap) -> Ok ({ mem = memout }, llist_to_list (mm_to_gil (Cap_v cap))))
+      | Success (memout, cap) -> Ok ({ mem = memout; genv = heap.genv }, llist_to_list (mm_to_gil (Cap_v cap))))
     | _ -> failwith "FAIL: alloc arguments does not match"
 
 let execute_free heap params =
   let open Literal in
   let open VTypes in
-  let open More_Word_Library in
+  let open Preliminary_Library in
     match params with
     | [ LList [ Loc block_id ; Int offset ; Int base ; Int len ; Bool perm_load ;
                 Bool perm_cap_load ; Bool perm_store ; Bool perm_cap_store ;
@@ -87,13 +87,13 @@ let execute_free heap params =
       let res = CHERI.free heap.mem mm_cap in
       (match res with
       | Error e -> Error e
-      | Success (memout, cap) -> Ok ({ mem = memout }, llist_to_list (mm_to_gil (Cap_v cap))))
+      | Success (memout, cap) -> Ok ({ mem = memout; genv = heap.genv }, llist_to_list (mm_to_gil (Cap_v cap))))
     | _ -> failwith "FAIL: free params does not match capability."
 
 let execute_load heap params =
   let open Literal in
   let open VTypes in
-  let open More_Word_Library in
+  let open Preliminary_Library in
     match params with
     | [ LList [ Loc block_id ; Int offset ; Int base ; Int len ; Bool perm_load ;
                 Bool perm_cap_load ; Bool perm_store ; Bool perm_cap_store ;
@@ -121,7 +121,7 @@ let execute_load heap params =
 let execute_store heap params =
   let open Literal in
   let open VTypes in
-  let open More_Word_Library in
+  let open Preliminary_Library in
     match params with
     | [ LList [ Loc block_id ; Int offset ; Int base ; Int len ; Bool perm_load ;
                 Bool perm_cap_load ; Bool perm_store ; Bool perm_cap_store ;
@@ -135,13 +135,13 @@ let execute_store heap params =
       let res = CHERI.store heap.mem mm_cap mval in
       (match res with
       | Error e -> Error e
-      | Success memout -> Ok ({ mem = memout }, []))
+      | Success memout -> Ok ({ mem = memout; genv = heap.genv }, []))
     | _ -> failwith "FAIL : store params do not match."
 
 let execute_copy heap params =
   let open Literal in
   let open VTypes in
-  let open More_Word_Library in
+  let open Preliminary_Library in
   match params with
   | [ LList [ Loc block_id_1 ; Int offset_1 ; Int base_1 ; Int len_1 ; Bool perm_load_1 ;
                 Bool perm_cap_load_1 ; Bool perm_store_1 ; Bool perm_cap_store_1 ;
@@ -161,13 +161,13 @@ let execute_copy heap params =
     let res = CHERI.memcpy heap.mem mm_cap_dst mm_cap_src (Arith.nat_of_integer n) in
     (match res with
     | Error e -> Error e
-    | Success memout -> Ok ({ mem = memout }, [gil_cap_1]))
-  | _ -> failwith "Fail : store params do not match." 
+    | Success memout -> Ok ({ mem = memout; genv = heap.genv }, [gil_cap_1]))
+  | _ -> failwith "Fail : store params do not match."
 
 let execute_cast heap params =
   let open Literal in
   let open VTypes in
-  let open More_Word_Library in
+  let open Preliminary_Library in
   match params with
   | [ String ctyp ; LList [ String typ ; Int siz ] ] ->
     let vtyp = c_to_vtypes ctyp in
@@ -180,23 +180,67 @@ let execute_null heap params =
   | [] -> Ok (heap, llist_to_list (mm_to_gil (Cap_v CHERI.null_capability)))
   | _ -> failwith "FAIL: NULL has arguments. Check file.log"
 
+let execute_globset heap params =
+  let open Literal in
+  match params with
+  | [ String var ; Int siz ] ->
+    let res = CHERI_GENV.set_glob_var heap.genv true (Arith.nat_of_integer siz) var in
+    (match res with
+    | Error e -> Error e
+    | Success (genvout, cap) -> Ok ({ mem = heap.mem; genv = genvout }, llist_to_list (mm_to_gil (Cap_v cap))))
+  | _ -> failwith "FAIL: set_glob_var params do not match."
+
+let execute_loadg heap params =
+  let open Literal in
+  let open VTypes in
+  match params with
+  | [ String var ; String typ ] when
+    String.equal typ u8_type
+    || String.equal typ s8_type
+    || String.equal typ u16_type
+    || String.equal typ s16_type
+    || String.equal typ u32_type
+    || String.equal typ s32_type
+    || String.equal typ u64_type
+    || String.equal typ s64_type
+    || String.equal typ cap_type ->
+    let res = CHERI_GENV.load_glob_var heap.genv var (vtype_to_mm_type typ) in
+    (match res with
+    | Error e -> Error e
+    | Success mval -> Ok (heap, llist_to_list (mm_to_gil mval)))
+  | _ -> failwith "FAIL: loadgv params do not match."
+
+let execute_storeg heap params =
+  let open Literal in
+  match params with
+  | [ String var ; LList value ] ->
+    let mval = gil_to_mm (list_to_llist value) in
+    let res = CHERI_GENV.store_glob_var heap.genv var mval in
+    (match res with
+    | Error e -> Error e
+    | Success genvout -> Ok ({ mem = heap.mem; genv = genvout }, []))
+  | _ -> failwith "FAIL: storegv params do not match."
+
 let execute_action name heap params =
   let action = str_to_mem_ac name in
   match action with
-  | Alloc -> execute_alloc heap params
-  | Free  -> execute_free  heap params
-  | Load  -> execute_load  heap params
-  | Store -> execute_store heap params
-  | Copy  -> execute_copy  heap params
-  | Cast  -> execute_cast  heap params
-  | Null  -> execute_null  heap params
+  | Alloc    -> execute_alloc   heap params
+  | Free     -> execute_free    heap params
+  | Load     -> execute_load    heap params
+  | Store    -> execute_store   heap params
+  | Copy     -> execute_copy    heap params
+  | Cast     -> execute_cast    heap params
+  | Null     -> execute_null    heap params
+  | GlobSet  -> execute_globset heap params
+  | LoadG    -> execute_loadg   heap params
+  | StoreG   -> execute_storeg  heap params
 
 let pp_mem fmt mem =
   let open CHERI in
   Format.fprintf fmt "{@[<v 2>@\nnext curr: %i\
                               @\nunfreed memory: %i Bytes\
                               @\nunfreed blocks: [%s]@\n@]@\n}"
-    (Z.to_int (next_block mem)) 
+    (Z.to_int (next_block mem))
     (Z.to_int (Arith.integer_of_nat (get_memory_leak_size mem (Arith.nat_of_integer (next_block mem)))))
     (String.concat ", " (List.map Z.to_string (List.rev (get_unfreed_blocks mem (Arith.nat_of_integer (next_block mem))))))
 

@@ -39,7 +39,7 @@ let c_to_vtypes s =
 
 let rec vtype_to_mm_type str =
   let open VTypes in
-  let open More_Word_Library in
+  let open Preliminary_Library in
   if str = u8_type then Uint8
   else if str = s8_type then Sint8
   else if str = u16_type then Uint16
@@ -67,7 +67,7 @@ let rec vtype_to_smm_type str =
 
 let gil_to_mm gil_value =
   let open Literal in
-  let open More_Word_Library in
+  let open Preliminary_Library in
   let open CHERI_C_Concrete_Memory_Model in
   match gil_value with
   | LList [ String typ ; Int ival ] when String.equal typ VTypes.u8_type ->
@@ -150,7 +150,7 @@ let gil_to_mm gil_value =
 
 let mm_to_gil mm_value =
   let open Literal in
-  let open More_Word_Library in
+  let open Preliminary_Library in
   let open CHERI_C_Concrete_Memory_Model in
   match mm_value with
   | Uint8_v v -> LList [ String VTypes.u8_type ; Int (integer_of_word8 v) ]
