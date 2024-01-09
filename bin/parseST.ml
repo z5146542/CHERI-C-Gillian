@@ -296,7 +296,7 @@ let gen_struct_sizeof_proc name size =
 let gen_struct_declare_proc name fls = 
   let undefs = String.concat ", " (List.init fls (fun _ -> "undefined")) in
   begin
-    Printf.printf "proc %s_declare (){ \n" name;
+    Printf.printf "proc %s_declare () {\n" name;
     Printf.printf "    ret := {{ %s }};\n" undefs;
     Printf.printf "    return\n};\n\n";
     ()
@@ -305,7 +305,7 @@ let gen_struct_declare_proc name fls =
 
 let gen_struct_declare_cap_proc name size =
   begin
-    Printf.printf "proc %s_declare_cap (){ \n" name;
+    Printf.printf "proc %s_declare_cap () {\n" name;
     Printf.printf "   len :=  \"i__length\"(%di);\n" (size/8);
     Printf.printf "   ret := [alloc]({{ \"uint64\", len }});\n";
     Printf.printf "   return\n};\n\n";
