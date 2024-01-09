@@ -22,7 +22,7 @@ let run cmd =
   (* loop "" *)
   first
 
-let includes = "import \"unops_common.gil\", \"binops_common.gil\", \"internals.gil\", \"cheri_purecap_compressed.gil\", \"cheri_purecap_uncompressed.gil\", \"stdlib_cap256.gil\", \"string_common.gil\";\n\n"
+let includes = "import \"unops_common.gil\", \"binops_common.gil\", \"internals.gil\", \"cheri_purecap_compressed.gil\", \"cheri_purecap_uncompressed.gil\", \"stdlib_cap256.gil\", \"string_common.gil\", \"global.gil\";\n\n"
 let esbmc_run = "bin/esbmc "
 let cheri_settings = "--no-library --cheri purecap --cheri-uncompressed "
 let sysroot = "--sysroot ~/Downloads/rootfs-mips64-purecap.cheribsd-headers "

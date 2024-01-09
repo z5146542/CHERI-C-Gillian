@@ -97,7 +97,7 @@ let compact_ty (t:string) = (* for proc generation *)
    | "unsigned long int"  -> "uint64"
    | "signed long int"    -> "int64"
    | _                    -> if contains t "CAP$"
-                               then "\"cap\""
+                               then "cap"
                                else "(compact_ty) err"
 
 (* Symbol Table Structure *)
@@ -293,6 +293,25 @@ let gen_struct_sizeof_proc name size =
   end
 ;;
 
+let gen_struct_declare_proc name fls = 
+  let undefs = String.concat ", " (List.init fls (fun _ -> "undefined")) in
+  begin
+    Printf.printf "proc %s_declare (){ \n" name;
+    Printf.printf "    ret := {{ %s }};\n" undefs;
+    Printf.printf "    return\n};\n\n";
+    ()
+  end
+;;
+
+let gen_struct_declare_cap_proc name size =
+  begin
+    Printf.printf "proc %s_declare_cap (){ \n" name;
+    Printf.printf "   ret := [alloc]({{ \"uint64\", %di }});\n" (size/8);
+    Printf.printf "   return\n};\n\n";
+    ()
+   end
+;;
+
 let gen_get_field_proc sn fn i = (* struct name, field name, field index *)
   begin
     Printf.printf "proc %s_get_%s (val) {\n" sn fn;
@@ -340,7 +359,7 @@ let gen_load_field_proc sn fn ty off = (* struct name, field name, field type, f
     Printf.printf "proc %s_load_%s (val) {\n" sn fn;
     Printf.printf "    nval := \"i__unops_cast\"(1i, val);\n";
     Printf.printf "    nnval := \"i__binops_add\"(nval, {{ \"int32\", %di }});\n" (off/8);
-    Printf.printf "    ret := \"i__load\"(nnval, %s);\n" (compact_ty ty);
+    Printf.printf "    ret := \"i__load\"(nnval, \"%s\");\n" (compact_ty ty);
     Printf.printf "    return\n};\n\n"
   end
 ;;
@@ -382,6 +401,8 @@ let rec generate_procs (symTable:tyTree list) =
                   match hd with
                       NilStruct ->  ()
                     | Struct(sn, fl, sz) -> let () = gen_struct_sizeof_proc sn sz in
+                                            let () = gen_struct_declare_proc sn (List.length fl) in
+                                            let () = gen_struct_declare_cap_proc sn sz in
                                               let () = gen_fields_proc sn fl in                                                
                                                 generate_procs tl
                 end

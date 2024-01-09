@@ -1,6 +1,6 @@
 (install
  (files binops_cap256_all_exec.gil  binops_common.gil internals.gil  
   stdlib_cap256.gil unops_common.gil cheri_purecap_uncompressed.gil 
-  cheri_purecap_compressed.gil string_common.gil)
+  cheri_purecap_compressed.gil string_common.gil global.gil)
  (section share)
  (package instantiation))
