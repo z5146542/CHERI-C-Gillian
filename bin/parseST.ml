@@ -306,7 +306,8 @@ let gen_struct_declare_proc name fls =
 let gen_struct_declare_cap_proc name size =
   begin
     Printf.printf "proc %s_declare_cap (){ \n" name;
-    Printf.printf "   ret := [alloc]({{ \"uint64\", %di }});\n" (size/8);
+    Printf.printf "   len :=  \"i__length\"(%di);\n" (size/8);
+    Printf.printf "   ret := [alloc]({{ \"uint64\", len }});\n";
     Printf.printf "   return\n};\n\n";
     ()
    end
