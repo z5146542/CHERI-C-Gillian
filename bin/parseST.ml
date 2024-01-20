@@ -303,16 +303,6 @@ let gen_struct_declare_proc name fls =
   end
 ;;
 
-let gen_struct_declare_cap_proc name size =
-  begin
-    Printf.printf "proc %s_declare_cap () {\n" name;
-    Printf.printf "   len :=  \"i__length\"(%di);\n" (size/8);
-    Printf.printf "   ret := [alloc]({{ \"uint64\", len }});\n";
-    Printf.printf "   return\n};\n\n";
-    ()
-   end
-;;
-
 let gen_get_field_proc sn fn i = (* struct name, field name, field index *)
   begin
     Printf.printf "proc %s_get_%s (val) {\n" sn fn;
@@ -403,7 +393,6 @@ let rec generate_procs (symTable:tyTree list) =
                       NilStruct ->  ()
                     | Struct(sn, fl, sz) -> let () = gen_struct_sizeof_proc sn sz in
                                             let () = gen_struct_declare_proc sn (List.length fl) in
-                                            let () = gen_struct_declare_cap_proc sn sz in
                                               let () = gen_fields_proc sn fl in                                                
                                                 generate_procs tl
                 end

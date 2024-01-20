@@ -125,12 +125,12 @@ let parse_and_compile_file path =
   let pathtxt' = Filename.chop_extension path ^ ".txt" in 
   let pathtxt = "/tmp/" ^ Filename.basename pathtxt' in
   let output = includes ^
-    (run (esbmc_run ^ cheri_settings ^ sysroot 
-        ^ "--symbol-table-only " ^ path ^ " > " ^ pathtxt ^ "; " ^ parse_st_run 
-        ^ pathtxt ^ "; rm " ^ pathtxt)) ^ 
+    (run ( esbmc_run ^ cheri_settings ^ sysroot 
+        ^ " --symbol-table-only " ^ path ^ " > " ^ pathtxt ^ "; " ^ parse_st_run 
+        ^ pathtxt ^  "; rm " ^ pathtxt  )) ^ 
     (run (esbmc_run ^ cheri_settings ^ sysroot 
         ^ (if !l_esbmc_args = [] then "" else String.concat " " !l_esbmc_args) 
-        ^ " --goto-functions-only " ^ path ^ " | " ^ remove_misc)) 
+        ^ " --goto-functions-only " ^ path ^ " | " ^ remove_misc ))
   in
   let () = Printf.fprintf oc "%s" output in
   (* let () = Printf.fprintf od "%s" output in *)
