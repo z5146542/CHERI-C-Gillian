@@ -100,57 +100,58 @@ let pp_err _ _ =
   failwith
     "Please implement the compiling interface to use with the '-compile' \
      flag or test suites"
-
-let parse_and_compile_file path =
-  let () =
-    if !l_emit_parse_tree then
-      let pathptree = Filename.chop_extension path ^ ".c.ptree" in
-      let oc = open_out pathptree in
-      let output = run (esbmc_run ^ " --parse-tree-only " ^ path ^ " 2>&1") in
-      let () = Printf.fprintf oc "%s" output in
-      close_out oc
-  in
-  let () =
-    if !l_emit_symbol_table then
-      let pathstable = Filename.chop_extension path ^ ".c.stable" in
-      let oc = open_out pathstable in
-      let output = run (esbmc_run ^ " --symbol-table-only " ^ path) in
-      let () = Printf.fprintf oc "%s" output in
-      close_out oc
-  in
-  let pathgil = Filename.chop_extension path ^ ".gil" in
-  (* let snd = Filename.chop_extension path ^ ".giltmp" in *)
-  let oc = open_out pathgil in
-  (* let od = open_out snd in *)
-  let pathtxt' = Filename.chop_extension path ^ ".txt" in 
-  let pathtxt = "/tmp/" ^ Filename.basename pathtxt' in
-  let output = includes ^
-    (run ( esbmc_run ^ cheri_settings ^ sysroot 
-        ^ " --symbol-table-only " ^ path ^ " > " ^ pathtxt ^ "; " ^ parse_st_run 
-        ^ pathtxt ^  "; rm " ^ pathtxt  )) ^ 
-    (run (esbmc_run ^ cheri_settings ^ sysroot 
-        ^ (if !l_esbmc_args = [] then "" else String.concat " " !l_esbmc_args) 
-        ^ " --goto-functions-only " ^ path ^ " | " ^ remove_misc ))
-  in
-  let () = Printf.fprintf oc "%s" output in
-  (* let () = Printf.fprintf od "%s" output in *)
-  let () = close_out oc in
-  (* let () = close_out od in *)
-  let trans_procs = (Gil_parsing.parse_eprog_from_string output).labeled_prog in
-  (pathgil, trans_procs)
   
-
 let parse_and_compile_files files =
   let open IncrementalAnalysis in
   let open Command_line.ParserAndCompiler in 
   let exec_mode = !Gillian.Utils.Config.current_exec_mode in
+  let () =
+    if !l_emit_parse_tree then
+      let ept path =
+      let pathptree = Filename.chop_extension path ^ ".c.ptree" in
+      let oc = open_out pathptree in
+      let output = run (esbmc_run ^ " --parse-tree-only " ^ path ^ " 2>&1") in
+      let () = Printf.fprintf oc "%s" output in
+      close_out oc in
+      List.iter ept files
+  in
+  let () =
+    if !l_emit_symbol_table then
+      let est path =
+      let pathstable = Filename.chop_extension path ^ ".c.stable" in
+      let oc = open_out pathstable in
+      let output = run (esbmc_run ^ " --symbol-table-only " ^ path) in
+      let () = Printf.fprintf oc "%s" output in
+      close_out oc in
+      List.iter est files
+  in
   let source_files = SourceFiles.make () in
-  let rec g filez = match filez with 
-    | f :: fs -> SourceFiles.add_source_file source_files f; (parse_and_compile_file f) :: g fs
-    | []      -> [] in
-  let progs = g files in
-  Ok ({ gil_progs = progs ; source_files; tl_ast = (); init_data = ()})
-
+  let files_string = String.concat " " files in
+  let mainfile = run (esbmc_run ^ cheri_settings ^ sysroot ^ " --symbol-table-only " ^ files_string ^ " | grep -B 1 \"Base name\\.*: main\" | head -1 | sed \"s/Module\\.*:\ //g\"") in
+  let is_mainpath file =
+    try ignore (Str.search_forward (Str.regexp_string (mainfile ^ ".c")) file 0);
+      true
+    with
+      Not_found -> false
+  in
+  let mainpath = List.find is_mainpath files in
+  let pathgil = Filename.chop_extension mainpath ^ ".gil" in
+  let oc = open_out pathgil in
+    let pathtxt' = Filename.chop_extension mainpath ^ ".txt" in
+    let pathtxt = "/tmp/" ^ Filename.basename pathtxt' in
+    let output = includes ^
+      (run ( esbmc_run ^ cheri_settings ^ sysroot
+          ^ " --symbol-table-only " ^ files_string ^ " > " ^ pathtxt ^ "; " ^ parse_st_run
+          ^ pathtxt ^  "; rm " ^ pathtxt  )) ^
+      (run (esbmc_run ^ cheri_settings ^ sysroot
+          ^ (if !l_esbmc_args = [] then "" else String.concat " " !l_esbmc_args)
+          ^ " --goto-functions-only " ^ files_string ^ " | " ^ remove_misc ))
+    in
+  let () = Printf.fprintf oc "%s" output in
+  let () = close_out oc in
+  let trans_procs = (Gil_parsing.parse_eprog_from_string output).labeled_prog in
+  let progs = [(pathgil, trans_procs)] in
+    Ok ({ gil_progs = progs ; source_files; tl_ast = (); init_data = ()})
 
 let other_imports = []
 let env_var_import_path = Some "INSTANTIATION_RUNTIME_PATH"
