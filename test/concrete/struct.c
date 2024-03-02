@@ -28,7 +28,7 @@ int main() {
   
   struct EmptyStruct e;
 
-  struct UniStruct *u;
+  struct UniStruct *u = malloc(sizeof(struct UniStruct));
   u->first = 1;
   int one = u->first;
   assert(one==1);
@@ -40,7 +40,7 @@ int main() {
   int three = b.first + b.second;
   assert(three==3);
 
-  struct TriStruct *t;
+  struct TriStruct *t = malloc(sizeof(struct TriStruct));
   t->first = 1;
   t->second = 2;
   t->third = 3;

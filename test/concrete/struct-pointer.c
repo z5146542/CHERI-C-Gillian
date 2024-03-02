@@ -7,7 +7,7 @@ struct TestStruct {
 };
 
 int main(void) {
-  struct TestStruct *px;
+  struct TestStruct *px = malloc(sizeof(struct TestStruct));
   px->first = 42;
   int x = px->first;
   assert(x==42);
