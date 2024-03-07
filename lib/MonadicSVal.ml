@@ -172,6 +172,15 @@ let of_gil_expr sval_e =
   let* sval_e = Delayed.reduce sval_e in
   match%ent sval_e with
   | undefined -> DO.some SUndef
+  | uint8_typ -> DO.some (SUint8_v (Expr.list_nth sval_e 1))
+  | sint8_typ -> DO.some (SSint8_v (Expr.list_nth sval_e 1))
+  | uint16_typ -> DO.some (SUint16_v (Expr.list_nth sval_e 1))
+  | sint16_typ -> DO.some (SSint16_v (Expr.list_nth sval_e 1))
+  | uint32_typ -> DO.some (SUint32_v (Expr.list_nth sval_e 1))
+  | sint32_typ -> DO.some (SSint32_v (Expr.list_nth sval_e 1))
+  | uint64_typ -> DO.some (SUint64_v (Expr.list_nth sval_e 1))
+  | sint64_typ -> DO.some (SSint64_v (Expr.list_nth sval_e 1))
+
   | obj ->
       let loc_expr = Expr.list_nth sval_e 0 in
       let o  = Expr.list_nth sval_e 1  in
@@ -242,15 +251,7 @@ let of_gil_expr sval_e =
             (aloc, learned)
       in
       DO.some ~learned (SCap_v_frag { block = bl ; offset = o ; base = b ; length = l ; load = l1 ; cload = l2 ; store = s1 ; cstore = s2 ; clstre = s3 ; global = g ; tag = t ; nth = n })
-  | uint8_typ -> DO.some (SUint8_v (Expr.list_nth sval_e 1))
-  | sint8_typ -> DO.some (SSint8_v (Expr.list_nth sval_e 1))
-  | uint16_typ -> DO.some (SUint16_v (Expr.list_nth sval_e 1))
-  | sint16_typ -> DO.some (SSint16_v (Expr.list_nth sval_e 1))
-  | uint32_typ -> DO.some (SUint32_v (Expr.list_nth sval_e 1))
-  | sint32_typ -> DO.some (SSint32_v (Expr.list_nth sval_e 1))
-  | uint64_typ -> DO.some (SUint64_v (Expr.list_nth sval_e 1))
-  | sint64_typ -> DO.some (SSint64_v (Expr.list_nth sval_e 1))
-  | _ -> DO.none ()
+    | _ -> DO.none ()
 
 let of_gil_expr_exn sval_e =
   let* value_opt = of_gil_expr sval_e in
