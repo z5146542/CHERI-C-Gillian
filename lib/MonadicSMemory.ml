@@ -626,6 +626,7 @@ let execute_globset g [var; size] =
      Lit x -> match x with String s -> s | _ -> failwith "globset: unexpected literal for var"
      | _ -> failwith "globset: unexpected expression for var"
    in
+    Logging.verbose (fun fmt -> fmt " globset with string : %a " Expr.full_pp (var));
    let s_cap =
      SVal.SCap_v { block = loc; offset = zero_i; base = zero_i; length = size;
                    load = Lit(Bool true); cload = Lit(Bool true); store = Lit(Bool true);
@@ -639,19 +640,20 @@ let execute_globset g [var; size] =
 
 let execute_loadg g [var; typ] =
    let open Expr in
-   let key =
+   let ident_string =
    match var with
      Lit x -> match x with  String s -> s | _ -> failwith "loadg: unexpected literal for var"
    | _ -> failwith "loadg: unexpected expression for var"
    in
-   let var_value = PMap.find_first_opt (fun x -> x=key) g.genv.var_map in
-   match var_value with
+   (*let var_value = PMap.find_first_opt (fun x -> x=key) g.genv.var_map in*)
+   let cap = PMap.find ident_string g.genv.var_map in
+   (*match var_value with
        None -> failwith ("tried to load glovar " ^ key ^ " not in store")
-     | Some res ->
+     | Some res ->*)
      let open DR.Syntax in
      let open Formula.Infix in
      let open Expr.Infix in
-     let (name, cap) = res in
+     (*let (name, cap) = res in*)
      match cap with
      | SVal.SCap_v { block = loc; offset = off; base = base; length = len; load = l1; cload = l2; store = s1; cstore = s2; clstre = s3; global = glob; tag = tag } ->
      let typ = match typ with Lit (String s) -> s | _ -> failwith ":(" in
@@ -681,7 +683,7 @@ let execute_loadg g [var; typ] =
          let gil_ret_val = llist_to_list gil_value in
          DR.ok
            (make_branch ~heap:{ mem = g.mem; genv = { memory = ref mem; var_map = g.genv.var_map } }  ~rets:gil_ret_val ())
-     | _ -> fail_ungracefully "loadg" [expr_of_loc_name key]
+     | _ -> fail_ungracefully "loadg" [expr_of_loc_name ident_string]
 
 let execute_storeg g [var; value] =
   let open Expr in
@@ -693,11 +695,12 @@ let execute_storeg g [var; value] =
      Lit x -> match x with  String s -> s | _ -> failwith "storeg: unexpected literal for var"
    | _ -> failwith "storeg: unexpected expression for var"
   in
-  let loaded = PMap.find_first_opt (fun x -> x=ident_string) g.genv.var_map in
+  let cap = PMap.find ident_string g.genv.var_map in
+  (*let loaded = PMap.find_first_opt (fun x -> x=ident_string) g.genv.var_map in
    match loaded with
      | None -> failwith ("tried to store glovar " ^ ident_string ^ " not in store")
      | Some res ->
-  let (name, cap) = res in
+  let (name, cap) = res in*)
   match cap with
      | SVal.SCap_v { block = loc; offset = off; base = base; length = len; load = l1; cload = l2; store = s1; cstore = s2; clstre = s3; global = glob; tag = t } -> (
      Logging.verbose (fun fmt -> fmt " this expr here : %a " Expr.full_pp (value));
