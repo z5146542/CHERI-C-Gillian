@@ -618,9 +618,6 @@ let execute_globset g [var; size] =
    let e_cap = [ALoc loc; zero_i; zero_i; size; Lit(Bool true); Lit(Bool true);
                     Lit (Bool true); Lit (Bool true); Lit (Bool true);
                     Lit (Bool true); Lit (Bool true); one_i ] in
-   (* if setting a global cap, we also need to create the cap for the pointer itself, and set 
-      the variable cap to point to that cap *)
-    
    let ident_string =
    match var with
      Lit x -> match x with String s -> s | _ -> failwith "globset: unexpected literal for var"
@@ -645,15 +642,10 @@ let execute_loadg g [var; typ] =
      Lit x -> match x with  String s -> s | _ -> failwith "loadg: unexpected literal for var"
    | _ -> failwith "loadg: unexpected expression for var"
    in
-   (*let var_value = PMap.find_first_opt (fun x -> x=key) g.genv.var_map in*)
    let cap = PMap.find ident_string g.genv.var_map in
-   (*match var_value with
-       None -> failwith ("tried to load glovar " ^ key ^ " not in store")
-     | Some res ->*)
      let open DR.Syntax in
      let open Formula.Infix in
      let open Expr.Infix in
-     (*let (name, cap) = res in*)
      match cap with
      | SVal.SCap_v { block = loc; offset = off; base = base; length = len; load = l1; cload = l2; store = s1; cstore = s2; clstre = s3; global = glob; tag = tag } ->
      let typ = match typ with Lit (String s) -> s | _ -> failwith ":(" in
@@ -696,11 +688,6 @@ let execute_storeg g [var; value] =
    | _ -> failwith "storeg: unexpected expression for var"
   in
   let cap = PMap.find ident_string g.genv.var_map in
-  (*let loaded = PMap.find_first_opt (fun x -> x=ident_string) g.genv.var_map in
-   match loaded with
-     | None -> failwith ("tried to store glovar " ^ ident_string ^ " not in store")
-     | Some res ->
-  let (name, cap) = res in*)
   match cap with
      | SVal.SCap_v { block = loc; offset = off; base = base; length = len; load = l1; cload = l2; store = s1; cstore = s2; clstre = s3; global = glob; tag = t } -> (
      Logging.verbose (fun fmt -> fmt " this expr here : %a " Expr.full_pp (value));
@@ -894,7 +881,6 @@ let execute_cast heap params =
   match params with
   | [ Expr.Lit (String ctyp) ; Expr.EList [ Expr.Lit (String typ); Expr.Lit (Int siz) ]] ->
     let vtyp = ValueTranslation.c_to_vtypes ctyp in 
-    (*TODO: add a function that actually does the casting. *)
     DR.ok (make_branch ~heap:heap ~rets:[ Expr.Lit (String vtyp); Expr.Lit (Int siz) ] ())
   | [ Expr.Lit (String ctyp) ; x ] ->
     let vtyp = ValueTranslation.c_to_vtypes ctyp in
