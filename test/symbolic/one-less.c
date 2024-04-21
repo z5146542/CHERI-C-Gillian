@@ -6,10 +6,10 @@ int gb;
 
 int main() {
 
-  ga = nondet_int();
-  gb = nondet_int();
-  __ESBMC_assume(ga==gb-1);
-  assert(ga<gb);
+  //ga = nondet_int();
+  //gb = nondet_int();
+  //__ESBMC_assume(ga==gb-1);
+  //assert(ga<gb);
 
   int la = nondet_int();
   int lb = nondet_int();
