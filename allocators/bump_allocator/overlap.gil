@@ -1,0 +1,242 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "cheri_purecap_compressed.gil", "cheri_purecap_uncompressed.gil", "stdlib_cap256.gil", "string_common.gil", "global.gil", "sys.gil";
+
+(* void (  ) *)
+proc overlap() {
+        to_alloc := undefined; (* signed int to_alloc; *)
+        retval_nondet_int_1 := undefined; (* signed int retval_nondet_int_1; *)
+        stmp_0 := fresh_svar();
+        assume(stmp_0 == {{ "int32", #lvar_0 }});
+        assume_type (#lvar_0, Int);
+        stmp_0 := stmp_0;
+        retval_nondet_int_1 := stmp_0;
+        to_alloc := retval_nondet_int_1;
+        tmp_1 := "i__binops_cmp_geq"(to_alloc, {{ "int32", 2i }});
+        tmp_2 := "i__unops_cast"("_Bool", tmp_1);
+        assume (tmp_2 == {{ "int32", 1i }});
+        tmp_3 := "i__binops_cmp_lt"(to_alloc, {{ "int32", 10i }});
+        tmp_4 := "i__unops_cast"("_Bool", tmp_3);
+        assume (tmp_4 == {{ "int32", 1i }});
+        x := undefined; (* signed int x; *)
+        retval_nondet_int_2 := undefined; (* signed int retval_nondet_int_2; *)
+        stmp_5 := fresh_svar();
+        assume(stmp_5 == {{ "int32", #lvar_1 }});
+        assume_type (#lvar_1, Int);
+        stmp_5 := stmp_5;
+        retval_nondet_int_2 := stmp_5;
+        x := retval_nondet_int_2;
+        y := undefined; (* signed int y; *)
+        retval_nondet_int_3 := undefined; (* signed int retval_nondet_int_3; *)
+        stmp_6 := fresh_svar();
+        assume(stmp_6 == {{ "int32", #lvar_2 }});
+        assume_type (#lvar_2, Int);
+        stmp_6 := stmp_6;
+        retval_nondet_int_3 := stmp_6;
+        y := retval_nondet_int_3;
+        tmp_7 := "i__binops_cmp_neq"(x, y);
+        tmp_8 := "i__unops_cast"("_Bool", tmp_7);
+        assume (tmp_8 == {{ "int32", 1i }});
+        tmp_9 := "i__binops_cmp_geq"(x, {{ "int32", 0i }});
+        tmp_10 := "i__binops_cmp_lt"(x, to_alloc);
+        tmp_11 := "i__binops_and"(tmp_9, tmp_10);
+        tmp_12 := "i__unops_cast"("_Bool", tmp_11);
+        assume (tmp_12 == {{ "int32", 1i }});
+        tmp_13 := "i__binops_cmp_geq"(y, {{ "int32", 0i }});
+        tmp_14 := "i__binops_cmp_lt"(y, to_alloc);
+        tmp_15 := "i__binops_and"(tmp_13, tmp_14);
+        tmp_16 := "i__unops_cast"("_Bool", tmp_15);
+        assume (tmp_16 == {{ "int32", 1i }});
+        px := undefined; (* signed char * px; *)
+        py := undefined; (* signed char * py; *)
+        i := undefined; (* signed int i; *)
+        i := {{ "int32", 0i }};
+    t1: tmp_17 := "i__binops_cmp_lt"(i, to_alloc);
+        tmp_18 := "i__unops_negb"(tmp_17);
+        vtb := "i__bool_of_value"(tmp_18);
+        goto [vtb] t4 s4;
+    s4: skip;
+        length := undefined; (* signed int length; *)
+        retval_nondet_int_4 := undefined; (* signed int retval_nondet_int_4; *)
+        stmp_19 := fresh_svar();
+        assume(stmp_19 == {{ "int32", #lvar_3 }});
+        assume_type (#lvar_3, Int);
+        stmp_19 := stmp_19;
+        retval_nondet_int_4 := stmp_19;
+        length := retval_nondet_int_4;
+        tmp_20 := "i__binops_cmp_geq"(length, {{ "int32", 0i }});
+        tmp_21 := "i__unops_cast"("_Bool", tmp_20);
+        assume (tmp_21 == {{ "int32", 1i }});
+        tmp_22 := "i__binops_cmp_lt"(length, {{ "int32", 2147483647i }});
+        tmp_23 := "i__unops_cast"("_Bool", tmp_22);
+        assume (tmp_23 == {{ "int32", 1i }});
+        p := undefined; (* signed char * p; *)
+        retval_malloc_5 := undefined; (* void * retval_malloc_5; *)
+        tmp_24 := "i__unops_cast"("unsigned long int", length);
+        tmp_25 := "i__malloc"(tmp_24);
+        retval_malloc_5 := tmp_25;
+        tmp_26 := "i__unops_cast"(1i, retval_malloc_5);
+        p := tmp_26;
+        tmp_27 := "i__binops_cmp_eq"(i, y);
+        tmp_28 := "i__unops_negb"(tmp_27);
+        vtb := "i__bool_of_value"(tmp_28);
+        goto [vtb] t2 s2;
+    s2: skip;
+        py := p;
+    t2: tmp_29 := "i__binops_cmp_eq"(i, x);
+        tmp_30 := "i__unops_negb"(tmp_29);
+        vtb := "i__bool_of_value"(tmp_30);
+        goto [vtb] t3 s3;
+    s3: skip;
+        px := p;
+    t3: skip;
+        tmp_31 := "i__binops_add"(i, {{ "int32", 1i }});
+        i := tmp_31;
+        goto t1;
+    t4: skip;
+        lower := undefined; (* signed char * lower; *)
+        higher := undefined; (* signed char * higher; *)
+        test := undefined; (* signed int test; *)
+        retval_i__cheri_address_get_6 := undefined; (* unsigned long int retval_i__cheri_address_get_6; *)
+        tmp_32 := "i__unops_cast"(1i, px);
+        retval_i__cheri_address_get_6 := "i__cheri_address_get"(tmp_32);
+        retval_i__cheri_address_get_7 := undefined; (* unsigned long int retval_i__cheri_address_get_7; *)
+        tmp_33 := "i__unops_cast"(1i, py);
+        retval_i__cheri_address_get_7 := "i__cheri_address_get"(tmp_33);
+        tmp_34 := "i__binops_cmp_lt"(retval_i__cheri_address_get_6, retval_i__cheri_address_get_7);
+        tmp_35 := "i__unops_cast"("signed int", tmp_34);
+        test := tmp_35;
+        tmp_36 := "i__unops_cast"("_Bool", test);
+        tmp_37 := "i__unops_negb"(tmp_36);
+        vtb := "i__bool_of_value"(tmp_37);
+        goto [vtb] t5 s5;
+    s5: skip;
+        higher := py;
+        lower := px;
+        goto t6;
+    t5: higher := px;
+        lower := py;
+    t6: retval_i__cheri_address_get_8 := undefined; (* unsigned long int retval_i__cheri_address_get_8; *)
+        tmp_38 := "i__unops_cast"(1i, lower);
+        retval_i__cheri_address_get_8 := "i__cheri_address_get"(tmp_38);
+        retval_i__cheri_length_get_9 := undefined; (* unsigned long int retval_i__cheri_length_get_9; *)
+        tmp_39 := "i__unops_cast"(1i, lower);
+        retval_i__cheri_length_get_9 := "i__cheri_length_get"(tmp_39);
+        retval_i__cheri_address_get_10 := undefined; (* unsigned long int retval_i__cheri_address_get_10; *)
+        tmp_40 := "i__unops_cast"(1i, higher);
+        retval_i__cheri_address_get_10 := "i__cheri_address_get"(tmp_40);
+        tmp_41 := "i__binops_add"(retval_i__cheri_address_get_8, retval_i__cheri_length_get_9);
+        tmp_42 := "i__binops_cmp_lt"(tmp_41, retval_i__cheri_address_get_10);
+        assert (tmp_42 == {{ "int32", 1i }});
+        tmp_43 := "i__binops_add"(retval_i__cheri_address_get_8, retval_i__cheri_length_get_9);
+        tmp_44 := "i__binops_cmp_lt"(tmp_43, retval_i__cheri_address_get_10);
+        tmp_45 := "i__unops_negb"(tmp_44);
+        vtb := "i__bool_of_value"(tmp_45);
+        goto [vtb] t7 s7;
+    s7: skip;
+    t7: skip;
+        ret := undefined;
+        return
+};
+
+(* void (  ) *)
+proc simple() {
+        x := undefined; (* signed int x; *)
+        retval_nondet_int_1 := undefined; (* signed int retval_nondet_int_1; *)
+        stmp_46 := fresh_svar();
+        assume(stmp_46 == {{ "int32", #lvar_4 }});
+        assume_type (#lvar_4, Int);
+        stmp_46 := stmp_46;
+        retval_nondet_int_1 := stmp_46;
+        x := retval_nondet_int_1;
+        y := undefined; (* signed int y; *)
+        retval_nondet_int_2 := undefined; (* signed int retval_nondet_int_2; *)
+        stmp_47 := fresh_svar();
+        assume(stmp_47 == {{ "int32", #lvar_5 }});
+        assume_type (#lvar_5, Int);
+        stmp_47 := stmp_47;
+        retval_nondet_int_2 := stmp_47;
+        y := retval_nondet_int_2;
+        tmp_48 := "i__binops_cmp_geq"(x, {{ "int32", 0i }});
+        tmp_49 := "i__unops_cast"("_Bool", tmp_48);
+        assume (tmp_49 == {{ "int32", 1i }});
+        tmp_50 := "i__binops_cmp_geq"(y, {{ "int32", 0i }});
+        tmp_51 := "i__unops_cast"("_Bool", tmp_50);
+        assume (tmp_51 == {{ "int32", 1i }});
+        tmp_52 := "i__binops_cmp_lt"(y, {{ "int32", 2147483647i }});
+        tmp_53 := "i__unops_cast"("_Bool", tmp_52);
+        assume (tmp_53 == {{ "int32", 1i }});
+        tmp_54 := "i__binops_cmp_lt"(x, {{ "int32", 2147483647i }});
+        tmp_55 := "i__unops_cast"("_Bool", tmp_54);
+        assume (tmp_55 == {{ "int32", 1i }});
+        px := undefined; (* signed char * px; *)
+        retval_malloc_3 := undefined; (* void * retval_malloc_3; *)
+        tmp_56 := "i__unops_cast"("unsigned long int", x);
+        tmp_57 := "i__malloc"(tmp_56);
+        retval_malloc_3 := tmp_57;
+        tmp_58 := "i__unops_cast"(1i, retval_malloc_3);
+        px := tmp_58;
+        py := undefined; (* signed char * py; *)
+        retval_malloc_4 := undefined; (* void * retval_malloc_4; *)
+        tmp_59 := "i__unops_cast"("unsigned long int", y);
+        tmp_60 := "i__malloc"(tmp_59);
+        retval_malloc_4 := tmp_60;
+        tmp_61 := "i__unops_cast"(1i, retval_malloc_4);
+        py := tmp_61;
+        test := undefined; (* signed int test; *)
+        retval_i__cheri_address_get_5 := undefined; (* unsigned long int retval_i__cheri_address_get_5; *)
+        tmp_62 := "i__unops_cast"(1i, px);
+        retval_i__cheri_address_get_5 := "i__cheri_address_get"(tmp_62);
+        retval_i__cheri_address_get_6 := undefined; (* unsigned long int retval_i__cheri_address_get_6; *)
+        tmp_63 := "i__unops_cast"(1i, py);
+        retval_i__cheri_address_get_6 := "i__cheri_address_get"(tmp_63);
+        tmp_64 := "i__binops_cmp_lt"(retval_i__cheri_address_get_5, retval_i__cheri_address_get_6);
+        tmp_65 := "i__unops_cast"("signed int", tmp_64);
+        test := tmp_65;
+        lower := undefined; (* signed char * lower; *)
+        higher := undefined; (* signed char * higher; *)
+        tmp_66 := "i__unops_cast"("_Bool", test);
+        tmp_67 := "i__unops_negb"(tmp_66);
+        vtb := "i__bool_of_value"(tmp_67);
+        goto [vtb] t1 s1;
+    s1: skip;
+        higher := py;
+        lower := px;
+        goto t2;
+    t1: higher := px;
+        lower := py;
+    t2: retval_i__cheri_address_get_7 := undefined; (* unsigned long int retval_i__cheri_address_get_7; *)
+        tmp_68 := "i__unops_cast"(1i, lower);
+        retval_i__cheri_address_get_7 := "i__cheri_address_get"(tmp_68);
+        retval_i__cheri_length_get_8 := undefined; (* unsigned long int retval_i__cheri_length_get_8; *)
+        tmp_69 := "i__unops_cast"(1i, lower);
+        retval_i__cheri_length_get_8 := "i__cheri_length_get"(tmp_69);
+        retval_i__cheri_address_get_9 := undefined; (* unsigned long int retval_i__cheri_address_get_9; *)
+        tmp_70 := "i__unops_cast"(1i, higher);
+        retval_i__cheri_address_get_9 := "i__cheri_address_get"(tmp_70);
+        tmp_71 := "i__binops_add"(retval_i__cheri_address_get_7, retval_i__cheri_length_get_8);
+        tmp_72 := "i__binops_cmp_lt"(tmp_71, retval_i__cheri_address_get_9);
+        assert (tmp_72 == {{ "int32", 1i }});
+        tmp_73 := "i__binops_add"(retval_i__cheri_address_get_7, retval_i__cheri_length_get_8);
+        tmp_74 := "i__binops_cmp_lt"(tmp_73, retval_i__cheri_address_get_9);
+        tmp_75 := "i__unops_negb"(tmp_74);
+        vtb := "i__bool_of_value"(tmp_75);
+        goto [vtb] t3 s3;
+    s3: skip;
+    t3: skip;
+        ret := undefined;
+        return
+};
+
+(* signed int (  ) *)
+proc main() {
+        tmp := "genv_init"();
+        tmp := "overlap"();
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        ret := undefined;
+        return
+};

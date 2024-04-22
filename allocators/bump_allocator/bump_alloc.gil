@@ -1,0 +1,84 @@
+import "unops_common.gil", "binops_common.gil", "internals.gil", "cheri_purecap_compressed.gil", "cheri_purecap_uncompressed.gil", "stdlib_cap256.gil", "string_common.gil", "global.gil", "sys.gil";
+
+GOTO program creation time: 0.021s
+
+(* void ( signed int ) *)
+proc init_alloc(size_in_bytes) {
+        res := undefined; (* signed char * res; *)
+        retval_mmap_1 := undefined; (* void * retval_mmap_1; *)
+        tmp_0 := [NULL]();
+        tmp_1 := "i__unops_cast"("unsigned long int", size_in_bytes);
+        tmp_2 := "i__unops_neg"({{ "int32", 1i }});
+        retval_mmap_1 := "i__mmap"(tmp_0, tmp_1, {{ "int32", 1i }}, {{ "int32", 4096i }}, tmp_2, {{ "int64", 0i }});
+        tmp_3 := "i__unops_cast"(1i, retval_mmap_1);
+        res := tmp_3;
+        tmp := "i__storegv"("buffer", res);
+        tmp := "i__storegv"("max", size_in_bytes);
+        ret := undefined;
+        return
+};
+
+(* signed char * ( signed int ) *)
+proc bump_alloc(len) {
+        chunk := undefined; (* signed char * chunk; *)
+        buffer := "i__loadgv"("buffer", "cap");
+        count := "i__loadgv"("count", "int32");
+        tmp_4 := "i__binops_add"(buffer, count);
+        chunk := tmp_4;
+        rounded_len := undefined; (* unsigned long int rounded_len; *)
+        new_count := undefined; (* unsigned long int new_count; *)
+        retval_i__cheri_representable_alignment_mask_1 := undefined; (* unsigned long int retval_i__cheri_representable_alignment_mask_1; *)
+        tmp_5 := "i__unops_cast"("unsigned long int", len);
+        retval_i__cheri_representable_alignment_mask_1 := "i__cheri_representable_alignment_mask"(tmp_5);
+        retval_i__builtin_align_up_2 := undefined; (* void * retval_i__builtin_align_up_2; *)
+        tmp_6 := "i__unops_cast"(1i, chunk);
+        tmp_7 := "i__unops_bitwisenot"(retval_i__cheri_representable_alignment_mask_1);
+        tmp_8 := "i__binops_add"(tmp_7, {{ "uint64", 1i }});
+        retval_i__builtin_align_up_2 := "i__builtin_align_up"(tmp_6, tmp_8);
+        tmp_9 := "i__unops_cast"(1i, retval_i__builtin_align_up_2);
+        chunk := tmp_9;
+        tmp_10 := "i__unops_cast"("unsigned long int", len);
+        rounded_len := "i__cheri_representable_length"(tmp_10);
+        tmp_11 := "i__binops_add"(chunk, rounded_len);
+        buffer := "i__loadgv"("buffer", "cap");
+        tmp_12 := "i__binops_sub"(tmp_11, buffer);
+        tmp_13 := "i__unops_cast"("unsigned long int", tmp_12);
+        new_count := tmp_13;
+        max := "i__loadgv"("max", "int32");
+        tmp_14 := "i__unops_cast"("unsigned long int", max);
+        tmp_15 := "i__binops_cmp_ge"(new_count, tmp_14);
+        tmp_16 := "i__unops_negb"(tmp_15);
+        vtb := "i__bool_of_value"(tmp_16);
+        goto [vtb] t1 s1;
+    s1: skip;
+        goto t2;
+    t1: retval_i__cheri_bounds_set_exact_3 := undefined; (* void * retval_i__cheri_bounds_set_exact_3; *)
+        tmp_18 := "i__unops_cast"(1i, chunk);
+        retval_i__cheri_bounds_set_exact_3 := "i__cheri_bounds_set_exact"(tmp_18, rounded_len);
+        tmp_19 := "i__unops_cast"(1i, retval_i__cheri_bounds_set_exact_3);
+        chunk := tmp_19;
+        tmp_20 := "i__unops_cast"("signed int", new_count);
+        tmp := "i__storegv"("count", tmp_20);
+    t2: ret := chunk;
+        return;
+        return
+};
+
+(* signed int (  ) *)
+proc main() {
+        tmp := "genv_init"();
+        ret := {{ "int32", 0i }};
+        return;
+        return
+};
+
+(* global-environment-setup *)
+proc genv_init() {
+        tmp := "i__set_glob_var"("count", 4i);
+        tmp := "i__storegv"("count", {{ "int32", 0i }});
+        tmp := "i__set_glob_var"("max", 4i);
+        tmp := "i__storegv"("max", {{ "int32", 0i }});
+        tmp := "i__set_glob_var"("buffer", 32i);
+        ret := undefined;
+        return
+};
