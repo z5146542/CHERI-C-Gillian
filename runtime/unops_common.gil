@@ -97,3 +97,12 @@ proc i__is_cap (cap) {
        return
 };
 
+proc i__is_addr (pair) {
+       goto [ l-len(pair) = 2i ] nxt utd;
+  nxt: goto [( (typeOf(l-nth(pair, 0i)) = Obj) and
+               (typeOf(l-nth(pair, 1i)) = Int) )] ctn utd;
+  ctn: ret := true;
+       return;
+  utd: ret := false;
+       return
+};
