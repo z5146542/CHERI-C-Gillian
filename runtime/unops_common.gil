@@ -8,6 +8,42 @@ proc i__unops_negb (val) {
        return
 };
 
+proc i__unops_bitwisenot (tval) {
+      typ := l-nth(tval, 0i);
+       val := l-nth(tval, 1i);
+       goto [ typ = "uint8"  ] u8 t2;
+  t2:  goto [ typ = "int8"   ] i8 t3;
+  t3:  goto [ typ = "uint16" ] u16 t4;
+  t4:  goto [ typ = "int16"  ] i16 t5;
+  t5:  goto [ typ = "uint32" ] u32 t6;
+  t6:  goto [ typ = "int32"  ] i32 t7;
+  t7:  goto [ typ = "uint64" ] u64 t8;
+  t8:  goto [ typ = "int64"  ] i64 fl;
+  u8:  ret := {{ typ, 255i i- val }};
+  i8:  goto end;
+  u16: ret := {{ typ, 65535i i- val }};
+       return;
+  i16: goto end;
+  u32: ret := {{ typ, 4294967295 i- val }};
+       return;
+  i32: goto end;
+  u64: ret := {{ typ, 18446744073709551615i i- val }};
+       return;
+  i64: goto end;
+  end: fail [operator] ("haven't implemented ~ for signed int");
+  fl:  fail [operator] ("cannot bitnot non-int type")
+};
+
+proc i__unops_neg (tval) {
+  typ := l-nth(tval, 0i);
+  goto [ typ = "uint32" ] us s;
+  s: val := l-nth(tval, 1i);
+  nval := 0i i- val;
+  ret := {{ typ, nval }};
+  return;
+  us: fail [operator] ("cannot negate value: must be signed int")
+};
+
 (** casting involves three processes:
   * 1. Casting capabilities: "i__unops_cast"(ni, cap);
   *    Casting capabilities changes the cap "offsiz" value
@@ -61,3 +97,12 @@ proc i__is_cap (cap) {
        return
 };
 
+proc i__is_addr (pair) {
+       goto [ l-len(pair) = 2i ] nxt utd;
+  nxt: goto [( (typeOf(l-nth(pair, 0i)) = Obj) and
+               (typeOf(l-nth(pair, 1i)) = Int) )] ctn utd;
+  ctn: ret := true;
+       return;
+  utd: ret := false;
+       return
+};

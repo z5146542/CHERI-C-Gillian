@@ -91,11 +91,21 @@ proc i__binops_add (v1, v2) {
 
 proc i__binops_sub (v1, v2) {
         (* As an interesting case, we consider either v1/v2 being a cap *)
-        tmp := "i__is_cap"(v1);
+   ad:  tmp := "i__is_addr"(v1);
+        goto [ tmp ] ad2 st;
+  ad2:  tmp := "i__is_addr"(v2);
+        goto [ tmp ] ad3 tft;
+  ad3:  goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] ad4 tft;
+  ad4:  diff := l-nth(v1, 1i) i- l-nth(v2, 1i);
+        ret := {{ "int64", diff }};
+        return;
+    st: tmp := "i__is_cap"(v1);
         goto [ tmp ] s1 f1;
     f1: tmp := "i__is_cap"(v2);
         goto [ tmp ] s2 f2;
-    s1: goto [ typeOf(l-nth(v2, 0i)) = Obj ] tft n1;
+    s1: tmp := "i__is_cap"(v2);
+        goto [ tmp ] end4 a;
+       a:  goto [ typeOf(l-nth(v2, 0i)) = Obj ] tft n1;
     n1: tmp := l-nth(v2, 1i) i* l-nth(v1, 11i);
         res := l-nth(v1, 1i) i- tmp;
         goto end2;
@@ -115,7 +125,14 @@ proc i__binops_sub (v1, v2) {
                   l-nth(v2, 5i), l-nth(v2, 6i), l-nth(v2, 7i), l-nth(v2, 8i),
                   l-nth(v2, 9i), l-nth(v2, 10i), l-nth(v2, 11i) }};
         return;
-   tft: fail[comparison]("Type of two values do not match")
+  (* case cap-cap *)
+  end4: goto [ l-nth(v1, 0i) = l-nth(v1, 0i) ] n fdb;
+    n:  diff := l-nth(v1, 1i) i- l-nth(v2, 1i);
+        diff := diff i/ (l-nth(v1, 11i));
+        ret := {{ "int32", diff }};
+        return;
+   fdb: fail[comparison]("subtracting two capabilities with different block id");
+   tft: fail[comparison]("type of two values do not match")
 };
 
 proc i__binops_leftshift (v1, v2) {
@@ -130,6 +147,20 @@ proc i__binops_leftshift (v1, v2) {
    tft: fail[comparison]("Bitwise & not support for caps")
 };
 
+proc i__binops_rightshift (v1, v2) {
+        (* As an interesting case, we consider either v1/v2 being a cap *)
+        tmp := "i__is_cap"(v1);
+        goto [ tmp ] tft f1;
+    f1: tmp := "i__is_cap"(v2);
+        goto [ tmp ] tft tsc;
+   tsc: res := as_num(l-nth(v1, 1i)) >>l as_num(l-nth(v2, 1i));
+        res := as_int(res);
+        ret := "i__unops_cast"(l-nth(v2, 0i), {{ l-nth(v2, 0i), res }});
+        return;
+   tft: fail[comparison]("Bitwise & not support for caps")
+};
+
+
 proc i__binops_bitwiseand (v1, v2) {
         (* As an interesting case, we consider either v1/v2 being a cap *)
         tmp := "i__is_cap"(v1);
@@ -138,14 +169,36 @@ proc i__binops_bitwiseand (v1, v2) {
         goto [ tmp ] tft tsc;
    tsc: res := l-nth(v1, 1i) &l l-nth(v2, 1i);
         ret := "i__unops_cast"(l-nth(v2, 0i), {{ l-nth(v2, 0i), res }});
+        ret := {{ l-nth(v2, 0i), res }};
         return;
    tft: fail[comparison]("Bitwise & not support for caps")
+};
+
+proc i__binops_bitwiseor (v1, v2) {
+       tmp := "i__is_cap"(v1);
+        goto [ tmp ] tft f1;
+    f1: tmp := "i__is_cap"(v2);
+        goto [ tmp ] tft tsc;
+   tsc: res := l-nth(v1, 1i) |l l-nth(v2, 1i);
+        ret := "i__unops_cast"(l-nth(v2, 0i), {{ l-nth(v2, 0i), res }});
+        return;
+   tft: fail[comparison]("Bitwise | not support for caps")
+
 };
 
 proc i__binops_mul (v1, v2) {
         goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
    tsc: goto [ typeOf(l-nth(v1, 0i)) = Str ] nxt tft;
    nxt: res := l-nth(v1, 1i) i* l-nth(v2, 1i);
+        ret := "i__unops_cast"(l-nth(v1, 0i), {{ l-nth(v1, 0i), res }});
+        return;
+   tft: fail[comparison]("Type of two values do not match")
+};
+
+proc i__binops_div (v1, v2) {
+      (*  goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;*)
+   (*tsc:*) goto [ typeOf(l-nth(v1, 0i)) = Str ] nxt tft;
+   nxt: res := l-nth(v1, 1i) i/ l-nth(v2, 1i);
         ret := "i__unops_cast"(l-nth(v1, 0i), {{ l-nth(v1, 0i), res }});
         return;
    tft: fail[comparison]("Type of two values do not match")
@@ -158,3 +211,13 @@ proc i__binops_and (v1, v2) {
         ret := "i__value_of_bool"(b);
         return
 };
+
+proc i__binops_mod (v1, v2) {
+        goto [ l-nth(v1, 0i) = l-nth(v2, 0i) ] tsc tft;
+   tsc: res := l-nth(v1, 1i) i% l-nth(v2, 1i);
+        ret := "i__unops_cast"(l-nth(v1, 0i), {{ l-nth(v1, 0i), res }});
+        return;
+   tft: fail[comparison]("Type of two values do not match")
+};
+
+

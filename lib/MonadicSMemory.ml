@@ -13,6 +13,7 @@ module SS = GUtils.Containers.SS
 module SVal = MonadicSVal
 module Debugger = Gillian.Debugger
 module Recovery_tactic = Gillian.General.Recovery_tactic
+open PMap
 
 (* Some utils first *)
 
@@ -493,16 +494,67 @@ module Mem = struct
     if !Config.pp_full_tree then pp_full fmt t else pp_normal ~exclude fmt t
 end
 
-type t = { mem : Mem.t ref }
+module Genv = struct
 
-let to_yojson t =
-  let { mem } = t in
-  Mem.to_yojson !mem
+  type t = {
+    memory : Mem.t ref;
+    var_map : (string, SVal.t) PMap.t;
+  }
 
-let of_yojson m =
-  Result.map
-    (fun mem -> { mem = ref mem })
-    (Mem.of_yojson m)
+  let json_to_var_map json =
+  match json with
+  | `Assoc lst ->
+    List.fold_left (fun acc (key, value_json) ->
+      match SVal.of_yojson value_json with
+      | Ok value -> PMap.add key value acc
+      | Error e -> failwith ("Error parsing SVal: " ^ e)
+    ) PMap.empty lst
+  | _ -> failwith "Expected JSON object for var_map"
+
+  let of_yojson json =
+  match json with
+  | `Assoc lst ->
+    let memory_json = List.assoc "memory" lst in
+    let var_map_json = List.assoc "var_map" lst in
+    begin match Mem.of_yojson memory_json with
+    | Ok memory ->
+      let var_map = json_to_var_map var_map_json in
+      Ok { memory = ref memory; var_map }
+    | Error e -> Error e
+    end
+  | _ -> Error "Expected JSON object for Genv.t"
+
+  let pmap_to_yojson (map : (string, SVal.t) PMap.t) : Yojson.Safe.t =
+  `Assoc (PMap.foldi (fun key value acc ->
+    (key, SVal.to_yojson value) :: acc) map [])
+
+  let to_yojson { memory; var_map } : Yojson.Safe.t =
+    `Assoc [
+      ("memory", Mem.to_yojson !memory);
+      ("var_map", pmap_to_yojson var_map)
+    ]
+
+end
+
+type t = { mem : Mem.t ref; genv: Genv.t }
+
+let of_yojson json =
+match json with
+| `Assoc lst ->
+  let mem_json = List.assoc "mem" lst in
+  let genv_json = List.assoc "genv" lst in
+  begin match Mem.of_yojson mem_json, Genv.of_yojson genv_json with
+  | Ok mem, Ok genv -> Ok { mem = ref mem; genv }
+  | Error e, _ | _, Error e -> Error e
+  end
+| _ -> Error "Expected JSON object for t"
+
+
+let to_yojson { mem; genv } : Yojson.Safe.t =
+  `Assoc [
+    ("mem", Mem.to_yojson !mem);
+    ("genv", Genv.to_yojson genv)
+  ]
 
 (* type action_ret = Success of (t * vt list) | Failure of err_t *)
 type action_ret = (t * vt list, err_t) result
@@ -521,10 +573,13 @@ let just_functions genv =
       genv Mem.empty
   else Mem.empty
 
-(*let init genv = { genv; mem = ref (just_functions genv) }*)
-let init () = { mem = ref Mem.empty }
-let clear _ = { mem = ref Mem.empty }
-let copy h = { mem = ref (Mem.copy !(h.mem)) }
+let init () = { mem = ref Mem.empty; genv = { memory = ref Mem.empty; var_map = PMap.empty } }
+
+let clear _ = { mem = ref Mem.empty; genv = { memory = ref Mem.empty; var_map = PMap.empty } }
+
+let copy h =
+  let map' = h.genv.var_map in
+    { mem = ref (Mem.copy !(h.mem)); genv = { memory = ref (Mem.copy !(h.genv.memory)); var_map = map' } }
 
 let pp_params fmt params =
   let rec aux fmtp = function
@@ -552,10 +607,114 @@ let execute_alloc heap params =
                       Lit (Bool true); Lit (Bool true); Lit (Bool true); 
                       Lit (Bool false); Lit (Bool true); one_i ] in
     let result =
-      make_branch ~heap:{ mem = ref mem } ~rets:cap ()
-    in 
+            make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:cap ()
+    in
     DR.ok result
   | _ -> fail_ungracefully "alloc" params
+
+let execute_globset g [var; size] =
+   let open Expr in
+   let mem, loc = Mem.alloc !(g.genv.memory) zero_i size in
+   let e_cap = [ALoc loc; zero_i; zero_i; size; Lit(Bool true); Lit(Bool true);
+                    Lit (Bool true); Lit (Bool true); Lit (Bool true);
+                    Lit (Bool true); Lit (Bool true); one_i ] in
+   let ident_string =
+   match var with
+     Lit x -> match x with String s -> s | _ -> failwith "globset: unexpected literal for var"
+     | _ -> failwith "globset: unexpected expression for var"
+   in
+    Logging.verbose (fun fmt -> fmt " globset with string : %a " Expr.full_pp (var));
+   let s_cap =
+     SVal.SCap_v { block = loc; offset = zero_i; base = zero_i; length = size;
+                   load = Lit(Bool true); cload = Lit(Bool true); store = Lit(Bool true);
+                   cstore = Lit(Bool true); clstre = Lit(Bool true);
+                   global = Lit(Bool true); tag = one_i }
+   in
+   let new_var_map = PMap.add ident_string s_cap g.genv.var_map in
+   let result = make_branch ~heap:{ mem = g.mem; genv = { memory = ref mem; var_map = new_var_map } } ~rets: e_cap ()
+   in
+     DR.ok result
+
+let execute_loadg g [var; typ] =
+   let open Expr in
+   let ident_string =
+   match var with
+     Lit x -> match x with  String s -> s | _ -> failwith "loadg: unexpected literal for var"
+   | _ -> failwith "loadg: unexpected expression for var"
+   in
+   let cap = PMap.find ident_string g.genv.var_map in
+     let open DR.Syntax in
+     let open Formula.Infix in
+     let open Expr.Infix in
+     match cap with
+     | SVal.SCap_v { block = loc; offset = off; base = base; length = len; load = l1; cload = l2; store = s1; cstore = s2; clstre = s3; global = glob; tag = tag } ->
+     let typ = match typ with Lit (String s) -> s | _ -> failwith ":(" in
+     let typ = ValueTranslation.vtype_to_smm_type typ in
+         if%sat tag #== (Expr.bool false)
+           then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err TagViolation } )
+         else if%sat l1 #== (Expr.bool false)
+           then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err PermitLoadViolation } )
+         else if%sat (base + len) #< (off + Expr.int (Chunk.size typ))
+           then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err LengthViolation})
+         else if%sat off #< base
+           then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err LengthViolation})
+         else if%sat fnot ((Expr.BinOp (off, IMod, Expr.int (Chunk.size typ))) #== (Expr.int 0))
+           then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err BadAddressViolation})
+         else
+         let** value_, mem = Mem.load !(g.genv.memory) (expr_of_loc_name loc) typ off in
+         let** value = match value_ with
+           | SVal.SCap_v c -> if%sat l2 #== (Expr.bool false) then DR.ok (SVal.SCap_v { c with tag = Expr.bool false }) else DR.ok value_
+           | _ -> DR.ok value_
+         in
+         let* gil_value = SVal.to_gil_expr value in
+         let llist_to_list x =
+           match x with
+           | Expr.EList l -> l
+           | _ -> [x]
+         in
+         let gil_ret_val = llist_to_list gil_value in
+         DR.ok
+           (make_branch ~heap:{ mem = g.mem; genv = { memory = ref mem; var_map = g.genv.var_map } }  ~rets:gil_ret_val ())
+     | _ -> fail_ungracefully "loadg" [expr_of_loc_name ident_string]
+
+let execute_storeg g [var; value] =
+  let open Expr in
+  let open DR.Syntax in
+  let open Formula.Infix in
+  let open Expr.Infix in
+  let ident_string =
+  match var with
+     Lit x -> match x with  String s -> s | _ -> failwith "storeg: unexpected literal for var"
+   | _ -> failwith "storeg: unexpected expression for var"
+  in
+  let cap = PMap.find ident_string g.genv.var_map in
+  match cap with
+     | SVal.SCap_v { block = loc; offset = off; base = base; length = len; load = l1; cload = l2; store = s1; cstore = s2; clstre = s3; global = glob; tag = t } -> (
+     Logging.verbose (fun fmt -> fmt " this expr here : %a " Expr.full_pp (value));
+     let* sval = SVal.of_gil_expr_exn value in
+     if%sat t #== (Expr.bool false)
+        then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err TagViolation } )
+
+      else if%sat s1 #== (Expr.bool false)
+        then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err PermitStoreViolation } )
+      else if%sat (match sval with | SCap_v cv -> Expr.BinOp (not s2, BAnd, cv.tag) | _ -> Expr.bool false) #== (Expr.bool true)
+        then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err PermitStoreCapViolation})
+      else if%sat (match sval with | SCap_v cv -> Expr.BinOp (Expr.BinOp (not s3, BAnd, cv.tag), BAnd, cv.global) | _ -> Expr.bool false) #== (Expr.bool true)
+        then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err PermitStoreLocalCapViolation})
+      else if%sat (base + len) #< (off + Expr.int (Chunk.size (SVal.typeof sval)))
+        then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err LengthViolation})
+      else if%sat off #< base
+        then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err LengthViolation})
+      else if%sat fnot ((Expr.BinOp (off, IMod, Expr.int (Chunk.align (SVal.typeof sval)))) #== (Expr.int 0))
+        then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err BadAddressViolation})
+      else if sval = SUndef
+        then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.LogicErr (Unhandled "Value to be stored is undefined.")})
+      else
+      let chunk = SVal.typeof sval in
+      let++ mem = Mem.store !(g.genv.memory) (expr_of_loc_name loc) chunk off sval in
+      make_branch ~heap:{ mem = g.mem ; genv = { memory = ref mem; var_map = g.genv.var_map } } ~rets:[] () )
+     | _ -> fail_ungracefully "storeg" [expr_of_loc_name ident_string]
+
 (*
 let execute_getcurperm heap params =
   let open DR.Syntax in
@@ -591,6 +750,8 @@ let execute_drop_perm heap params =
 
 (* Note to self: we only need the capability and the value in our case
    Note 2: the value also contains information of the type *)
+
+
 let execute_store heap params =
   let open DR.Syntax in
   let open Formula.Infix in
@@ -618,7 +779,9 @@ let execute_store heap params =
       else
       let chunk = SVal.typeof sval in
       let++ mem = Mem.store !(heap.mem) loc chunk off sval in
-      make_branch ~heap:{ mem = ref mem } ~rets:[] ()
+      make_branch ~heap:{ mem = ref mem ; genv = heap.genv } ~rets:[] ()
+      (*let result = make_branch ~heap:{ mem = ref mem ; genv = heap.genv } ~rets:[] () in
+      DR.ok result*)
   | _ -> fail_ungracefully "store" params
 
 (* Note: l2 does not throw an exception -- it nullifies the tag bit of the capability when loaded *)
@@ -656,8 +819,8 @@ let execute_load heap params =
         | _ -> [x]
       in
       let gil_ret_val = llist_to_list gil_value in
-      DR.ok
-        (make_branch ~heap:{ mem = ref mem } ~rets:gil_ret_val ())
+      let result = (make_branch ~heap:{ mem = ref mem ; genv = heap.genv } ~rets:gil_ret_val ()) in
+      DR.ok  result
   | _ -> fail_ungracefully "store" params
 
 let execute_free heap params =
@@ -668,10 +831,10 @@ let execute_free heap params =
   | [ Expr.EList [ loc; off; base; len; l1; l2; s1; s2; s3; g; t; ofs ] ] ->
       let cap = Expr.EList [ loc; off; base; len; l1; l2; s1; s2; s3; g; t; ofs ] in
       let* gil_cap = SVal.of_gil_expr_exn cap in
-      if MonadicSVal.sure_is_zero gil_cap
+      if SVal.sure_is_zero gil_cap
         then let ret_cap = [ loc; off; base; len; l1; l2; s1; s2; s3; g; t; ofs ] in
         let () = Logging.tmi (fun fmt -> fmt "Attempting to free a null capability") in
-        DR.ok (make_branch ~heap:{ mem = ref !(heap.mem) } ~rets:ret_cap ())
+        DR.ok (make_branch ~heap:{ mem = ref (Mem.copy !(heap.mem)); genv = heap.genv } ~rets:ret_cap ())
       else if%sat t #== (Expr.bool false) 
         then DR.error (SHeapTreeErr { at_locations = [""]; sheaptree_err = SHeapTree.C2Err TagViolation } ) 
       else if%sat g #== (Expr.bool true)
@@ -682,7 +845,7 @@ let execute_free heap params =
       else
       let++ mem = Mem.free !(heap.mem) loc base len in
       let freed_cap = [ loc; off; base; len; l1; l2; s1; s2; s3; g; Lit (Bool false); ofs ] in
-      make_branch ~heap:{ mem = ref mem } ~rets:freed_cap ()
+      make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:freed_cap ()
   | _ -> fail_ungracefully "free" params
 
 let execute_null heap params =
@@ -695,7 +858,8 @@ let execute_null heap params =
       | _ -> [x]
       in
       let null_ret = llist_to_list null_cap_gil_val in
-      DR.ok (make_branch ~heap:heap ~rets:null_ret ())
+      let result = (make_branch ~heap:heap ~rets:null_ret ()) in
+      DR.ok result
   | _ -> failwith "NULL has arguments, which should be impossible." 
 
 let execute_copy heap params =
@@ -707,7 +871,9 @@ let execute_copy heap params =
                    src_s2; src_s3; src_g; src_t; src_ofs ];
       Expr.EList [ _; size ] ] ->
       let++ mem = Mem.move !(heap.mem) dst_loc dst_off src_loc src_off size in
-      make_branch ~heap:{ mem = ref mem } ~rets:[] ()
+      make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ()
+      (*let result = make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] () in
+      DR.ok result*)
   | _ -> fail_ungracefully "wrong call to execute_move" params
 
 let execute_cast heap params = 
@@ -715,11 +881,25 @@ let execute_cast heap params =
   match params with
   | [ Expr.Lit (String ctyp) ; Expr.EList [ Expr.Lit (String typ); Expr.Lit (Int siz) ]] ->
     let vtyp = ValueTranslation.c_to_vtypes ctyp in 
-    (*TODO: add a function that actually does the casting. *)
     DR.ok (make_branch ~heap:heap ~rets:[ Expr.Lit (String vtyp); Expr.Lit (Int siz) ] ())
-  | [ Expr.Lit (String ctyp) ; Expr.EList [ Expr.Lit (String typ); x ]] ->
+  | [ Expr.Lit (String ctyp) ; x ] ->
     let vtyp = ValueTranslation.c_to_vtypes ctyp in
-    DR.ok (make_branch ~heap:heap ~rets:[ Expr.Lit (String vtyp); x ] ())
+    let* sval = SVal.of_gil_expr_exn x in
+    let lvar =
+      (*| SUndef ->*)
+      match sval with
+      | SUint8_v v -> v
+      | SSint8_v v -> v
+      | SUint16_v v -> v
+      | SSint16_v v -> v
+      | SUint32_v v -> v
+      | SSint32_v v -> v
+      | SUint64_v v -> v
+      | SSint64_v v -> v
+    in
+    let ret = [ Expr.Lit (String vtyp) ; lvar ] in
+    let result = (make_branch ~heap:heap ~rets:ret ()) in
+    DR.ok result
   | _ -> failwith "Cast parameters do not match."
 
 let execute_get_single heap params =
@@ -734,7 +914,7 @@ let execute_get_single heap params =
       let* sval_e = SVal.to_gil_expr sval in
       DR.ok
         (make_branch
-           ~heap:{ mem = ref mem }
+           ~heap:{ mem = ref mem; genv = heap.genv }
            ~rets:
              [
                loc_e;
@@ -757,7 +937,7 @@ let execute_set_single heap params =
       let chunk = ValueTranslation.string_to_chunk chunk_string in
       let* sval = SVal.of_gil_expr_exn sval_e in
       let++ mem = Mem.set_single !(heap.mem) loc ofs chunk sval in
-      make_branch ~heap:{ mem = ref mem } ~rets:[] ()
+      make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ()
   | _ -> fail_ungracefully "set_single" params
 
 let execute_rem_single heap params =
@@ -766,7 +946,7 @@ let execute_rem_single heap params =
   | [ loc; ofs; Expr.Lit (String chunk_string) ] ->
       let chunk = ValueTranslation.string_to_chunk chunk_string in
       let+ mem = Mem.rem_single !(heap.mem) loc ofs chunk in
-      Ok (make_branch ~heap:{ mem = ref mem } ~rets:[] ())
+      Ok (make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ())
   | _ -> fail_ungracefully "rem_single" params
 
 let execute_get_array heap params =
@@ -782,7 +962,7 @@ let execute_get_array heap params =
       let* array_e = MonadicSVal.SVArray.to_gil_expr ~chunk ~range array in
       DR.ok
         (make_branch
-           ~heap:{ mem = ref mem }
+           ~heap:{ mem = ref mem; genv = heap.genv }
            ~rets:
              [
                loc_e;
@@ -807,7 +987,7 @@ let execute_set_array heap params =
       let chunk = ValueTranslation.string_to_chunk chunk_string in
       let arr = MonadicSVal.SVArray.of_gil_expr_exn arr_e in
       let++ mem = Mem.set_array !(heap.mem) loc ofs size chunk arr in
-      make_branch ~heap:{ mem = ref mem } ~rets:[] ()
+      make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ()
   | _ -> fail_ungracefully "set_single" params
 
 let execute_rem_array heap params =
@@ -816,7 +996,7 @@ let execute_rem_array heap params =
   | [ loc; ofs; size; Expr.Lit (String chunk_string) ] ->
       let chunk = ValueTranslation.string_to_chunk chunk_string in
       let+ mem = Mem.rem_array !(heap.mem) loc ofs size chunk in
-      Ok (make_branch ~heap:{ mem = ref mem } ~rets:[] ())
+      Ok (make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ())
   | _ -> fail_ungracefully "rem_single" params
 
 let execute_get_simple ~mem_getter ~name heap params =
@@ -827,7 +1007,7 @@ let execute_get_simple ~mem_getter ~name heap params =
       let loc_e = expr_of_loc_name loc_name in
       DR.ok
         (make_branch
-           ~heap:{ mem = ref mem }
+           ~heap:{ mem = ref mem; genv = heap.genv }
            ~rets:[ loc_e; low; high ]
            ())
   | _ -> fail_ungracefully name params
@@ -837,14 +1017,14 @@ let execute_set_simple ~mem_setter ~name heap params =
   match params with
   | [ loc; low; high; Expr.Lit (String perm_string) ] ->
       let++ mem = mem_setter !(heap.mem) loc low high in
-      make_branch ~heap:{ mem = ref mem } ~rets:[] ()
+      make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ()
   | _ -> fail_ungracefully name params
 
 let execute_rem_simple ~mem_remover ~name heap params =
   match params with
   | [ loc; low; high ] ->
       let+ mem = mem_remover !(heap.mem) loc low high in
-      Ok (make_branch ~heap:{ mem = ref mem } ~rets:[] ())
+      Ok (make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ())
   | _ -> fail_ungracefully name params
 
 let execute_get_hole =
@@ -877,7 +1057,7 @@ let execute_set_freed heap params =
   match params with
   | [ loc ] ->
       let+ mem = Mem.set_freed !(heap.mem) loc in
-      Ok (make_branch ~heap:{ mem = ref mem } ~rets:[] ())
+      Ok (make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ())
   | _ -> fail_ungracefully "set_freed" params
 
 let execute_rem_freed heap params =
@@ -885,7 +1065,7 @@ let execute_rem_freed heap params =
   match params with
   | [ loc ] ->
       let++ mem = Mem.rem_freed !(heap.mem) loc in
-      make_branch ~heap:{ mem = ref mem } ~rets:[] ()
+      make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ()
   | _ -> fail_ungracefully "rem_freed" params
 
 let execute_get_bounds heap params =
@@ -914,7 +1094,7 @@ let execute_set_bounds heap params =
         | _ -> fail_ungracefully "set_bounds" params
       in
       let++ mem = Mem.set_bounds !(heap.mem) loc bounds in
-      make_branch ~heap:{ mem = ref mem } ~rets:[] ()
+      make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ()
   | _ -> fail_ungracefully "set_bounds" params
 
 let execute_rem_bounds heap params =
@@ -922,7 +1102,7 @@ let execute_rem_bounds heap params =
   match params with
   | [ loc ] ->
       let++ mem = Mem.rem_bounds !(heap.mem) loc in
-      make_branch ~heap:{ mem = ref mem } ~rets:[] ()
+      make_branch ~heap:{ mem = ref mem; genv = heap.genv } ~rets:[] ()
   | _ -> fail_ungracefully "rem_bounds" params
 (*
 let execute_genvgetdef heap params =
@@ -1046,6 +1226,9 @@ let execute_action ~action_name heap params =
     | Null -> execute_null heap params
     | Copy -> execute_copy heap params
     | Cast -> execute_cast heap params
+    | GlobSet -> execute_globset heap params
+    | LoadG -> execute_loadg heap params
+    | StoreG -> execute_storeg heap params
     (*
     | Move -> execute_move heap params
     | AMem GetSingle -> execute_get_single heap params
@@ -1081,10 +1264,10 @@ let ga_to_deleter = id
 let substitution_in_place subst heap =
   let open Delayed.Syntax in
   let () = Logging.verbose (fun fmt -> fmt "ASDFCurrent heap : %a" pp heap) in
-  let { mem } = heap in
+  let { mem; genv } = heap in
   let+ mem = Mem.substitution subst !mem in
   match mem with
-  | Ok mem -> { mem = ref mem }
+  | Ok mem -> { mem = ref mem; genv = heap.genv }
   | Error e -> Fmt.failwith "Error in substitution: %a" SHeapTree.pp_err e
 
 let fresh_val _ = Expr.LVar (LVar.alloc ())

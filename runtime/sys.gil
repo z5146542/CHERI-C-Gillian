@@ -1,0 +1,12 @@
+#internal
+
+(* a simplified mmap *)
+proc i__mmap(addr, length, prot, flags, fd, offset) {
+        len := l-nth(length, 1i);
+        rep_len := "i__length"(len);
+        goto [ rep_len = len ] succ unrp;
+  succ: bl := [alloc](length);
+        ret := bl;
+        return;
+  unrp: fail[noexactrep]("length is not exactly representable")
+};

@@ -1,0 +1,16 @@
+#internal
+
+proc i__set_glob_var(var, size) {
+  ret := [set_glob_var](var, size);
+  return
+};
+
+proc i__loadgv(var, type) {
+  ret := [loadgv](var, type);
+  return
+};
+
+proc i__storegv(var, val) {
+  ret := [storegv](var, val);
+  return
+};
